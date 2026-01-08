@@ -28,7 +28,10 @@ private:
 	void UpdateFlags();
 	void UpdateAim();
 	void UpdateLean();
-protected:
+	void UpdateTurnInPlace();
+	void ProcessRootYawOffset();
+
+public:
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<APlayerCharacter> PlayerCharacter;
 	
@@ -106,5 +109,45 @@ protected:
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Movement|Aiming")
 	float AimPitch;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Movement|Aiming")
+	float AimYaw;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "TurnInPlace|Config")
+	FName TurnYawWeightCurveName = FName("TurnYawWeight");
+	
+	UPROPERTY(EditDefaultsOnly, Category = "TurnInPlace|Config")
+	FName RemainingTurnYawCurveName = FName("RemainingTurnYaw");
+	
+	// 현재 Turn 중인지 여부 (TurnYawWeight 커브 기반)
+	UPROPERTY(BlueprintReadOnly, Category = "Turn In Place")
+	bool bIsTurningInPlace;
+
+	// 남은 회전량 (-180 ~ 180)
+	UPROPERTY(BlueprintReadOnly, Category = "Turn In Place")
+	float RemainingTurnYaw;
+
+	// 메시에 적용할 Root Yaw Offset
+	UPROPERTY(BlueprintReadOnly, Category = "Turn In Place")
+	float RootYawOffset;
+	
+	// Turn 시작 임계값
+	UPROPERTY(EditDefaultsOnly, Category = "TurnInPlace|Config")
+	float TurnStartThreshold = 90.0f;
+
+	// Turn 종료 임계값
+	UPROPERTY(EditDefaultsOnly, Category = "TurnInPlace|Config")
+	float TurnEndThreshold = 5.0f;
+
+	// Offset 보간 속도
+	UPROPERTY(EditDefaultsOnly, Category = "TurnInPlace|Config")
+	float RootYawOffsetInterpSpeed = 10.0f;
+	
+private:
+	// 이전 프레임의 RemainingTurnYaw (델타 계산용)
+	float PreviousRemainingTurnYaw;
+    
+	// Turn 시작 시점의 Yaw 저장
+	float TurnStartYaw;
 	
 };

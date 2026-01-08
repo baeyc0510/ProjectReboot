@@ -8,7 +8,7 @@
 #include "PRAnimInstance.generated.h"
 
 class UCharacterMovementComponent;
-class APlayerCharacter;
+class APRPlayerCharacter;
 /**
  * 
  */
@@ -29,11 +29,11 @@ private:
 	void UpdateAim();
 	void UpdateLean();
 	void UpdateTurnInPlace();
-	void ProcessRootYawOffset();
+	void UpdateRootYawOffset();
 
 public:
 	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<APlayerCharacter> PlayerCharacter;
+	TObjectPtr<APRPlayerCharacter> PlayerCharacter;
 	
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<UCharacterMovementComponent> CharacterMovement;
@@ -146,8 +146,11 @@ public:
 private:
 	// 이전 프레임의 RemainingTurnYaw (델타 계산용)
 	float PreviousRemainingTurnYaw;
-    
 	// Turn 시작 시점의 Yaw 저장
 	float TurnStartYaw;
+	float DistanceCurve = 0.0f;
+	float LastDistanceCurve = 0.0f;
+	FRotator MovingRotation = FRotator::ZeroRotator;
+	FRotator LastMovingRotation = FRotator::ZeroRotator;
 	
 };

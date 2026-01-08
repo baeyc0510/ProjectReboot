@@ -6,13 +6,13 @@
 #include "KismetAnimationLibrary.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "ProjectReboot/Character/PlayerCharacter.h"
+#include "ProjectReboot/Character/PRPlayerCharacter.h"
 
 void UPRAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
 	
-	PlayerCharacter = Cast<APlayerCharacter>(GetOwningActor());
+	PlayerCharacter = Cast<APRPlayerCharacter>(GetOwningActor());
 	if (IsValid(PlayerCharacter))
 	{
 		CharacterMovement = PlayerCharacter->GetCharacterMovement();
@@ -34,8 +34,8 @@ void UPRAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	UpdateAim();
 	UpdateLean();
 	UpdateFlags();
-	
-	//TODO: TurnInPlace
+	UpdateTurnInPlace();
+	UpdateRootYawOffset();
 }
 
 void UPRAnimInstance::UpdateVelocity()
@@ -88,11 +88,9 @@ void UPRAnimInstance::UpdateFlags()
 	bHasAcceleration = !LocalAcceleration2D.IsNearlyZero();
 	bShouldMove = XYSpeed > MoveSpeedThreshold && bHasAcceleration;
 	bIsFalling = CharacterMovement->IsFalling();
-	
-	// TODO: Character 상태 적용
-	bIsCrouching = false;
-	bIsSprint = false;
-	LandState = ELandState::Normal;
+	bIsCrouching = PlayerCharacter->IsCrouching();
+	bIsSprint = PlayerCharacter->IsSprinting();
+	LandState = ELandState::Normal; // TODO: Character 상태 적용
 }
 
 void UPRAnimInstance::UpdateAim()
@@ -107,92 +105,67 @@ void UPRAnimInstance::UpdateAim()
 
 void UPRAnimInstance::UpdateLean()
 {
-	float TurnDirection = PlayerCharacter->GetTurnDirection();
+	float LookDirection = PlayerCharacter->GetDesiredLookDirection();
 	float DeltaSeconds = GetWorld()->GetDeltaSeconds();
-	LeanDirection = FMath::FInterpTo(LeanDirection, TurnDirection, DeltaSeconds, 10.f);
+	LeanDirection = FMath::FInterpTo(LeanDirection, LookDirection, DeltaSeconds, 10.f);
 }
 
 void UPRAnimInstance::UpdateTurnInPlace()
 {
-	// 커브 값 추출
-	const float TurnYawWeight = GetCurveValue(TurnYawWeightCurveName);
-	const float CurveRemainingTurnYaw = GetCurveValue(RemainingTurnYawCurveName);
-
-	// 이전 값 저장 (델타 계산용)
-	PreviousRemainingTurnYaw = RemainingTurnYaw;
-
-	// TurnYawWeight가 1이면 Turn 애니메이션 활성 상태
-	const bool bTurnAnimationActive = FMath::IsNearlyEqual(TurnYawWeight, 1.0f, 0.1f);
-
-	if (bTurnAnimationActive)
-	{
-		// Turn 애니메이션이 재생 중일 때
-		if (!bIsTurningInPlace)
-		{
-			// Turn 시작 시점
-			bIsTurningInPlace = true;
-			TurnStartYaw = AimYaw;
-			RemainingTurnYaw = AimYaw;
-		}
-		else
-		{
-			// Turn 진행 중 - 커브 값으로 남은 회전량 업데이트
-			const float AnimationTurnProgress = TurnStartYaw - CurveRemainingTurnYaw;
-			RemainingTurnYaw = AimYaw - AnimationTurnProgress;
-			RemainingTurnYaw = FRotator::NormalizeAxis(RemainingTurnYaw);
-		}
-	}
-	else
-	{
-		// Turn 애니메이션이 비활성 상태
-		if (bIsTurningInPlace)
-		{
-			// Turn 종료
-			bIsTurningInPlace = false;
-		}
-        
-		// Idle 상태에서는 AimYaw가 곧 RemainingTurnYaw
-		RemainingTurnYaw = AimYaw;
-	}
+    // 커브 값 추출
+    const float TurnYawWeight = GetCurveValue(TurnYawWeightCurveName);
+    const float CurveRemainingTurnYaw = GetCurveValue(RemainingTurnYawCurveName);
+    
+    // TurnYawWeight가 0보다 크면 Turn 애니메이션 활성 상태
+    bIsTurningInPlace = TurnYawWeight > 0.0f;
+    
+    // Distance 커브 업데이트 (RemainingTurnYaw 사용)
+    LastDistanceCurve = DistanceCurve;
+    DistanceCurve = CurveRemainingTurnYaw;
 }
 
-void UPRAnimInstance::ProcessRootYawOffset()
+void UPRAnimInstance::UpdateRootYawOffset()
 {
 	float DeltaSeconds = GetWorld()->GetDeltaSeconds();
-	if (bShouldMove)
+    
+	LastMovingRotation = MovingRotation;
+	MovingRotation = PlayerCharacter->GetActorRotation();
+    
+	if (bShouldMove || bIsFalling)
 	{
-		// 이동 중에는 Offset을 0으로 보간
 		RootYawOffset = FMath::FInterpTo(RootYawOffset, 0.0f, DeltaSeconds, RootYawOffsetInterpSpeed);
-	}
-	else if (bIsTurningInPlace)
-	{
-		// Turn 중일 때 - 애니메이션 커브의 델타만큼 캐릭터 회전
-		const float YawDelta = PreviousRemainingTurnYaw - RemainingTurnYaw;
-        
-		if (!FMath::IsNearlyZero(YawDelta, 0.01f))
-		{
-			// 캐릭터 실제 회전
-			FRotator NewRotation = PlayerCharacter->GetActorRotation();
-			NewRotation.Yaw += YawDelta;
-			PlayerCharacter->SetActorRotation(NewRotation);
-            
-			// 메시 Offset 보정 (캐릭터가 회전한 만큼 반대로)
-			RootYawOffset -= YawDelta;
-			RootYawOffset = FRotator::NormalizeAxis(RootYawOffset);
-		}
 	}
 	else
 	{
-		// Idle 상태 - Offset 유지 또는 서서히 해소
-		if (FMath::Abs(AimYaw) > TurnStartThreshold)
+		FRotator DeltaRotator = UKismetMathLibrary::NormalizedDeltaRotator(MovingRotation, LastMovingRotation);
+		RootYawOffset -= DeltaRotator.Yaw;
+		RootYawOffset = FRotator::NormalizeAxis(RootYawOffset);
+        
+		// 최대 Offset 제한 (Turn 시작 전)
+		if (!bIsTurningInPlace)
 		{
-			// Turn이 곧 시작될 것이므로 Offset 준비
-			RootYawOffset = AimYaw;
+			RootYawOffset = FMath::Clamp(RootYawOffset, -90.0f, 90.0f);
 		}
-		else
+        
+		if (bIsTurningInPlace)
 		{
-			// 천천히 0으로 복귀
-			RootYawOffset = FMath::FInterpTo(RootYawOffset, 0.0f, DeltaSeconds, RootYawOffsetInterpSpeed * 0.5f);
+			float DeltaDistanceCurve = DistanceCurve - LastDistanceCurve;
+			RootYawOffset -= DeltaDistanceCurve;
+            
+			float AbsRootYawOffset = FMath::Abs(RootYawOffset);
+			if (AbsRootYawOffset > TurnStartThreshold)
+			{
+				float YawExcess = AbsRootYawOffset - TurnStartThreshold;
+                
+				if (RootYawOffset > 0.0f)
+				{
+					RootYawOffset -= YawExcess;
+				}
+				else
+				{
+					RootYawOffset += YawExcess;
+				}
+			}
 		}
 	}
 }

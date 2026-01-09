@@ -27,6 +27,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	bool bIsSprint;
 	
+	UPROPERTY(BlueprintReadOnly)
+	bool bIsCrouching;
+	
 	// 전방 기준 방향 각도
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	float F_OrientationAngle;
@@ -48,4 +51,13 @@ protected:
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	ECardinalDirection CardinalDirection;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Movement|Aiming")
+	float AimPitch;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Movement|Aiming")
+	float AimYaw;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Movement|Aiming")
+	float RootYawOffset;
 };

@@ -187,28 +187,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Roguelite|Numeric")
 	TMap<FGameplayTag, float> GetAllRunStateValues() const;
 
-	/*~ Slots ~*/
-
-	// 슬롯에 장착
-	UFUNCTION(BlueprintCallable, Category = "Roguelite|Slots")
-	bool EquipActionToSlot(URogueliteActionData* Action, FGameplayTag SlotTag);
-
-	// 슬롯에서 해제
-	UFUNCTION(BlueprintCallable, Category = "Roguelite|Slots")
-	void UnequipActionFromSlot(URogueliteActionData* Action, FGameplayTag SlotTag);
-
-	// 슬롯 내용 조회
-	UFUNCTION(BlueprintCallable, Category = "Roguelite|Slots")
-	TArray<URogueliteActionData*> GetSlotContents(FGameplayTag SlotTag) const;
-
-	// 슬롯 사용 개수
-	UFUNCTION(BlueprintCallable, Category = "Roguelite|Slots")
-	int32 GetSlotCount(FGameplayTag SlotTag) const;
-
-	// 슬롯 풀 여부
-	UFUNCTION(BlueprintCallable, Category = "Roguelite|Slots")
-	bool IsSlotFull(FGameplayTag SlotTag, int32 MaxCount) const;
-
 	/*~ Save/Load ~*/
 
 	// 세이브 데이터 생성
@@ -228,6 +206,26 @@ public:
 	// 획득 전 체크 해제
 	UFUNCTION(BlueprintCallable, Category = "Roguelite|Handlers")
 	void UnregisterPreAcquireCheck(FRoguelitePreAcquireCheckSignature CheckDelegate);
+
+	/*~ Filtered Events ~*/
+
+	// 태그 필터링된 액션 획득 이벤트 바인딩
+	FDelegateHandle BindActionAcquiredByTags(const FGameplayTagContainer& FilterTags, const FRogueliteActionFilteredSignature::FDelegate& Delegate);
+
+	// 태그 필터링된 액션 획득 이벤트 언바인딩
+	void UnbindActionAcquiredByTags(const FGameplayTagContainer& FilterTags, FDelegateHandle Handle);
+
+	// 태그 필터링된 액션 제거 이벤트 바인딩
+	FDelegateHandle BindActionRemovedByTags(const FGameplayTagContainer& FilterTags, const FRogueliteActionFilteredSignature::FDelegate& Delegate);
+
+	// 태그 필터링된 액션 제거 이벤트 언바인딩
+	void UnbindActionRemovedByTags(const FGameplayTagContainer& FilterTags, FDelegateHandle Handle);
+
+	// 태그 필터링된 스택 변경 이벤트 바인딩
+	FDelegateHandle BindStackChangedByTags(const FGameplayTagContainer& FilterTags, const FRogueliteActionFilteredSignature::FDelegate& Delegate);
+
+	// 태그 필터링된 스택 변경 이벤트 언바인딩
+	void UnbindStackChangedByTags(const FGameplayTagContainer& FilterTags, FDelegateHandle Handle);
 
 public:
 	/*~ Delegates ~*/
@@ -281,4 +279,18 @@ private:
 
 	// 획득 전 체크 목록
 	TArray<FRoguelitePreAcquireCheckSignature> PreAcquireChecks;
+
+	/*~ Filtered Listeners ~*/
+
+	// 필터링된 액션 획득 리스너 목록 (TagFilter -> Native Multicast)
+	TArray<TPair<FGameplayTagContainer, FRogueliteActionFilteredSignature>> FilteredAcquiredDelegates;
+
+	// 필터링된 액션 제거 리스너 목록
+	TArray<TPair<FGameplayTagContainer, FRogueliteActionFilteredSignature>> FilteredRemovedDelegates;
+
+	// 필터링된 스택 변경 리스너 목록
+	TArray<TPair<FGameplayTagContainer, FRogueliteActionFilteredSignature>> FilteredStackChangedDelegates;
+
+	// 필터링된 리스너들에게 브로드캐스트
+	void BroadcastToFilteredDelegates(TArray<TPair<FGameplayTagContainer, FRogueliteActionFilteredSignature>>& Delegates, URogueliteActionData* Action, int32 OldStacks, int32 NewStacks);
 };

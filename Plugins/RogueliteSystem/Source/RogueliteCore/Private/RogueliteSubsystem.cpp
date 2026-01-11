@@ -273,6 +273,10 @@ bool URogueliteSubsystem::TryAcquireAction(URogueliteActionData* Action, FString
 	OnActionAcquired.Broadcast(Action, OldStacks, NewStacks);
 	OnStackChanged.Broadcast(Action, OldStacks, NewStacks);
 
+	// 필터링된 리스너들에게 브로드캐스트
+	BroadcastToFilteredDelegates(FilteredAcquiredDelegates, Action, OldStacks, NewStacks);
+	BroadcastToFilteredDelegates(FilteredStackChangedDelegates, Action, OldStacks, NewStacks);
+
 	return true;
 }
 
@@ -329,6 +333,10 @@ bool URogueliteSubsystem::RemoveAction(URogueliteActionData* Action, int32 Stack
 	// 이벤트 발생
 	OnActionRemoved.Broadcast(Action, OldStacks, NewStacks);
 	OnStackChanged.Broadcast(Action, OldStacks, NewStacks);
+
+	// 필터링된 리스너들에게 브로드캐스트
+	BroadcastToFilteredDelegates(FilteredRemovedDelegates, Action, OldStacks, NewStacks);
+	BroadcastToFilteredDelegates(FilteredStackChangedDelegates, Action, OldStacks, NewStacks);
 
 	return true;
 }
@@ -419,66 +427,6 @@ TMap<FGameplayTag, float> URogueliteSubsystem::GetAllRunStateValues() const
 	return RunState.NumericData;
 }
 
-/*~ Slots ~*/
-
-bool URogueliteSubsystem::EquipActionToSlot(URogueliteActionData* Action, FGameplayTag SlotTag)
-{
-	if (!IsValid(Action) || !SlotTag.IsValid())
-	{
-		return false;
-	}
-
-	if (!RunState.HasAction(Action))
-	{
-		return false;
-	}
-
-	FRogueliteSlotArray& SlotData = RunState.Slots.FindOrAdd(SlotTag);
-	if (SlotData.Actions.Contains(Action))
-	{
-		return false;
-	}
-
-	SlotData.Actions.Add(Action);
-	return true;
-}
-
-void URogueliteSubsystem::UnequipActionFromSlot(URogueliteActionData* Action, FGameplayTag SlotTag)
-{
-	if (!IsValid(Action) || !SlotTag.IsValid())
-	{
-		return;
-	}
-
-	if (FRogueliteSlotArray* SlotData = RunState.Slots.Find(SlotTag))
-	{
-		SlotData->Actions.Remove(Action);
-	}
-}
-
-TArray<URogueliteActionData*> URogueliteSubsystem::GetSlotContents(FGameplayTag SlotTag) const
-{
-	if (const FRogueliteSlotArray* SlotData = RunState.Slots.Find(SlotTag))
-	{
-		return SlotData->Actions;
-	}
-	return TArray<URogueliteActionData*>();
-}
-
-int32 URogueliteSubsystem::GetSlotCount(FGameplayTag SlotTag) const
-{
-	if (const FRogueliteSlotArray* SlotData = RunState.Slots.Find(SlotTag))
-	{
-		return SlotData->Actions.Num();
-	}
-	return 0;
-}
-
-bool URogueliteSubsystem::IsSlotFull(FGameplayTag SlotTag, int32 MaxCount) const
-{
-	return GetSlotCount(SlotTag) >= MaxCount;
-}
-
 /*~ Save/Load ~*/
 
 FRogueliteRunSaveData URogueliteSubsystem::CreateRunSaveData() const
@@ -494,19 +442,7 @@ FRogueliteRunSaveData URogueliteSubsystem::CreateRunSaveData() const
 		}
 	}
 
-	for (const auto& SlotPair : RunState.Slots)
-	{
-		FRogueliteSlotSaveArray& SaveSlot = SaveData.Slots.FindOrAdd(SlotPair.Key);
-		for (URogueliteActionData* Action : SlotPair.Value.Actions)
-		{
-			if (IsValid(Action))
-			{
-				SaveSlot.ActionPaths.Add(FSoftObjectPath(Action));
-			}
-		}
-	}
-
-	SaveData.ActiveTags = RunState.ActiveTagStacks.GetTags();
+	SaveData.ActiveTagStacks = RunState.ActiveTagStacks;
 	SaveData.NumericData = RunState.NumericData;
 
 	return SaveData;
@@ -530,23 +466,8 @@ void URogueliteSubsystem::RestoreRunFromSaveData(const FRogueliteRunSaveData& Sa
 		}
 	}
 
-	for (const auto& SlotPair : SaveData.Slots)
-	{
-		FRogueliteSlotArray& SlotData = RunState.Slots.FindOrAdd(SlotPair.Key);
-		for (const FSoftObjectPath& Path : SlotPair.Value.ActionPaths)
-		{
-			if (UObject* Obj = Path.TryLoad())
-			{
-				if (URogueliteActionData* Action = Cast<URogueliteActionData>(Obj))
-				{
-					SlotData.Actions.Add(Action);
-				}
-			}
-		}
-	}
-
 	RunState.ActiveTagStacks.Reset();
-	RunState.ActiveTagStacks.AppendTags(SaveData.ActiveTags);
+	RunState.ActiveTagStacks = SaveData.ActiveTagStacks;
 	RunState.NumericData = SaveData.NumericData;
 }
 
@@ -621,5 +542,122 @@ void URogueliteSubsystem::RemoveActionEffects(URogueliteActionData* Action, int3
 	if (!Action->TagsToGrant.IsEmpty())
 	{
 		RunState.ActiveTagStacks.RemoveTags(Action->TagsToGrant);
+	}
+}
+
+/*~ Filtered Events ~*/
+
+FDelegateHandle URogueliteSubsystem::BindActionAcquiredByTags(const FGameplayTagContainer& FilterTags, const FRogueliteActionFilteredSignature::FDelegate& Delegate)
+{
+	TPair<FGameplayTagContainer, FRogueliteActionFilteredSignature>* FoundPair = nullptr;
+
+	for (auto& SearchPair : FilteredAcquiredDelegates)
+	{
+		if (FilterTags == SearchPair.Key)
+		{
+			FoundPair = &SearchPair;
+			break;
+		}
+	}
+
+	if (!FoundPair)
+	{
+		FoundPair = new(FilteredAcquiredDelegates) TPair<FGameplayTagContainer, FRogueliteActionFilteredSignature>(FilterTags, FRogueliteActionFilteredSignature());
+	}
+
+	return FoundPair->Value.Add(Delegate);
+}
+
+void URogueliteSubsystem::UnbindActionAcquiredByTags(const FGameplayTagContainer& FilterTags, FDelegateHandle Handle)
+{
+	for (auto& SearchPair : FilteredAcquiredDelegates)
+	{
+		if (FilterTags == SearchPair.Key)
+		{
+			SearchPair.Value.Remove(Handle);
+			break;
+		}
+	}
+}
+
+FDelegateHandle URogueliteSubsystem::BindActionRemovedByTags(const FGameplayTagContainer& FilterTags, const FRogueliteActionFilteredSignature::FDelegate& Delegate)
+{
+	TPair<FGameplayTagContainer, FRogueliteActionFilteredSignature>* FoundPair = nullptr;
+
+	for (auto& SearchPair : FilteredRemovedDelegates)
+	{
+		if (FilterTags == SearchPair.Key)
+		{
+			FoundPair = &SearchPair;
+			break;
+		}
+	}
+
+	if (!FoundPair)
+	{
+		FoundPair = new(FilteredRemovedDelegates) TPair<FGameplayTagContainer, FRogueliteActionFilteredSignature>(FilterTags, FRogueliteActionFilteredSignature());
+	}
+
+	return FoundPair->Value.Add(Delegate);
+}
+
+void URogueliteSubsystem::UnbindActionRemovedByTags(const FGameplayTagContainer& FilterTags, FDelegateHandle Handle)
+{
+	for (auto& SearchPair : FilteredRemovedDelegates)
+	{
+		if (FilterTags == SearchPair.Key)
+		{
+			SearchPair.Value.Remove(Handle);
+			break;
+		}
+	}
+}
+
+FDelegateHandle URogueliteSubsystem::BindStackChangedByTags(const FGameplayTagContainer& FilterTags, const FRogueliteActionFilteredSignature::FDelegate& Delegate)
+{
+	TPair<FGameplayTagContainer, FRogueliteActionFilteredSignature>* FoundPair = nullptr;
+
+	for (auto& SearchPair : FilteredStackChangedDelegates)
+	{
+		if (FilterTags == SearchPair.Key)
+		{
+			FoundPair = &SearchPair;
+			break;
+		}
+	}
+
+	if (!FoundPair)
+	{
+		FoundPair = new(FilteredStackChangedDelegates) TPair<FGameplayTagContainer, FRogueliteActionFilteredSignature>(FilterTags, FRogueliteActionFilteredSignature());
+	}
+
+	return FoundPair->Value.Add(Delegate);
+}
+
+void URogueliteSubsystem::UnbindStackChangedByTags(const FGameplayTagContainer& FilterTags, FDelegateHandle Handle)
+{
+	for (auto& SearchPair : FilteredStackChangedDelegates)
+	{
+		if (FilterTags == SearchPair.Key)
+		{
+			SearchPair.Value.Remove(Handle);
+			break;
+		}
+	}
+}
+
+void URogueliteSubsystem::BroadcastToFilteredDelegates(TArray<TPair<FGameplayTagContainer, FRogueliteActionFilteredSignature>>& Delegates, URogueliteActionData* Action, int32 OldStacks, int32 NewStacks)
+{
+	if (!IsValid(Action))
+	{
+		return;
+	}
+
+	for (auto& Pair : Delegates)
+	{
+		if (Action->HasAnyTags(Pair.Key))
+		{
+			Pair.Value.Broadcast(Action, OldStacks, NewStacks);
+		}
 	}
 }

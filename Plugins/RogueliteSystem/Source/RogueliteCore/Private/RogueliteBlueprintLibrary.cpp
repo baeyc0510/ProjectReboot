@@ -249,52 +249,6 @@ TMap<FGameplayTag, float> URogueliteBlueprintLibrary::GetAllRunStateValues(const
 	return TMap<FGameplayTag, float>();
 }
 
-/*~ Slots ~*/
-
-bool URogueliteBlueprintLibrary::EquipActionToSlot(const UObject* WorldContextObject, URogueliteActionData* Action, FGameplayTag SlotTag)
-{
-	if (URogueliteSubsystem* Subsystem = GetSubsystem(WorldContextObject))
-	{
-		return Subsystem->EquipActionToSlot(Action, SlotTag);
-	}
-	return false;
-}
-
-void URogueliteBlueprintLibrary::UnequipActionFromSlot(const UObject* WorldContextObject, URogueliteActionData* Action, FGameplayTag SlotTag)
-{
-	if (URogueliteSubsystem* Subsystem = GetSubsystem(WorldContextObject))
-	{
-		Subsystem->UnequipActionFromSlot(Action, SlotTag);
-	}
-}
-
-TArray<URogueliteActionData*> URogueliteBlueprintLibrary::GetSlotContents(const UObject* WorldContextObject, FGameplayTag SlotTag)
-{
-	if (URogueliteSubsystem* Subsystem = GetSubsystem(WorldContextObject))
-	{
-		return Subsystem->GetSlotContents(SlotTag);
-	}
-	return TArray<URogueliteActionData*>();
-}
-
-int32 URogueliteBlueprintLibrary::GetSlotCount(const UObject* WorldContextObject, FGameplayTag SlotTag)
-{
-	if (URogueliteSubsystem* Subsystem = GetSubsystem(WorldContextObject))
-	{
-		return Subsystem->GetSlotCount(SlotTag);
-	}
-	return 0;
-}
-
-bool URogueliteBlueprintLibrary::IsSlotFull(const UObject* WorldContextObject, FGameplayTag SlotTag, int32 MaxCount)
-{
-	if (URogueliteSubsystem* Subsystem = GetSubsystem(WorldContextObject))
-	{
-		return Subsystem->IsSlotFull(SlotTag, MaxCount);
-	}
-	return false;
-}
-
 /*~ Save/Load ~*/
 
 FRogueliteRunSaveData URogueliteBlueprintLibrary::CreateRunSaveData(const UObject* WorldContextObject)

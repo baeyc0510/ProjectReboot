@@ -112,28 +112,6 @@ struct ROGUELITECORE_API FRoguelitePendingAcquireInfo
 };
 
 
-/*~ Slot Array Wrapper ~*/
-
-USTRUCT(BlueprintType)
-struct ROGUELITECORE_API FRogueliteSlotArray
-{
-	GENERATED_BODY()
-
-	// 슬롯에 장착된 액션 목록
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<URogueliteActionData*> Actions;
-};
-
-USTRUCT(BlueprintType)
-struct ROGUELITECORE_API FRogueliteSlotSaveArray
-{
-	GENERATED_BODY()
-
-	// 슬롯에 장착된 액션 경로 목록
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FSoftObjectPath> ActionPaths;
-};
-
 USTRUCT(BlueprintType)
 struct ROGUELITECORE_API FRogueliteTagCountContainer
 {
@@ -247,10 +225,6 @@ struct ROGUELITECORE_API FRogueliteRunState
 	UPROPERTY(BlueprintReadOnly)
 	TMap<URogueliteActionData*, FRogueliteAcquiredInfo> AcquiredActions;
 
-	// 슬롯별 장착된 액션 목록
-	UPROPERTY(BlueprintReadOnly)
-	TMap<FGameplayTag, FRogueliteSlotArray> Slots;
-
 	// 현재 런의 활성 태그
 	UPROPERTY(BlueprintReadOnly)
 	FRogueliteTagCountContainer ActiveTagStacks;
@@ -264,7 +238,6 @@ struct ROGUELITECORE_API FRogueliteRunState
 	{
 		bActive = false;
 		AcquiredActions.Empty();
-		Slots.Empty();
 		ActiveTagStacks.Reset();
 		NumericData.Empty();
 	}
@@ -389,10 +362,6 @@ struct ROGUELITECORE_API FRogueliteRunSaveData
 	// 획득 액션 (소프트 경로 + 스택 수)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TMap<FSoftObjectPath, int32> AcquiredActions;
-
-	// 슬롯별 장착 액션 (소프트 경로)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TMap<FGameplayTag, FRogueliteSlotSaveArray> Slots;
 
 	// 활성 태그
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

@@ -419,66 +419,6 @@ TMap<FGameplayTag, float> URogueliteSubsystem::GetAllRunStateValues() const
 	return RunState.NumericData;
 }
 
-/*~ Slots ~*/
-
-bool URogueliteSubsystem::EquipActionToSlot(URogueliteActionData* Action, FGameplayTag SlotTag)
-{
-	if (!IsValid(Action) || !SlotTag.IsValid())
-	{
-		return false;
-	}
-
-	if (!RunState.HasAction(Action))
-	{
-		return false;
-	}
-
-	FRogueliteSlotArray& SlotData = RunState.Slots.FindOrAdd(SlotTag);
-	if (SlotData.Actions.Contains(Action))
-	{
-		return false;
-	}
-
-	SlotData.Actions.Add(Action);
-	return true;
-}
-
-void URogueliteSubsystem::UnequipActionFromSlot(URogueliteActionData* Action, FGameplayTag SlotTag)
-{
-	if (!IsValid(Action) || !SlotTag.IsValid())
-	{
-		return;
-	}
-
-	if (FRogueliteSlotArray* SlotData = RunState.Slots.Find(SlotTag))
-	{
-		SlotData->Actions.Remove(Action);
-	}
-}
-
-TArray<URogueliteActionData*> URogueliteSubsystem::GetSlotContents(FGameplayTag SlotTag) const
-{
-	if (const FRogueliteSlotArray* SlotData = RunState.Slots.Find(SlotTag))
-	{
-		return SlotData->Actions;
-	}
-	return TArray<URogueliteActionData*>();
-}
-
-int32 URogueliteSubsystem::GetSlotCount(FGameplayTag SlotTag) const
-{
-	if (const FRogueliteSlotArray* SlotData = RunState.Slots.Find(SlotTag))
-	{
-		return SlotData->Actions.Num();
-	}
-	return 0;
-}
-
-bool URogueliteSubsystem::IsSlotFull(FGameplayTag SlotTag, int32 MaxCount) const
-{
-	return GetSlotCount(SlotTag) >= MaxCount;
-}
-
 /*~ Save/Load ~*/
 
 FRogueliteRunSaveData URogueliteSubsystem::CreateRunSaveData() const
@@ -491,18 +431,6 @@ FRogueliteRunSaveData URogueliteSubsystem::CreateRunSaveData() const
 		{
 			FSoftObjectPath Path(Pair.Key);
 			SaveData.AcquiredActions.Add(Path, Pair.Value.Stacks);
-		}
-	}
-
-	for (const auto& SlotPair : RunState.Slots)
-	{
-		FRogueliteSlotSaveArray& SaveSlot = SaveData.Slots.FindOrAdd(SlotPair.Key);
-		for (URogueliteActionData* Action : SlotPair.Value.Actions)
-		{
-			if (IsValid(Action))
-			{
-				SaveSlot.ActionPaths.Add(FSoftObjectPath(Action));
-			}
 		}
 	}
 
@@ -526,21 +454,6 @@ void URogueliteSubsystem::RestoreRunFromSaveData(const FRogueliteRunSaveData& Sa
 				FRogueliteAcquiredInfo Info;
 				Info.Stacks = Pair.Value;
 				RunState.AcquiredActions.Add(Action, Info);
-			}
-		}
-	}
-
-	for (const auto& SlotPair : SaveData.Slots)
-	{
-		FRogueliteSlotArray& SlotData = RunState.Slots.FindOrAdd(SlotPair.Key);
-		for (const FSoftObjectPath& Path : SlotPair.Value.ActionPaths)
-		{
-			if (UObject* Obj = Path.TryLoad())
-			{
-				if (URogueliteActionData* Action = Cast<URogueliteActionData>(Obj))
-				{
-					SlotData.Actions.Add(Action);
-				}
 			}
 		}
 	}

@@ -187,28 +187,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Roguelite|Numeric")
 	TMap<FGameplayTag, float> GetAllRunStateValues() const;
 
-	/*~ Slots ~*/
-
-	// 슬롯에 장착
-	UFUNCTION(BlueprintCallable, Category = "Roguelite|Slots")
-	bool EquipActionToSlot(URogueliteActionData* Action, FGameplayTag SlotTag);
-
-	// 슬롯에서 해제
-	UFUNCTION(BlueprintCallable, Category = "Roguelite|Slots")
-	void UnequipActionFromSlot(URogueliteActionData* Action, FGameplayTag SlotTag);
-
-	// 슬롯 내용 조회
-	UFUNCTION(BlueprintCallable, Category = "Roguelite|Slots")
-	TArray<URogueliteActionData*> GetSlotContents(FGameplayTag SlotTag) const;
-
-	// 슬롯 사용 개수
-	UFUNCTION(BlueprintCallable, Category = "Roguelite|Slots")
-	int32 GetSlotCount(FGameplayTag SlotTag) const;
-
-	// 슬롯 풀 여부
-	UFUNCTION(BlueprintCallable, Category = "Roguelite|Slots")
-	bool IsSlotFull(FGameplayTag SlotTag, int32 MaxCount) const;
-
 	/*~ Save/Load ~*/
 
 	// 세이브 데이터 생성

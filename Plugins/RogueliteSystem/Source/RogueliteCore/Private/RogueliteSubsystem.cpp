@@ -273,6 +273,10 @@ bool URogueliteSubsystem::TryAcquireAction(URogueliteActionData* Action, FString
 	OnActionAcquired.Broadcast(Action, OldStacks, NewStacks);
 	OnStackChanged.Broadcast(Action, OldStacks, NewStacks);
 
+	// 필터링된 리스너들에게 브로드캐스트
+	BroadcastToFilteredDelegates(FilteredAcquiredDelegates, Action, OldStacks, NewStacks);
+	BroadcastToFilteredDelegates(FilteredStackChangedDelegates, Action, OldStacks, NewStacks);
+
 	return true;
 }
 
@@ -329,6 +333,10 @@ bool URogueliteSubsystem::RemoveAction(URogueliteActionData* Action, int32 Stack
 	// 이벤트 발생
 	OnActionRemoved.Broadcast(Action, OldStacks, NewStacks);
 	OnStackChanged.Broadcast(Action, OldStacks, NewStacks);
+
+	// 필터링된 리스너들에게 브로드캐스트
+	BroadcastToFilteredDelegates(FilteredRemovedDelegates, Action, OldStacks, NewStacks);
+	BroadcastToFilteredDelegates(FilteredStackChangedDelegates, Action, OldStacks, NewStacks);
 
 	return true;
 }
@@ -434,7 +442,7 @@ FRogueliteRunSaveData URogueliteSubsystem::CreateRunSaveData() const
 		}
 	}
 
-	SaveData.ActiveTags = RunState.ActiveTagStacks.GetTags();
+	SaveData.ActiveTagStacks = RunState.ActiveTagStacks;
 	SaveData.NumericData = RunState.NumericData;
 
 	return SaveData;
@@ -459,7 +467,7 @@ void URogueliteSubsystem::RestoreRunFromSaveData(const FRogueliteRunSaveData& Sa
 	}
 
 	RunState.ActiveTagStacks.Reset();
-	RunState.ActiveTagStacks.AppendTags(SaveData.ActiveTags);
+	RunState.ActiveTagStacks = SaveData.ActiveTagStacks;
 	RunState.NumericData = SaveData.NumericData;
 }
 
@@ -534,5 +542,122 @@ void URogueliteSubsystem::RemoveActionEffects(URogueliteActionData* Action, int3
 	if (!Action->TagsToGrant.IsEmpty())
 	{
 		RunState.ActiveTagStacks.RemoveTags(Action->TagsToGrant);
+	}
+}
+
+/*~ Filtered Events ~*/
+
+FDelegateHandle URogueliteSubsystem::BindActionAcquiredByTags(const FGameplayTagContainer& FilterTags, const FRogueliteActionFilteredSignature::FDelegate& Delegate)
+{
+	TPair<FGameplayTagContainer, FRogueliteActionFilteredSignature>* FoundPair = nullptr;
+
+	for (auto& SearchPair : FilteredAcquiredDelegates)
+	{
+		if (FilterTags == SearchPair.Key)
+		{
+			FoundPair = &SearchPair;
+			break;
+		}
+	}
+
+	if (!FoundPair)
+	{
+		FoundPair = new(FilteredAcquiredDelegates) TPair<FGameplayTagContainer, FRogueliteActionFilteredSignature>(FilterTags, FRogueliteActionFilteredSignature());
+	}
+
+	return FoundPair->Value.Add(Delegate);
+}
+
+void URogueliteSubsystem::UnbindActionAcquiredByTags(const FGameplayTagContainer& FilterTags, FDelegateHandle Handle)
+{
+	for (auto& SearchPair : FilteredAcquiredDelegates)
+	{
+		if (FilterTags == SearchPair.Key)
+		{
+			SearchPair.Value.Remove(Handle);
+			break;
+		}
+	}
+}
+
+FDelegateHandle URogueliteSubsystem::BindActionRemovedByTags(const FGameplayTagContainer& FilterTags, const FRogueliteActionFilteredSignature::FDelegate& Delegate)
+{
+	TPair<FGameplayTagContainer, FRogueliteActionFilteredSignature>* FoundPair = nullptr;
+
+	for (auto& SearchPair : FilteredRemovedDelegates)
+	{
+		if (FilterTags == SearchPair.Key)
+		{
+			FoundPair = &SearchPair;
+			break;
+		}
+	}
+
+	if (!FoundPair)
+	{
+		FoundPair = new(FilteredRemovedDelegates) TPair<FGameplayTagContainer, FRogueliteActionFilteredSignature>(FilterTags, FRogueliteActionFilteredSignature());
+	}
+
+	return FoundPair->Value.Add(Delegate);
+}
+
+void URogueliteSubsystem::UnbindActionRemovedByTags(const FGameplayTagContainer& FilterTags, FDelegateHandle Handle)
+{
+	for (auto& SearchPair : FilteredRemovedDelegates)
+	{
+		if (FilterTags == SearchPair.Key)
+		{
+			SearchPair.Value.Remove(Handle);
+			break;
+		}
+	}
+}
+
+FDelegateHandle URogueliteSubsystem::BindStackChangedByTags(const FGameplayTagContainer& FilterTags, const FRogueliteActionFilteredSignature::FDelegate& Delegate)
+{
+	TPair<FGameplayTagContainer, FRogueliteActionFilteredSignature>* FoundPair = nullptr;
+
+	for (auto& SearchPair : FilteredStackChangedDelegates)
+	{
+		if (FilterTags == SearchPair.Key)
+		{
+			FoundPair = &SearchPair;
+			break;
+		}
+	}
+
+	if (!FoundPair)
+	{
+		FoundPair = new(FilteredStackChangedDelegates) TPair<FGameplayTagContainer, FRogueliteActionFilteredSignature>(FilterTags, FRogueliteActionFilteredSignature());
+	}
+
+	return FoundPair->Value.Add(Delegate);
+}
+
+void URogueliteSubsystem::UnbindStackChangedByTags(const FGameplayTagContainer& FilterTags, FDelegateHandle Handle)
+{
+	for (auto& SearchPair : FilteredStackChangedDelegates)
+	{
+		if (FilterTags == SearchPair.Key)
+		{
+			SearchPair.Value.Remove(Handle);
+			break;
+		}
+	}
+}
+
+void URogueliteSubsystem::BroadcastToFilteredDelegates(TArray<TPair<FGameplayTagContainer, FRogueliteActionFilteredSignature>>& Delegates, URogueliteActionData* Action, int32 OldStacks, int32 NewStacks)
+{
+	if (!IsValid(Action))
+	{
+		return;
+	}
+
+	for (auto& Pair : Delegates)
+	{
+		if (Action->HasAnyTags(Pair.Key))
+		{
+			Pair.Value.Broadcast(Action, OldStacks, NewStacks);
+		}
 	}
 }

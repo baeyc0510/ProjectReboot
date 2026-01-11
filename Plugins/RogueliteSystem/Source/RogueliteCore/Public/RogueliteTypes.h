@@ -14,6 +14,9 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FRogueliteValueChangedSignature, 
 // 비동기 액션 로드 완료 콜백 델리게이트
 DECLARE_DYNAMIC_DELEGATE_OneParam(FRogueliteActionsLoadedSignature, int32, TotalCount);
 
+// Native Delegate (C++ 전용, 필터링된 이벤트용)
+DECLARE_MULTICAST_DELEGATE_ThreeParams(FRogueliteActionFilteredSignature, URogueliteActionData* /*Action*/, int32 /*OldStacks*/, int32 /*NewStacks*/);
+
 /*~ Enums ~*/
 
 UENUM(BlueprintType)
@@ -364,8 +367,8 @@ struct ROGUELITECORE_API FRogueliteRunSaveData
 	TMap<FSoftObjectPath, int32> AcquiredActions;
 
 	// 활성 태그
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FGameplayTagContainer ActiveTags;
+	UPROPERTY(BlueprintReadOnly)
+	FRogueliteTagCountContainer ActiveTagStacks;
 
 	// 수치 데이터
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

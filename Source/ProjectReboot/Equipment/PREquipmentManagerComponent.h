@@ -8,35 +8,8 @@
 #include "PREquipmentManagerComponent.generated.h"
 
 
-class UEquipmentInstance;
 class URogueliteActionData;
-class UPREquipActionData;
-
-USTRUCT()
-struct FEquipmentSlotItem
-{
-	GENERATED_BODY()
-	
-	UPROPERTY()
-	TObjectPtr<UEquipmentInstance> EquipmentInstance = nullptr;
-	
-	UPROPERTY()
-	TObjectPtr<UPREquipActionData> EquipActionData = nullptr;
-};
-
-USTRUCT()
-struct FEquipmentSlots
-{
-	GENERATED_BODY()
-	
-	UPROPERTY()
-	TMap<FGameplayTag, FEquipmentSlotItem> SlotItems;
-	
-	const FEquipmentSlotItem* FindSlotItem(FGameplayTag SlotTag) const
-	{
-		return SlotItems.Find(SlotTag);
-	}
-};
+class UPRRogueliteEquipActionData;
 
 UCLASS(meta=(BlueprintSpawnableComponent))
 class PROJECTREBOOT_API UPREquipmentManagerComponent : public UActorComponent
@@ -52,7 +25,8 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	/*~ RogueliteSubsystem 이벤트 핸들러 ~*/
+	/*~ Subsystem 이벤트 핸들러 ~*/
+
 	UFUNCTION()
 	void HandleActionAcquired(URogueliteActionData* Action, int32 OldStacks, int32 NewStacks);
 
@@ -60,22 +34,36 @@ protected:
 	void HandleActionRemoved(URogueliteActionData* Action, int32 OldStacks, int32 NewStacks);
 
 	UFUNCTION()
-	void HandleActionStackChanged(URogueliteActionData* Action, int32 OldStacks, int32 NewStacks);
+	void HandleStackChanged(URogueliteActionData* Action, int32 OldStacks, int32 NewStacks);
 
 	UFUNCTION()
 	void HandleRunEnded(bool bCompleted);
+	
+	// 슬롯에 장착
+	UFUNCTION(BlueprintCallable, Category = "Equipment|Slots")
+	bool EquipActionToSlot(UPRRogueliteEquipActionData* Action, FGameplayTag SlotTag);
+
+	// 슬롯에서 해제
+	UFUNCTION(BlueprintCallable, Category = "Equipment|Slots")
+	void UnequipActionFromSlot(UPRRogueliteEquipActionData* Action, FGameplayTag SlotTag);
+
+	// 슬롯 내용 조회
+	UFUNCTION(BlueprintCallable, Category = "Equipment|Slots")
+	TArray<UPRRogueliteEquipActionData*> GetSlotContents(FGameplayTag SlotTag) const;
+
+	// 슬롯 사용 개수
+	UFUNCTION(BlueprintCallable, Category = "Equipment|Slots")
+	int32 GetSlotCount(FGameplayTag SlotTag) const;
+
+	// 슬롯 풀 여부
+	UFUNCTION(BlueprintCallable, Category = "Equipment|Slots")
+	bool IsSlotFull(FGameplayTag SlotTag, int32 MaxCount) const;
 	
 private:
 	void BindToRogueliteSubsystem();
 	void UnbindFromRogueliteSubsystem();
 	
+	
 private:
-	UPROPERTY(EditDefaultsOnly, meta=(AllowPrivateAccess=true))
-	FGameplayTagContainer EquipmentActionTags;
-	
-	FDelegateHandle ActionAcquiredDelegateHandle;
-	FDelegateHandle ActionRemovedDelegateHandle;
-	FDelegateHandle ActionStackChangedDelegateHandle;
-	
 	bool bIsBoundToSubsystem = false;
 };

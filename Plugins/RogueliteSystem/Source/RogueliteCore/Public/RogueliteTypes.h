@@ -14,6 +14,9 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FRogueliteValueChangedSignature, 
 // 비동기 액션 로드 완료 콜백 델리게이트
 DECLARE_DYNAMIC_DELEGATE_OneParam(FRogueliteActionsLoadedSignature, int32, TotalCount);
 
+// Native Delegate (C++ 전용, 필터링된 이벤트용)
+DECLARE_MULTICAST_DELEGATE_ThreeParams(FRogueliteActionFilteredSignature, URogueliteActionData* /*Action*/, int32 /*OldStacks*/, int32 /*NewStacks*/);
+
 /*~ Enums ~*/
 
 UENUM(BlueprintType)
@@ -111,28 +114,6 @@ struct ROGUELITECORE_API FRoguelitePendingAcquireInfo
 	int32 Stacks = 0;
 };
 
-
-/*~ Slot Array Wrapper ~*/
-
-USTRUCT(BlueprintType)
-struct ROGUELITECORE_API FRogueliteSlotArray
-{
-	GENERATED_BODY()
-
-	// 슬롯에 장착된 액션 목록
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<URogueliteActionData*> Actions;
-};
-
-USTRUCT(BlueprintType)
-struct ROGUELITECORE_API FRogueliteSlotSaveArray
-{
-	GENERATED_BODY()
-
-	// 슬롯에 장착된 액션 경로 목록
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FSoftObjectPath> ActionPaths;
-};
 
 USTRUCT(BlueprintType)
 struct ROGUELITECORE_API FRogueliteTagCountContainer
@@ -247,10 +228,6 @@ struct ROGUELITECORE_API FRogueliteRunState
 	UPROPERTY(BlueprintReadOnly)
 	TMap<URogueliteActionData*, FRogueliteAcquiredInfo> AcquiredActions;
 
-	// 슬롯별 장착된 액션 목록
-	UPROPERTY(BlueprintReadOnly)
-	TMap<FGameplayTag, FRogueliteSlotArray> Slots;
-
 	// 현재 런의 활성 태그
 	UPROPERTY(BlueprintReadOnly)
 	FRogueliteTagCountContainer ActiveTagStacks;
@@ -264,7 +241,6 @@ struct ROGUELITECORE_API FRogueliteRunState
 	{
 		bActive = false;
 		AcquiredActions.Empty();
-		Slots.Empty();
 		ActiveTagStacks.Reset();
 		NumericData.Empty();
 	}
@@ -390,13 +366,9 @@ struct ROGUELITECORE_API FRogueliteRunSaveData
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TMap<FSoftObjectPath, int32> AcquiredActions;
 
-	// 슬롯별 장착 액션 (소프트 경로)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TMap<FGameplayTag, FRogueliteSlotSaveArray> Slots;
-
 	// 활성 태그
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FGameplayTagContainer ActiveTags;
+	UPROPERTY(BlueprintReadOnly)
+	FRogueliteTagCountContainer ActiveTagStacks;
 
 	// 수치 데이터
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

@@ -4,7 +4,7 @@
 #include "PREquipmentManagerComponent.h"
 
 #include "RogueliteSubsystem.h"
-#include "ProjectReboot/Roguelite/PRRogueliteEquipActionData.h"
+#include "ProjectReboot/Roguelite/PREquipActionData.h"
 
 
 // Sets default values for this component's properties
@@ -23,6 +23,10 @@ void UPREquipmentManagerComponent::BeginPlay()
 
 	// ...
 	BindToRogueliteSubsystem();
+	
+	// TODO: 이미 획득한 액션 목록 처리
+	
+	
 }
 
 void UPREquipmentManagerComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -34,7 +38,7 @@ void UPREquipmentManagerComponent::EndPlay(const EEndPlayReason::Type EndPlayRea
 
 void UPREquipmentManagerComponent::HandleActionAcquired(URogueliteActionData* Action, int32 OldStacks, int32 NewStacks)
 {
-	UPRRogueliteEquipActionData* EquipActionData = Cast<UPRRogueliteEquipActionData>(Action);
+	UPREquipActionData* EquipActionData = Cast<UPREquipActionData>(Action);
 	if (!IsValid(EquipActionData))
 	{
 		return;
@@ -45,18 +49,16 @@ void UPREquipmentManagerComponent::HandleActionAcquired(URogueliteActionData* Ac
 
 void UPREquipmentManagerComponent::HandleActionRemoved(URogueliteActionData* Action, int32 OldStacks, int32 NewStacks)
 {
-	UPRRogueliteEquipActionData* EquipActionData = Cast<UPRRogueliteEquipActionData>(Action);
+	UPREquipActionData* EquipActionData = Cast<UPREquipActionData>(Action);
 	if (!IsValid(EquipActionData))
 	{
 		return;
 	}
-	
-	
 }
 
-void UPREquipmentManagerComponent::HandleStackChanged(URogueliteActionData* Action, int32 OldStacks, int32 NewStacks)
+void UPREquipmentManagerComponent::HandleActionStackChanged(URogueliteActionData* Action, int32 OldStacks, int32 NewStacks)
 {
-	UPRRogueliteEquipActionData* EquipActionData = Cast<UPRRogueliteEquipActionData>(Action);
+	UPREquipActionData* EquipActionData = Cast<UPREquipActionData>(Action);
 	if (!IsValid(EquipActionData))
 	{
 		return;
@@ -69,31 +71,6 @@ void UPREquipmentManagerComponent::HandleRunEnded(bool bCompleted)
 {
 }
 
-bool UPREquipmentManagerComponent::EquipActionToSlot(UPRRogueliteEquipActionData* Action, FGameplayTag SlotTag)
-{
-	return false;
-}
-
-void UPREquipmentManagerComponent::UnequipActionFromSlot(UPRRogueliteEquipActionData* Action,
-	FGameplayTag SlotTag)
-{
-}
-
-TArray<UPRRogueliteEquipActionData*> UPREquipmentManagerComponent::GetSlotContents(FGameplayTag SlotTag) const
-{
-	return TArray<UPRRogueliteEquipActionData*>();
-}
-
-int32 UPREquipmentManagerComponent::GetSlotCount(FGameplayTag SlotTag) const
-{
-	return 0;
-}
-
-bool UPREquipmentManagerComponent::IsSlotFull(FGameplayTag SlotTag, int32 MaxCount) const
-{
-	return false;
-}
-
 
 void UPREquipmentManagerComponent::BindToRogueliteSubsystem()
 {
@@ -103,10 +80,13 @@ void UPREquipmentManagerComponent::BindToRogueliteSubsystem()
 		return;
 	}
 
-	// TODO: Tag기반으로 특정 이벤트만 수신
-	RogueliteSubsystem->OnActionAcquired.AddDynamic(this, &ThisClass::HandleActionAcquired);
-	RogueliteSubsystem->OnActionRemoved.AddDynamic(this, &ThisClass::HandleActionRemoved);
-	RogueliteSubsystem->OnStackChanged.AddDynamic(this, &ThisClass::HandleStackChanged);
+	ActionAcquiredDelegateHandle =  RogueliteSubsystem->BindActionAcquiredByTags(EquipmentActionTags,
+		FRogueliteActionFilteredSignature::FDelegate::CreateUObject(this, &ThisClass::HandleActionAcquired));
+	ActionRemovedDelegateHandle = RogueliteSubsystem->BindActionRemovedByTags(EquipmentActionTags,
+		FRogueliteActionFilteredSignature::FDelegate::CreateUObject(this, &ThisClass::HandleActionRemoved));
+	ActionStackChangedDelegateHandle = RogueliteSubsystem->BindStackChangedByTags(EquipmentActionTags,
+		FRogueliteActionFilteredSignature::FDelegate::CreateUObject(this,&ThisClass::HandleActionStackChanged));
+	
 	RogueliteSubsystem->OnRunEnded.AddDynamic(this, &ThisClass::HandleRunEnded);
 	
 	bIsBoundToSubsystem = true;
@@ -125,8 +105,8 @@ void UPREquipmentManagerComponent::UnbindFromRogueliteSubsystem()
 		return;
 	}
 	
-	RogueliteSubsystem->OnActionAcquired.RemoveDynamic(this, &ThisClass::HandleActionAcquired);
-	RogueliteSubsystem->OnActionRemoved.RemoveDynamic(this, &ThisClass::HandleActionRemoved);
-	RogueliteSubsystem->OnStackChanged.RemoveDynamic(this, &ThisClass::HandleStackChanged);
+	RogueliteSubsystem->UnbindActionAcquiredByTags(EquipmentActionTags, ActionAcquiredDelegateHandle);
+	RogueliteSubsystem->UnbindActionRemovedByTags(EquipmentActionTags, ActionRemovedDelegateHandle);
+	RogueliteSubsystem->UnbindStackChangedByTags(EquipmentActionTags, ActionStackChangedDelegateHandle);
 	RogueliteSubsystem->OnRunEnded.RemoveDynamic(this, &ThisClass::HandleRunEnded);
 }

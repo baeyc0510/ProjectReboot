@@ -1,0 +1,92 @@
+﻿// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "PREquipmentTypes.h"
+#include "RogueliteTypes.h"
+#include "UObject/Object.h"
+#include "EquipmentInstance.generated.h"
+
+class UPREquipActionData;
+
+USTRUCT()
+struct FSpawnedVisualEntry
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TObjectPtr<USceneComponent> SpawnedComponent = nullptr;
+
+	UPROPERTY()
+	FEquipmentMeshSpawnInfo UsedSpawnInfo;
+};
+
+UCLASS(BlueprintType, Blueprintable)
+class PROJECTREBOOT_API UEquipmentInstance : public UObject
+{
+	GENERATED_BODY()
+
+public:
+	// 초기화
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	void Initialize(USceneComponent* InAttachTarget, UPREquipActionData* InPrimaryActionData);
+	
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	void Uninitialize();
+
+	// 비주얼 관리
+	// 외형 추가
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	void AddVisual(UPREquipActionData* ActionData);
+	
+	// 외형 제거
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	void RemoveVisual(UPREquipActionData* ActionData);
+	
+	// 외형 새로고침
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	void RefreshVisuals();
+	
+	// 모든 외형 파괴
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	void DestroyAllVisuals();
+
+	// 태그 조회
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	const FGameplayTagContainer& GetGrantedTags() const { return GrantedTags.GetTags(); }
+
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	bool HasTag(FGameplayTag Tag) const { return GrantedTags.HasTag(Tag); }
+
+	// Getters
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	UPREquipActionData* GetActionData() const { return PrimaryActionData; }
+
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	FGameplayTag GetSlotTag() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	USceneComponent* GetPrimaryComponent() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	bool HasVisual(UPREquipActionData* ActionData) const;
+
+protected:
+	FEquipmentMeshSpawnInfo SelectSpawnInfo(const FEquipmentVisualSettings& VisualSettings) const;
+	USceneComponent* CreateMeshComponent(const FEquipmentMeshSpawnInfo& SpawnInfo);
+	void ApplyAttachment(USceneComponent* Component, const FEquipmentAttachmentInfo& AttachInfo);
+
+protected:
+	UPROPERTY()
+	TWeakObjectPtr<USceneComponent> AttachTarget;
+
+	UPROPERTY()
+	TObjectPtr<UPREquipActionData> PrimaryActionData;
+
+	UPROPERTY()
+	FRogueliteTagCountContainer GrantedTags;
+
+	UPROPERTY()
+	TMap<TObjectPtr<UPREquipActionData>, FSpawnedVisualEntry> SpawnedVisuals;
+};

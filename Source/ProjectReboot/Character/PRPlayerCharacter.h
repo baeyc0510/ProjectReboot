@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "PRPlayerCharacter.generated.h"
 
+class UPREquipmentManagerComponent;
 class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
@@ -85,6 +86,8 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = Movement)
 	bool bIsCrouching = false;
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Equipment)
+	UPREquipmentManagerComponent* EquipmentManager;
 private:
 	float DesiredLookDirection;
 };

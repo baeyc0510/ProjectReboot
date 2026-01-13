@@ -38,37 +38,41 @@ public:
     UPREquipmentManagerComponent();
 
 protected:
+    /*~ UActorComponent Interface ~*/
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     
 public:
-    // Equipment Operations
+    /*~ UPREquipmentManagerComponent Interface ~*/
+    /*~ Equipment Operations ~*/
     UFUNCTION(BlueprintCallable, Category = "Equipment")
-    void Equip(UPREquipActionData* ActionData);
+    void Equip(UPREquipActionData* ActionData, bool bRefreshVisuals = true);
 
     UFUNCTION(BlueprintCallable, Category = "Equipment")
-    void Unequip(FGameplayTag SlotTag);
+    void Unequip(FGameplayTag SlotTag, bool bRefreshVisuals = true);
 
     UFUNCTION(BlueprintCallable, Category = "Equipment")
     void UnequipAll();
 
-    // Query
+    /*~ Queries ~*/
     UFUNCTION(BlueprintCallable, Category = "Equipment")
-    UEquipmentInstance* GetInstance(FGameplayTag SlotTag) const;
-
+    UEquipmentInstance* GetEquipmentInstance(FGameplayTag SlotTag) const;
+    
+    UFUNCTION(BlueprintCallable, Category = "Equipment")
+    TArray<UEquipmentInstance*> GetAllEquipmentInstances() const;
+    
     UFUNCTION(BlueprintCallable, Category = "Equipment")
     UPREquipActionData* GetActionData(FGameplayTag SlotTag) const;
-
-    UFUNCTION(BlueprintCallable, Category = "Equipment")
-    TArray<UEquipmentInstance*> GetAllInstances() const;
-
+    
     UFUNCTION(BlueprintCallable, Category = "Equipment")
     bool HasEquipment(FGameplayTag SlotTag) const;
 
     UFUNCTION(BlueprintCallable, Category = "Equipment")
     bool IsParentEquipmentSlot(FGameplayTag SlotTag) const;
 
-    // Events
+    void RefreshAllVisuals();
+public:
+    /*~ Delegates ~*/
     UPROPERTY(BlueprintAssignable, Category = "Equipment")
     FOnEquipmentChangedDelegate OnEquipped;
 
@@ -80,6 +84,7 @@ private:
     void BindToRogueliteSubsystem();
     void UnbindFromRogueliteSubsystem();
     void ProcessExistingActions();
+    TArray<UPREquipActionData*> GetSortedActionsByDependency(TArray<URogueliteActionData*>& InActions) const;
 
     // Subsystem Helper
     URogueliteSubsystem* GetRogueliteSubsystem() const;
@@ -97,19 +102,21 @@ private:
     UFUNCTION()
     void HandleRunEnded(bool bCompleted);
     
-    // Internal
+    // Internals
+    void HandleActionAcquired_Internal(UPREquipActionData* EquipAction, bool bRefreshVisuals = true);
+    void HandleActionRemoved_Internal(UPREquipActionData* EquipAction, bool bRefreshVisuals = true);
     UEquipmentInstance* CreateInstance(UPREquipActionData* ActionData);
     USceneComponent* GetAttachTarget() const;
-    void RefreshAllVisuals();
     void UnequipChildren(FGameplayTag ParentSlotTag);
     TArray<FGameplayTag> FindChildSlots(FGameplayTag ParentSlotTag) const;
 
+protected:
+    UPROPERTY(EditDefaultsOnly)
+    FGameplayTagContainer ActionTagsToManage;
+    
 private:
     UPROPERTY()
     TMap<FGameplayTag, FEquipmentSlotEntry> Slots;
-
-    UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess = true))
-    FGameplayTagContainer ActionTagsToReceive;
 
     FDelegateHandle ActionAcquiredHandle;
     FDelegateHandle ActionRemovedHandle;

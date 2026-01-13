@@ -13,7 +13,7 @@ void UEquipmentInstance::Initialize(USceneComponent* InAttachTarget, UPREquipAct
 
     if (PrimaryActionData)
     {
-        AddVisual(PrimaryActionData);
+        AttachPart(PrimaryActionData);
     }
 }
 
@@ -24,7 +24,7 @@ void UEquipmentInstance::Uninitialize()
     PrimaryActionData = nullptr;
 }
 
-void UEquipmentInstance::AddVisual(UPREquipActionData* InActionData)
+void UEquipmentInstance::AttachPart(UPREquipActionData* InActionData)
 {
     if (!InActionData || !AttachTarget.IsValid())
     {
@@ -50,7 +50,8 @@ void UEquipmentInstance::AddVisual(UPREquipActionData* InActionData)
     }
 
     // 컴포넌트 생성
-    USceneComponent* NewComponent = CreateMeshComponent(SpawnInfo);
+    bool bIsPrimaryMesh = InActionData == PrimaryActionData;
+    USceneComponent* NewComponent = CreateMeshComponent(SpawnInfo,bIsPrimaryMesh);
 
     FSpawnedVisualEntry Entry;
     Entry.SpawnedComponent = NewComponent;
@@ -59,7 +60,7 @@ void UEquipmentInstance::AddVisual(UPREquipActionData* InActionData)
     SpawnedVisuals.Add(InActionData, Entry);
 }
 
-void UEquipmentInstance::RemoveVisual(UPREquipActionData* InActionData)
+void UEquipmentInstance::DetachPart(UPREquipActionData* InActionData)
 {
     if (!InActionData)
     {
@@ -82,6 +83,13 @@ void UEquipmentInstance::RemoveVisual(UPREquipActionData* InActionData)
 
     // 태그 제거
     GrantedTags.RemoveTags(InActionData->TagsToGrant);
+}
+
+TArray<UPREquipActionData*> UEquipmentInstance::GetAllAttachedActions() const
+{
+    TArray<UPREquipActionData*> Result;
+    SpawnedVisuals.GetKeys(Result);
+    return Result; 
 }
 
 void UEquipmentInstance::RefreshVisuals()
@@ -128,7 +136,8 @@ void UEquipmentInstance::RefreshVisuals()
             // 새 컴포넌트 생성
             if (NewSpawnInfo.IsValid())
             {
-                Entry.SpawnedComponent = CreateMeshComponent(NewSpawnInfo);
+                bool bIsPrimaryMesh = Data == PrimaryActionData;
+                Entry.SpawnedComponent = CreateMeshComponent(NewSpawnInfo,bIsPrimaryMesh);
             }
 
             Entry.UsedSpawnInfo = NewSpawnInfo;
@@ -176,7 +185,7 @@ FEquipmentMeshSpawnInfo UEquipmentInstance::SelectSpawnInfo(const FEquipmentVisu
     return VisualSettings.DefaultMeshSpawnInfo;
 }
 
-USceneComponent* UEquipmentInstance::CreateMeshComponent(const FEquipmentMeshSpawnInfo& SpawnInfo)
+USceneComponent* UEquipmentInstance::CreateMeshComponent(const FEquipmentMeshSpawnInfo& SpawnInfo, bool bIsPrimaryMesh)
 {
     AActor* Owner = AttachTarget.IsValid() ? AttachTarget->GetOwner() : nullptr;
     if (!Owner)
@@ -212,26 +221,39 @@ USceneComponent* UEquipmentInstance::CreateMeshComponent(const FEquipmentMeshSpa
 
     if (NewComponent)
     {
-        ApplyAttachment(NewComponent, SpawnInfo.AttachmentInfo);
+        ApplyAttachment(NewComponent, SpawnInfo.AttachmentInfo, !bIsPrimaryMesh);
         NewComponent->RegisterComponent();
     }
 
     return NewComponent;
 }
 
-void UEquipmentInstance::ApplyAttachment(USceneComponent* Component, const FEquipmentAttachmentInfo& AttachInfo)
+void UEquipmentInstance::ApplyAttachment(USceneComponent* Component, const FEquipmentAttachmentInfo& AttachInfo, bool bIsChild)
 {
     if (!Component || !AttachTarget.IsValid())
     {
         return;
     }
-
+    
+    USceneComponent* Parent = nullptr;
+    if (!bIsChild)
+    {
+        Parent = AttachTarget.Get();
+    }
+    else if (IsValid(PrimaryActionData) && SpawnedVisuals.Find(PrimaryActionData))
+    {
+        Parent = SpawnedVisuals[PrimaryActionData].SpawnedComponent;
+    }
+    else
+    {
+        UE_LOG(LogTemp,Warning,TEXT("Try to attach child but there is no primary visual"));
+    }
+    
     Component->AttachToComponent(
-        AttachTarget.Get(),
-        FAttachmentTransformRules::SnapToTargetIncludingScale,
-        AttachInfo.SocketName
-    );
-
+               Parent,
+               FAttachmentTransformRules::SnapToTargetIncludingScale,
+               AttachInfo.SocketName
+           );    
     Component->SetRelativeLocation(AttachInfo.LocationOffset);
     Component->SetRelativeRotation(AttachInfo.RotationOffset);
     Component->SetRelativeScale3D(AttachInfo.Scale);

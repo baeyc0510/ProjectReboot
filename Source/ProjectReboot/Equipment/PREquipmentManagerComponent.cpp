@@ -6,6 +6,7 @@
 #include "EquipmentInstance.h"
 #include "RogueliteBlueprintLibrary.h"
 #include "RogueliteSubsystem.h"
+#include "GameFramework/Character.h"
 #include "ProjectReboot/Roguelite/PREquipActionData.h"
 
 
@@ -15,6 +16,7 @@ UPREquipmentManagerComponent::UPREquipmentManagerComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 
 	// ...
+	ActionTagsToManage.AddTag(TAG_EQUIPMENT);
 }
 
 // Called when the game starts
@@ -23,8 +25,6 @@ void UPREquipmentManagerComponent::BeginPlay()
 	Super::BeginPlay();
 
 	BindToRogueliteSubsystem();
-	
-	// TODO: 이미 획득한 액션 목록 처리
 	ProcessExistingActions();
 }
 
@@ -37,7 +37,7 @@ void UPREquipmentManagerComponent::EndPlay(const EEndPlayReason::Type EndPlayRea
 }
 
 
-void UPREquipmentManagerComponent::Equip(UPREquipActionData* ActionData)
+void UPREquipmentManagerComponent::Equip(UPREquipActionData* ActionData, bool bRefreshVisuals)
 {
 	if (!ActionData)
 	{
@@ -51,25 +51,30 @@ void UPREquipmentManagerComponent::Equip(UPREquipActionData* ActionData)
 		return;
 	}
 
+	// 자식 Equipment
 	if (ActionData->bAttachToParentEquipment)
 	{
-		UEquipmentInstance* ParentInstance = GetInstance(ActionData->ParentEquipmentSlot);
+		UEquipmentInstance* ParentInstance = GetEquipmentInstance(ActionData->ParentEquipmentSlot);
 		if (!ParentInstance)
 		{
+			UE_LOG(LogTemp,Warning,TEXT("ActionData %s 가 부모 Equipment를 필요로 하지만 아직 부모 EquipmentInstance가 없음."), *ActionData->GetName());
 			return;
 		}
 
-		ParentInstance->AddVisual(ActionData);
-
+		ParentInstance->AttachPart(ActionData);
+		if (bRefreshVisuals)
+		{
+			ParentInstance->RefreshVisuals();	
+		}
+		
 		FEquipmentSlotEntry Entry;
 		Entry.Instance = ParentInstance;
 		Entry.ActionData = ActionData;
+		
 		Slots.Add(SlotTag, Entry);
-
-		RefreshAllVisuals();
-
 		OnEquipped.Broadcast(SlotTag, ParentInstance, ActionData);
 	}
+	// 부모 Equipment
 	else
 	{
 		UEquipmentInstance* Instance = CreateInstance(ActionData);
@@ -78,13 +83,13 @@ void UPREquipmentManagerComponent::Equip(UPREquipActionData* ActionData)
 		FEquipmentSlotEntry Entry;
 		Entry.Instance = Instance;
 		Entry.ActionData = ActionData;
+		
 		Slots.Add(SlotTag, Entry);
-
 		OnEquipped.Broadcast(SlotTag, Instance, ActionData);
 	}
 }
 
-void UPREquipmentManagerComponent::Unequip(FGameplayTag SlotTag)
+void UPREquipmentManagerComponent::Unequip(FGameplayTag SlotTag, bool bRefreshVisuals)
 {
 	FEquipmentSlotEntry* Entry = Slots.Find(SlotTag);
 	if (!Entry)
@@ -103,8 +108,11 @@ void UPREquipmentManagerComponent::Unequip(FGameplayTag SlotTag)
 	}
 	else
 	{
-		Instance->RemoveVisual(ActionData);
-		RefreshAllVisuals();
+		Instance->DetachPart(ActionData);
+		if (bRefreshVisuals)
+		{
+			Instance->RefreshVisuals();	
+		}
 	}
 
 	Slots.Remove(SlotTag);
@@ -135,10 +143,25 @@ void UPREquipmentManagerComponent::UnequipAll()
 	}
 }
 
-UEquipmentInstance* UPREquipmentManagerComponent::GetInstance(FGameplayTag SlotTag) const
+UEquipmentInstance* UPREquipmentManagerComponent::GetEquipmentInstance(FGameplayTag SlotTag) const
 {
 	const FEquipmentSlotEntry* Entry = Slots.Find(SlotTag);
 	return Entry ? Entry->Instance : nullptr;
+}
+
+TArray<UEquipmentInstance*> UPREquipmentManagerComponent::GetAllEquipmentInstances() const
+{
+	TArray<UEquipmentInstance*> Instances;
+
+	for (const auto& Pair : Slots)
+	{
+		if (Pair.Value.Instance)
+		{
+			Instances.AddUnique(Pair.Value.Instance);
+		}
+	}
+	
+	return Instances;
 }
 
 UPREquipActionData* UPREquipmentManagerComponent::GetActionData(FGameplayTag SlotTag) const
@@ -147,20 +170,6 @@ UPREquipActionData* UPREquipmentManagerComponent::GetActionData(FGameplayTag Slo
 	return Entry ? Entry->ActionData : nullptr;
 }
 
-TArray<UEquipmentInstance*> UPREquipmentManagerComponent::GetAllInstances() const
-{
-	TArray<UEquipmentInstance*> Instances;
-
-	for (const auto& Pair : Slots)
-	{
-		if (Pair.Value.Instance && !Instances.Contains(Pair.Value.Instance))
-		{
-			Instances.Add(Pair.Value.Instance);
-		}
-	}
-
-	return Instances;
-}
 
 bool UPREquipmentManagerComponent::HasEquipment(FGameplayTag SlotTag) const
 {
@@ -171,6 +180,18 @@ bool UPREquipmentManagerComponent::IsParentEquipmentSlot(FGameplayTag SlotTag) c
 {
 	const FEquipmentSlotEntry* Entry = Slots.Find(SlotTag);
 	return Entry && Entry->ActionData && !Entry->ActionData->bAttachToParentEquipment;
+}
+
+void UPREquipmentManagerComponent::RefreshAllVisuals()
+{
+	TArray<UEquipmentInstance*> AllInstances = GetAllEquipmentInstances();
+	for (UEquipmentInstance* Instance : AllInstances)
+	{
+		if (IsValid(Instance))
+		{
+			Instance->RefreshVisuals();
+		}
+	}
 }
 
 UEquipmentInstance* UPREquipmentManagerComponent::CreateInstance(UPREquipActionData* ActionData)
@@ -186,11 +207,25 @@ UEquipmentInstance* UPREquipmentManagerComponent::CreateInstance(UPREquipActionD
 
 USceneComponent* UPREquipmentManagerComponent::GetAttachTarget() const
 {
+	// Owner 액터가 캐릭터인 경우
+	if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
+	{
+		if (USkeletalMeshComponent* Mesh = Character->GetMesh())
+		{
+			return Mesh;
+		}
+	}
+	
+	// Fallback: SkeletalMeshComponent를 직접 찾음
+	if (GetOwner())
+	{
+		if (USkeletalMeshComponent* Mesh = GetOwner()->FindComponentByClass<USkeletalMeshComponent>())
+		{
+			return Mesh;
+		}
+	}
+	
 	return nullptr;
-}
-
-void UPREquipmentManagerComponent::RefreshAllVisuals()
-{
 }
 
 void UPREquipmentManagerComponent::UnequipChildren(FGameplayTag ParentSlotTag)
@@ -229,11 +264,11 @@ void UPREquipmentManagerComponent::BindToRogueliteSubsystem()
 		return;
 	}
 
-	ActionAcquiredHandle =  RogueliteSubsystem->BindActionAcquiredByTags(ActionTagsToReceive,
+	ActionAcquiredHandle =  RogueliteSubsystem->BindActionAcquiredByTags(ActionTagsToManage,
 		FRogueliteActionFilteredSignature::FDelegate::CreateUObject(this, &ThisClass::HandleActionAcquired));
-	ActionRemovedHandle = RogueliteSubsystem->BindActionRemovedByTags(ActionTagsToReceive,
+	ActionRemovedHandle = RogueliteSubsystem->BindActionRemovedByTags(ActionTagsToManage,
 		FRogueliteActionFilteredSignature::FDelegate::CreateUObject(this, &ThisClass::HandleActionRemoved));
-	ActionStackChangedHandle = RogueliteSubsystem->BindStackChangedByTags(ActionTagsToReceive,
+	ActionStackChangedHandle = RogueliteSubsystem->BindStackChangedByTags(ActionTagsToManage,
 		FRogueliteActionFilteredSignature::FDelegate::CreateUObject(this,&ThisClass::HandleActionStackChanged));
 	
 	RogueliteSubsystem->OnRunEnded.AddDynamic(this, &ThisClass::HandleRunEnded);
@@ -254,22 +289,59 @@ void UPREquipmentManagerComponent::UnbindFromRogueliteSubsystem()
 		return;
 	}
 	
-	RogueliteSubsystem->UnbindActionAcquiredByTags(ActionTagsToReceive, ActionAcquiredHandle);
-	RogueliteSubsystem->UnbindActionRemovedByTags(ActionTagsToReceive, ActionRemovedHandle);
-	RogueliteSubsystem->UnbindStackChangedByTags(ActionTagsToReceive, ActionStackChangedHandle);
+	RogueliteSubsystem->UnbindActionAcquiredByTags(ActionTagsToManage, ActionAcquiredHandle);
+	RogueliteSubsystem->UnbindActionRemovedByTags(ActionTagsToManage, ActionRemovedHandle);
+	RogueliteSubsystem->UnbindStackChangedByTags(ActionTagsToManage, ActionStackChangedHandle);
 	RogueliteSubsystem->OnRunEnded.RemoveDynamic(this, &ThisClass::HandleRunEnded);
 }
 
 void UPREquipmentManagerComponent::ProcessExistingActions()
 {
 	TArray<URogueliteActionData*> AllActions = URogueliteBlueprintLibrary::GetAllAcquired(this);
-	for (URogueliteActionData* Action : AllActions)
+	TArray<UPREquipActionData*> SortedActions = GetSortedActionsByDependency(AllActions);
+	
+	for (UPREquipActionData* EquipAction : SortedActions)
 	{
-		if (UPREquipActionData* EquipAction = Cast<UPREquipActionData>(Action))
+		// RefreshVisuals는 한번에 처리
+		HandleActionAcquired_Internal(EquipAction, false);
+	}
+	
+	RefreshAllVisuals();
+}
+
+TArray<UPREquipActionData*> UPREquipmentManagerComponent::GetSortedActionsByDependency(TArray<URogueliteActionData*>& InActions) const
+{
+	TArray<UPREquipActionData*> Result;
+	
+	for (URogueliteActionData* RawAction : InActions)
+	{
+		UPREquipActionData* EquipAction = Cast<UPREquipActionData>(RawAction);
+		if (!IsValid(EquipAction))
 		{
-			HandleActionAcquired(Action,0,1);
+			continue;
+		}
+		
+		if (ActionTagsToManage.IsEmpty() || EquipAction->HasAnyTags(ActionTagsToManage))
+		{
+			Result.Add(EquipAction);
 		}
 	}
+	
+	// 부모 Equipment가 앞으로 오도록 정렬
+	Result.Sort([](const UPREquipActionData& A, const UPREquipActionData& B)
+	{
+		if (!A.bAttachToParentEquipment && B.bAttachToParentEquipment)
+		{
+			return true;
+		}
+		if (A.bAttachToParentEquipment && !B.bAttachToParentEquipment)
+		{
+			return false;
+		}
+		return false;
+	});
+	
+	return Result;
 }
 
 URogueliteSubsystem* UPREquipmentManagerComponent::GetRogueliteSubsystem() const
@@ -285,7 +357,36 @@ void UPREquipmentManagerComponent::HandleActionAcquired(URogueliteActionData* Ac
 	{
 		return;
 	}
+	HandleActionRemoved_Internal(EquipAction,true);
+}
+
+void UPREquipmentManagerComponent::HandleActionRemoved(URogueliteActionData* Action, int32 OldStacks, int32 NewStacks)
+{
+	UPREquipActionData* EquipAction = Cast<UPREquipActionData>(Action);
+	if (!IsValid(EquipAction))
+	{
+		return;
+	}
+	HandleActionRemoved_Internal(EquipAction,true);
+}
+
+void UPREquipmentManagerComponent::HandleActionStackChanged(URogueliteActionData* Action, int32 OldStacks, int32 NewStacks)
+{
+	UPREquipActionData* EquipAction = Cast<UPREquipActionData>(Action);
+	if (!IsValid(EquipAction))
+	{
+		return;
+	}
 	
+	// TODO: 스택 지원 EquipAction?
+}
+
+void UPREquipmentManagerComponent::HandleRunEnded(bool bCompleted)
+{
+}
+
+void UPREquipmentManagerComponent::HandleActionAcquired_Internal(UPREquipActionData* EquipAction, bool bRefreshVisuals)
+{
 	FGameplayTag SlotToEquip = EquipAction->EquipmentSlot;
 	
 	// 이미 슬롯이 사용중?
@@ -296,32 +397,11 @@ void UPREquipmentManagerComponent::HandleActionAcquired(URogueliteActionData* Ac
 		URogueliteBlueprintLibrary::RemoveAction(this, EquippedAction);
 	}
 	
-	Equip(EquipAction);
+	Equip(EquipAction, bRefreshVisuals);
 }
 
-void UPREquipmentManagerComponent::HandleActionRemoved(URogueliteActionData* Action, int32 OldStacks, int32 NewStacks)
+void UPREquipmentManagerComponent::HandleActionRemoved_Internal(UPREquipActionData* EquipAction, bool bRefreshVisuals)
 {
-	UPREquipActionData* EquipActionData = Cast<UPREquipActionData>(Action);
-	if (!IsValid(EquipActionData))
-	{
-		return;
-	}
-	
-	FGameplayTag SlotToUnequip = EquipActionData->EquipmentSlot;
-	Unequip(SlotToUnequip);
-}
-
-void UPREquipmentManagerComponent::HandleActionStackChanged(URogueliteActionData* Action, int32 OldStacks, int32 NewStacks)
-{
-	UPREquipActionData* EquipActionData = Cast<UPREquipActionData>(Action);
-	if (!IsValid(EquipActionData))
-	{
-		return;
-	}
-	
-	// TODO: 스택 지원 EquipAction?
-}
-
-void UPREquipmentManagerComponent::HandleRunEnded(bool bCompleted)
-{
+	FGameplayTag SlotToUnequip = EquipAction->EquipmentSlot;
+	Unequip(SlotToUnequip, bRefreshVisuals);
 }

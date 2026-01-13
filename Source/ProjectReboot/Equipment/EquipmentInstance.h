@@ -38,11 +38,14 @@ public:
 	// 비주얼 관리
 	// 외형 추가
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
-	void AddVisual(UPREquipActionData* ActionData);
+	void AttachPart(UPREquipActionData* ActionData);
 	
 	// 외형 제거
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
-	void RemoveVisual(UPREquipActionData* ActionData);
+	void DetachPart(UPREquipActionData* ActionData);
+	
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	TArray<UPREquipActionData*> GetAllAttachedActions() const;
 	
 	// 외형 새로고침
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
@@ -74,8 +77,8 @@ public:
 
 protected:
 	FEquipmentMeshSpawnInfo SelectSpawnInfo(const FEquipmentVisualSettings& VisualSettings) const;
-	USceneComponent* CreateMeshComponent(const FEquipmentMeshSpawnInfo& SpawnInfo);
-	void ApplyAttachment(USceneComponent* Component, const FEquipmentAttachmentInfo& AttachInfo);
+	USceneComponent* CreateMeshComponent(const FEquipmentMeshSpawnInfo& SpawnInfo, bool bIsPrimaryMesh);
+	void ApplyAttachment(USceneComponent* Component, const FEquipmentAttachmentInfo& AttachInfo, bool bIsChild);
 
 protected:
 	UPROPERTY()
@@ -88,5 +91,5 @@ protected:
 	FRogueliteTagCountContainer GrantedTags;
 
 	UPROPERTY()
-	TMap<TObjectPtr<UPREquipActionData>, FSpawnedVisualEntry> SpawnedVisuals;
+	TMap<UPREquipActionData*, FSpawnedVisualEntry> SpawnedVisuals;
 };

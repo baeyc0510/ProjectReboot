@@ -354,7 +354,11 @@ int32 URogueliteSubsystem::GetActionStacks(URogueliteActionData* Action) const
 TArray<URogueliteActionData*> URogueliteSubsystem::GetAllAcquired() const
 {
 	TArray<URogueliteActionData*> Result;
-	RunState.AcquiredActions.GetKeys(Result);
+	Result.Reserve(RunState.AcquiredActions.Num());
+	for (auto& KVP : RunState.AcquiredActions)
+	{
+		Result.Add(KVP.Key);
+	}
 	return Result;
 }
 

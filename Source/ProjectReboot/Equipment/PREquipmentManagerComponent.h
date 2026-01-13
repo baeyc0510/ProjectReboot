@@ -8,74 +8,119 @@
 #include "PREquipmentManagerComponent.generated.h"
 
 
+class URogueliteSubsystem;
 class UEquipmentInstance;
 class URogueliteActionData;
 class UPREquipActionData;
 
 USTRUCT()
-struct FEquipmentSlotItem
+struct FEquipmentSlotEntry
 {
-	GENERATED_BODY()
-	
-	UPROPERTY()
-	TObjectPtr<UEquipmentInstance> EquipmentInstance = nullptr;
-	
-	UPROPERTY()
-	TObjectPtr<UPREquipActionData> EquipActionData = nullptr;
+    GENERATED_BODY()
+
+    UPROPERTY()
+    TObjectPtr<UEquipmentInstance> Instance = nullptr;
+
+    UPROPERTY()
+    TObjectPtr<UPREquipActionData> ActionData = nullptr;
+
+    bool IsValid() const { return ActionData != nullptr; }
 };
 
-USTRUCT()
-struct FEquipmentSlots
-{
-	GENERATED_BODY()
-	
-	UPROPERTY()
-	TMap<FGameplayTag, FEquipmentSlotItem> SlotItems;
-	
-	const FEquipmentSlotItem* FindSlotItem(FGameplayTag SlotTag) const
-	{
-		return SlotItems.Find(SlotTag);
-	}
-};
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnEquipmentChangedDelegate, FGameplayTag, SlotTag, UEquipmentInstance*, Instance, UPREquipActionData*, ActionData);
 
-UCLASS(meta=(BlueprintSpawnableComponent))
+UCLASS(meta = (BlueprintSpawnableComponent))
 class PROJECTREBOOT_API UPREquipmentManagerComponent : public UActorComponent
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	// Sets default values for this component's properties
-	UPREquipmentManagerComponent();
+    UPREquipmentManagerComponent();
 
 protected:
-	// Called when the game starts
-	virtual void BeginPlay() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+    /*~ UActorComponent Interface ~*/
+    virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+    
+public:
+    /*~ UPREquipmentManagerComponent Interface ~*/
+    /*~ Equipment Operations ~*/
+    UFUNCTION(BlueprintCallable, Category = "Equipment")
+    void Equip(UPREquipActionData* ActionData, bool bRefreshVisuals = true);
 
-	/*~ RogueliteSubsystem 이벤트 핸들러 ~*/
-	UFUNCTION()
-	void HandleActionAcquired(URogueliteActionData* Action, int32 OldStacks, int32 NewStacks);
+    UFUNCTION(BlueprintCallable, Category = "Equipment")
+    void Unequip(FGameplayTag SlotTag, bool bRefreshVisuals = true);
 
-	UFUNCTION()
-	void HandleActionRemoved(URogueliteActionData* Action, int32 OldStacks, int32 NewStacks);
+    UFUNCTION(BlueprintCallable, Category = "Equipment")
+    void UnequipAll();
 
-	UFUNCTION()
-	void HandleActionStackChanged(URogueliteActionData* Action, int32 OldStacks, int32 NewStacks);
+    /*~ Queries ~*/
+    UFUNCTION(BlueprintCallable, Category = "Equipment")
+    UEquipmentInstance* GetEquipmentInstance(FGameplayTag SlotTag) const;
+    
+    UFUNCTION(BlueprintCallable, Category = "Equipment")
+    TArray<UEquipmentInstance*> GetAllEquipmentInstances() const;
+    
+    UFUNCTION(BlueprintCallable, Category = "Equipment")
+    UPREquipActionData* GetActionData(FGameplayTag SlotTag) const;
+    
+    UFUNCTION(BlueprintCallable, Category = "Equipment")
+    bool HasEquipment(FGameplayTag SlotTag) const;
 
-	UFUNCTION()
-	void HandleRunEnded(bool bCompleted);
-	
+    UFUNCTION(BlueprintCallable, Category = "Equipment")
+    bool IsParentEquipmentSlot(FGameplayTag SlotTag) const;
+
+    void RefreshAllVisuals();
+public:
+    /*~ Delegates ~*/
+    UPROPERTY(BlueprintAssignable, Category = "Equipment")
+    FOnEquipmentChangedDelegate OnEquipped;
+
+    UPROPERTY(BlueprintAssignable, Category = "Equipment")
+    FOnEquipmentChangedDelegate OnUnequipped;
+
 private:
-	void BindToRogueliteSubsystem();
-	void UnbindFromRogueliteSubsystem();
-	
+    // Subsystem Binding
+    void BindToRogueliteSubsystem();
+    void UnbindFromRogueliteSubsystem();
+    void ProcessExistingActions();
+    TArray<UPREquipActionData*> GetSortedActionsByDependency(TArray<URogueliteActionData*>& InActions) const;
+
+    // Subsystem Helper
+    URogueliteSubsystem* GetRogueliteSubsystem() const;
+    
+    // Event Handlers
+    UFUNCTION()
+    void HandleActionAcquired(URogueliteActionData* ActionData, int32 OldStacks, int32 NewStacks);
+
+    UFUNCTION()
+    void HandleActionRemoved(URogueliteActionData* ActionData, int32 OldStacks, int32 NewStacks);
+
+    UFUNCTION()
+    void HandleActionStackChanged(URogueliteActionData* ActionData, int32 OldStacks, int32 NewStacks);
+
+    UFUNCTION()
+    void HandleRunEnded(bool bCompleted);
+    
+    // Internals
+    void HandleActionAcquired_Internal(UPREquipActionData* EquipAction, bool bRefreshVisuals = true);
+    void HandleActionRemoved_Internal(UPREquipActionData* EquipAction, bool bRefreshVisuals = true);
+    UEquipmentInstance* CreateInstance(UPREquipActionData* ActionData);
+    USceneComponent* GetAttachTarget() const;
+    void UnequipChildren(FGameplayTag ParentSlotTag);
+    TArray<FGameplayTag> FindChildSlots(FGameplayTag ParentSlotTag) const;
+
+protected:
+    UPROPERTY(EditDefaultsOnly)
+    FGameplayTagContainer ActionTagsToManage;
+    
 private:
-	UPROPERTY(EditDefaultsOnly, meta=(AllowPrivateAccess=true))
-	FGameplayTagContainer EquipmentActionTags;
-	
-	FDelegateHandle ActionAcquiredDelegateHandle;
-	FDelegateHandle ActionRemovedDelegateHandle;
-	FDelegateHandle ActionStackChangedDelegateHandle;
-	
-	bool bIsBoundToSubsystem = false;
+    UPROPERTY()
+    TMap<FGameplayTag, FEquipmentSlotEntry> Slots;
+
+    FDelegateHandle ActionAcquiredHandle;
+    FDelegateHandle ActionRemovedHandle;
+    FDelegateHandle ActionStackChangedHandle;
+
+    bool bIsBoundToSubsystem = false;
 };

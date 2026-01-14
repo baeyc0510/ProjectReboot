@@ -20,6 +20,9 @@ public class ProjectReboot : ModuleRules
 			"AnimGraphRuntime",
 			"RogueliteCore",
 			"RogueliteGAS",
+			"UMG",
+			"Slate",
+			"SlateCore",
 		});
 
 		// Uncomment if you are using Slate UI

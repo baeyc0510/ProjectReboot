@@ -146,10 +146,10 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActorPreview|Scene")
     FVector PreviewWorldLocation = FVector(10000.f, 10000.f, 10000.f);
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActorPreview|Advanced", AdvancedDisplay)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActorPreview|Texture")
     TObjectPtr<UTextureRenderTarget2D> RenderTargetOverride;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActorPreview|Advanced", AdvancedDisplay)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActorPreview|Texture")
     TObjectPtr<UMaterialInterface> MaterialOverride;
 
 private:

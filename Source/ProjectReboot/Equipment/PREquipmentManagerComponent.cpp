@@ -99,6 +99,22 @@ void UPREquipmentManagerComponent::Equip(UPREquipActionData* ActionData, bool bR
 	}
 }
 
+void UPREquipmentManagerComponent::UnequipByAction(UPREquipActionData* ActionData, bool bRefreshVisuals)
+{
+	if (!IsValid(ActionData))
+	{
+		return;
+	}
+	
+	if (ActionData != GetActionData(ActionData->EquipmentSlot))
+	{
+		return;
+	}
+	
+	Unequip(ActionData->EquipmentSlot);
+}
+
+
 void UPREquipmentManagerComponent::Unequip(FGameplayTag SlotTag, bool bRefreshVisuals)
 {
 	FEquipmentSlotEntry* Entry = Slots.Find(SlotTag);

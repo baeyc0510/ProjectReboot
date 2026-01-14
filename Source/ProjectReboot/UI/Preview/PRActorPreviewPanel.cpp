@@ -38,19 +38,19 @@ void UPRActorPreviewPanel::NativeConstruct()
 			FSlateBrush Brush;
 			if (MaterialOverride)
 			{
-				Brush.SetResourceObject(MaterialOverride);	
+				Brush.SetResourceObject(MaterialOverride);
 			}
 			else if (RenderTargetOverride)
 			{
 				Brush.SetResourceObject(RenderTargetOverride);
 			}
-		
+
 			Brush.ImageSize = FVector2D(RenderSettings.Resolution.X, RenderSettings.Resolution.Y);
-			Img_Preview->SetBrush(Brush);	
+			Img_Preview->SetBrush(Brush);
 		}
 		return;
-	} 
-	
+	}
+
 	CurrentRotation = InitialRotation;
 	CurrentCameraDistance = CameraSettings.Distance;
 	InitializePreviewScene();
@@ -129,7 +129,8 @@ void UPRActorPreviewPanel::InitializePreviewScene()
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	SceneCaptureActor = World->SpawnActor<AActor>(AActor::StaticClass(), PreviewWorldLocation, FRotator::ZeroRotator,SpawnParams);
+	SceneCaptureActor = World->SpawnActor<AActor>(AActor::StaticClass(), PreviewWorldLocation, FRotator::ZeroRotator,
+	                                              SpawnParams);
 	if (!SceneCaptureActor)
 	{
 		return;
@@ -212,7 +213,10 @@ void UPRActorPreviewPanel::ConfigureSceneCapture(USceneCaptureComponent2D* Captu
 	}
 
 	CaptureComponent->PrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_UseShowOnlyList;
-	CaptureComponent->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
+	// MaterialOverride 사용 시 알파 채널 캡처 (투명 배경 지원)
+	CaptureComponent->CaptureSource = MaterialOverride
+		? ESceneCaptureSource::SCS_SceneColorHDR
+		: ESceneCaptureSource::SCS_FinalColorLDR;
 	CaptureComponent->FOVAngle = CameraSettings.FOV;
 	CaptureComponent->bCaptureEveryFrame = true;
 	CaptureComponent->bCaptureOnMovement = false;
@@ -258,9 +262,24 @@ void UPRActorPreviewPanel::UpdateCameraTransform()
 		return;
 	}
 
-	const FVector Location = CameraSettings.Angle.Vector() * -CurrentCameraDistance + CameraSettings.Offset;
-	SceneCaptureComponent->SetRelativeLocation(Location);
-	SceneCaptureComponent->SetRelativeRotation(CameraSettings.Angle);
+	// 카메라 위치 계산: 액터 정면 앞에서 액터를 마주봄
+	// 기본 오프셋: +X 방향(정면 앞)으로 Distance만큼
+	FVector CameraOffset = FVector(CurrentCameraDistance, 0.f, 0.f);
+
+	// CameraSettings.Angle 적용 (Pitch: 위아래, Yaw: 좌우)
+	CameraOffset = CameraSettings.Angle.RotateVector(CameraOffset);
+
+	// InitialRotation으로 전체 기준점 회전
+	CameraOffset = InitialRotation.RotateVector(CameraOffset);
+
+	// 최종 위치 = 오프셋 + 추가 Offset
+	const FVector FinalLocation = CameraOffset + CameraSettings.Offset;
+
+	// 원점(액터 위치)을 바라보는 회전 계산
+	const FRotator LookAtRotation = (-FinalLocation).Rotation();
+
+	SceneCaptureComponent->SetRelativeLocation(FinalLocation);
+	SceneCaptureComponent->SetRelativeRotation(LookAtRotation);
 }
 
 void UPRActorPreviewPanel::ApplyActorRotation()
@@ -278,7 +297,7 @@ float UPRActorPreviewPanel::ProcessAxisInput(const FPRAxisSettings& Settings, co
 	{
 		return CurrentValue;
 	}
-	
+
 	float Input = (Settings.DragInput == EPRDragInput::DragX) ? Delta.X : Delta.Y;
 	if (Settings.bInvert) Input *= -1.f;
 
@@ -372,15 +391,9 @@ void UPRActorPreviewPanel::ApplyInstanceSettings(AActor* Actor)
 		Actor->SetActorLocation(PreviewWorldLocation);
 	}
 
-	if (InstanceSettings.bPreserveRotation)
-	{
-		CurrentRotation = Actor->GetActorRotation();
-	}
-	else
-	{
-		Actor->SetActorRotation(InitialRotation);
-		CurrentRotation = InitialRotation;
-	}
+	// 항상 InitialRotation 적용 (카메라가 Forward 기준 정면을 바라보므로)
+	Actor->SetActorRotation(InitialRotation);
+	CurrentRotation = InitialRotation;
 
 	if (InstanceSettings.bDisableCollision)
 	{
@@ -405,10 +418,8 @@ void UPRActorPreviewPanel::RestoreInstanceSettings(AActor* Actor)
 		Actor->SetActorLocation(RestoreData.OriginalLocation);
 	}
 
-	if (!InstanceSettings.bPreserveRotation)
-	{
-		Actor->SetActorRotation(RestoreData.OriginalRotation);
-	}
+	// 원래 회전값 복원
+	Actor->SetActorRotation(RestoreData.OriginalRotation);
 
 	if (InstanceSettings.bDisableCollision)
 	{
@@ -490,7 +501,10 @@ void UPRActorPreviewPanel::SetPreviewActorByClass(TSubclassOf<AActor> ActorClass
 	ClearPreview();
 
 	UWorld* World = GetWorld();
-	if (!World || !SceneCaptureComponent) { return; }
+	if (!World || !SceneCaptureComponent)
+	{
+		return;
+	}
 
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -605,6 +619,7 @@ void UPRActorPreviewPanel::SetInstanceSettings(const FPRInstanceSettings& Settin
 void UPRActorPreviewPanel::OnPreviewActorSet_Implementation(AActor* Actor)
 {
 }
+
 void UPRActorPreviewPanel::OnPreviewActorCleared_Implementation(AActor* Actor)
 {
 }

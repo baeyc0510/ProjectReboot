@@ -47,6 +47,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	TArray<UPREquipActionData*> GetAllAttachedActions() const;
 	
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	TArray<UPREquipActionData*> GetChildPartActions() const;
+	
 	// 외형 새로고침
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	void RefreshVisuals();

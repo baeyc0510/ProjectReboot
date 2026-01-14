@@ -49,6 +49,9 @@ public:
     void Equip(UPREquipActionData* ActionData, bool bRefreshVisuals = true);
 
     UFUNCTION(BlueprintCallable, Category = "Equipment")
+    void UnequipByAction(UPREquipActionData* ActionData, bool bRefreshVisuals = true);
+    
+    UFUNCTION(BlueprintCallable, Category = "Equipment")
     void Unequip(FGameplayTag SlotTag, bool bRefreshVisuals = true);
 
     UFUNCTION(BlueprintCallable, Category = "Equipment")

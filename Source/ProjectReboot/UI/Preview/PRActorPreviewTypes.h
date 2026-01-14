@@ -68,7 +68,7 @@ struct FPRRenderSettings
     TEnumAsByte<ETextureRenderTargetFormat> Format = RTF_RGBA8;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    FLinearColor ClearColor = FLinearColor(0.05f, 0.05f, 0.05f, 1.f);
+    FLinearColor ClearColor =  FLinearColor(0.05f, 0.05f, 0.05f, 1.f);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     bool bUseSRGB = true;
@@ -153,10 +153,6 @@ struct FPRInstanceSettings
     // 프리뷰 위치로 이동할지 여부
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     bool bRelocateToPreviewLocation = true;
-
-    // 기존 회전값 유지할지 여부
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    bool bPreserveRotation = false;
 
     // 충돌 비활성화 여부
     UPROPERTY(EditAnywhere, BlueprintReadWrite)

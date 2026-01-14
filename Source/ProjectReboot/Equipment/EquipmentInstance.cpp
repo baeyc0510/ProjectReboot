@@ -92,6 +92,13 @@ TArray<UPREquipActionData*> UEquipmentInstance::GetAllAttachedActions() const
     return Result; 
 }
 
+TArray<UPREquipActionData*> UEquipmentInstance::GetChildPartActions() const
+{
+    TArray<UPREquipActionData*> Result = GetAllAttachedActions();
+    Result.Remove(PrimaryActionData);
+    return Result;
+}
+
 void UEquipmentInstance::RefreshVisuals()
 {
     if (!AttachTarget.IsValid())

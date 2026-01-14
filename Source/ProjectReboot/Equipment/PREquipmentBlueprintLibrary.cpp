@@ -3,6 +3,8 @@
 
 #include "PREquipmentBlueprintLibrary.h"
 
+#include <ProjectReboot/Roguelite/PREquipActionData.h>
+
 #include "EquipmentInstance.h"
 #include "PREquipmentManagerComponent.h"
 
@@ -20,6 +22,8 @@ void UPREquipmentBlueprintLibrary::SyncEquipmentManager(AActor* From, AActor* To
 	{
 		return;
 	}
+	
+	ToComp->UnequipAll();
 	
 	auto AllEquipments = FromComp->GetAllEquipmentInstances();
 	for (auto Equipment : AllEquipments)
@@ -48,4 +52,89 @@ void UPREquipmentBlueprintLibrary::SyncEquipmentManager(AActor* From, AActor* To
 	}
 	
 	ToComp->RefreshAllVisuals();
+}
+
+bool UPREquipmentBlueprintLibrary::TryEquipAction(AActor* Target, UPREquipActionData* ActionData)
+{
+	if (!IsValid(Target) || !IsValid(ActionData))
+	{
+		return false;
+	}
+	
+	UPREquipmentManagerComponent* EquipmentManager = Target->GetComponentByClass<UPREquipmentManagerComponent>();
+	if (!EquipmentManager)
+	{
+		return false;
+	}
+	
+	if (EquipmentManager->HasEquipment(ActionData->EquipmentSlot))
+	{
+		return false;
+	}
+	
+	EquipmentManager->Equip(ActionData);
+	
+	return true;
+}
+
+void UPREquipmentBlueprintLibrary::OverrideEquipAction(AActor* Target, UPREquipActionData* ActionData)
+{
+	if (!IsValid(Target) || !IsValid(ActionData))
+	{
+		return;
+	}
+	
+	UPREquipmentManagerComponent* EquipmentManager = Target->GetComponentByClass<UPREquipmentManagerComponent>();
+	if (!EquipmentManager)
+	{
+		return;
+	}
+	
+	TArray<UPREquipActionData*> PartActions;
+	PartActions.Add(ActionData);
+	if (EquipmentManager->HasEquipment(ActionData->EquipmentSlot))
+	{
+		if (UEquipmentInstance* EquipmentInstance = EquipmentManager->GetEquipmentInstance(ActionData->EquipmentSlot))
+		{
+			PartActions.Append(EquipmentInstance->GetChildPartActions());
+		}
+		EquipmentManager->Unequip(ActionData->EquipmentSlot);
+	}
+	
+	for (UPREquipActionData* PartAction : PartActions)
+	{
+		EquipmentManager->Equip(PartAction);
+	}
+}
+
+void UPREquipmentBlueprintLibrary::UnequipAction(AActor* Target, UPREquipActionData* ActionData)
+{
+	if (!IsValid(Target) || !IsValid(ActionData))
+	{
+		return;
+	}
+	
+	UPREquipmentManagerComponent* EquipmentManager = Target->GetComponentByClass<UPREquipmentManagerComponent>();
+	if (!EquipmentManager)
+	{
+		return;
+	}
+	
+	EquipmentManager->UnequipByAction(ActionData);
+}
+
+void UPREquipmentBlueprintLibrary::UnequipSlot(AActor* Target, FGameplayTag& SlotTag)
+{
+	if (!IsValid(Target) || !SlotTag.IsValid())
+	{
+		return;
+	}
+	
+	UPREquipmentManagerComponent* EquipmentManager = Target->GetComponentByClass<UPREquipmentManagerComponent>();
+	if (!EquipmentManager)
+	{
+		return;
+	}
+	
+	EquipmentManager->Unequip(SlotTag);
 }

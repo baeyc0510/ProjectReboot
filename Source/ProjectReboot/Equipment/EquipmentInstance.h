@@ -64,7 +64,7 @@ public:
 
 	// Getters
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
-	UPREquipActionData* GetActionData() const { return PrimaryActionData; }
+	UPREquipActionData* GetPrimaryActionData() const { return PrimaryActionData; }
 
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	FGameplayTag GetSlotTag() const;

@@ -70,6 +70,7 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Equipment")
     bool IsParentEquipmentSlot(FGameplayTag SlotTag) const;
 
+    UFUNCTION(BlueprintCallable, Category = "Equipment")
     void RefreshAllVisuals();
 public:
     /*~ Delegates ~*/

@@ -1,7 +1,9 @@
 ﻿// PRActorPreviewPanel.cpp
 #include "PRActorPreviewPanel.h"
 #include "Components/Image.h"
+#include "Components/PrimitiveComponent.h"
 #include "Components/SceneCaptureComponent2D.h"
+#include "Components/DirectionalLightComponent.h"
 #include "Engine/TextureRenderTarget2D.h"
 #include "Materials/MaterialInstanceDynamic.h"
 
@@ -142,6 +144,16 @@ void UPRActorPreviewPanel::InitializePreviewScene()
 	SceneCaptureComponent->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
 	SceneCaptureComponent->TextureTarget = RenderTarget;
 
+	// 프리뷰 전용 조명 생성 (Lighting Channel 1 사용하여 분리)
+	PreviewLightComponent = NewObject<UDirectionalLightComponent>(SceneCaptureActor, TEXT("PreviewLight"));
+	PreviewLightComponent->RegisterComponent();
+	PreviewLightComponent->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
+	PreviewLightComponent->SetRelativeRotation(LightSettings.Rotation);
+	PreviewLightComponent->SetIntensity(LightSettings.Intensity);
+	PreviewLightComponent->SetLightColor(LightSettings.LightColor);
+	// Lighting Channel 1만 사용 (월드 오브젝트와 분리)
+	PreviewLightComponent->SetLightingChannels(false, true, false);
+
 	ConfigureSceneCapture(SceneCaptureComponent);
 	UpdateCameraTransform();
 	ApplyToImage(RenderTarget);
@@ -158,6 +170,7 @@ void UPRActorPreviewPanel::DestroyPreviewScene()
 		SceneCaptureActor->Destroy();
 		SceneCaptureActor = nullptr;
 		SceneCaptureComponent = nullptr;
+		PreviewLightComponent = nullptr;
 	}
 
 	if (RenderTarget && !RenderTargetOverride)
@@ -288,6 +301,28 @@ void UPRActorPreviewPanel::RegisterPreviewActor(AActor* Actor)
 
 	PreviewActor = Actor;
 	SceneCaptureComponent->ShowOnlyActors.Add(Actor);
+
+	// 프리뷰 조명과 같은 Lighting Channel 사용 (Channel 1)
+	TArray<UPrimitiveComponent*> PrimitiveComponents;
+	Actor->GetComponents<UPrimitiveComponent>(PrimitiveComponents);
+	for (UPrimitiveComponent* PrimComp : PrimitiveComponents)
+	{
+		if (PrimComp)
+		{
+			FLightingChannels Channels;
+			Channels.bChannel0 = false;
+			Channels.bChannel1 = true;
+			Channels.bChannel2 = false;
+			PrimComp->SetLightingChannels(Channels.bChannel0, Channels.bChannel1, Channels.bChannel2);
+		}
+	}
+
+	// SceneCaptureActor를 PreviewActor 위치로 이동하여 카메라가 올바른 타겟을 바라보도록 함
+	if (SceneCaptureActor)
+	{
+		SceneCaptureActor->SetActorLocation(Actor->GetActorLocation());
+	}
+	UpdateCameraTransform();
 
 	OnPreviewActorSet(Actor);
 }

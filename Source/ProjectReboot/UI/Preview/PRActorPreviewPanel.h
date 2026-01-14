@@ -8,6 +8,7 @@
 #include "PRActorPreviewPanel.generated.h"
 
 class UImage;
+class UDirectionalLightComponent;
 /**
  * 
  */
@@ -127,6 +128,9 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActorPreview|Settings")
     FPRInstanceSettings InstanceSettings;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActorPreview|Settings")
+    FPRLightSettings LightSettings;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActorPreview|Rotation")
     FPRAxisSettings PitchSettings;
 
@@ -149,19 +153,22 @@ protected:
     TObjectPtr<UMaterialInterface> MaterialOverride;
 
 private:
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere)
     TObjectPtr<UTextureRenderTarget2D> RenderTarget;
 
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere)
     TObjectPtr<AActor> SceneCaptureActor;
 
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere)
     TObjectPtr<USceneCaptureComponent2D> SceneCaptureComponent;
 
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere)
+    TObjectPtr<UDirectionalLightComponent> PreviewLightComponent;
+
+    UPROPERTY(VisibleAnywhere)
     TObjectPtr<AActor> PreviewActor;
 
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere)
     TObjectPtr<UMaterialInstanceDynamic> DynamicMaterial;
 
     struct FActorRestoreData

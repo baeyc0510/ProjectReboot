@@ -28,6 +28,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
 	TArray<TSubclassOf<UGameplayEffect>> Effects;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
+	FGameplayTagContainer DynamicTags;
+	
 	/*~ 트리거 조건 ~*/
 
 	// 트리거 조건 (TriggerEventTag가 비어있으면 패시브)

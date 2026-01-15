@@ -23,6 +23,8 @@ public class ProjectReboot : ModuleRules
 			"UMG",
 			"Slate",
 			"SlateCore",
+			"GameplayAbilities",
+			"GameplayTasks"
 		});
 
 		// Uncomment if you are using Slate UI

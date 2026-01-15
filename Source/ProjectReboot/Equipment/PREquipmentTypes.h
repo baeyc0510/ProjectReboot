@@ -5,9 +5,6 @@
 
 #include "PREquipmentTypes.generated.h"
 
-/*~ Equipment Tags ~*/
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_EQUIPMENT);
-
 /*~ 전방 선언 ~*/
 class UStaticMesh;
 class USkeletalMesh;

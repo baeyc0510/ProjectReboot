@@ -424,6 +424,7 @@ void URogueliteAbilityHandlerComponent::GrantAbilities(URogueliteGASActionData* 
 		}
 
 		FGameplayAbilitySpec Spec(AbilityClass, Level, INDEX_NONE, GetOwner());
+		Spec.GetDynamicSpecSourceTags().AppendTags(Action->DynamicTags);
 		FGameplayAbilitySpecHandle Handle = CachedASC->GiveAbility(Spec);
 
 		if (Handle.IsValid())
@@ -476,7 +477,11 @@ void URogueliteAbilityHandlerComponent::ApplyEffectsInternal(URogueliteGASAction
 
 		int32 EffectLevel = (Action->StackScalingMode == ERogueliteStackScalingMode::Level) ? Stacks : 1;
 		FGameplayEffectSpecHandle SpecHandle = CachedASC->MakeOutgoingSpec(EffectClass, EffectLevel, Context);
-
+		if ( auto Spec = SpecHandle.Data.Get())
+		{
+			Spec->AppendDynamicAssetTags(Action->DynamicTags);
+		}
+		
 		if (SpecHandle.IsValid())
 		{
 			ApplySetByCallerValues(Action, SpecHandle, Stacks, Payload);

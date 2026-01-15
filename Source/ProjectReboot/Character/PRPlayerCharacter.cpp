@@ -6,11 +6,14 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "RogueliteAbilityHandlerComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "ProjectReboot/AbilitySystem/PRAbilitySystemComponent.h"
 #include "ProjectReboot/Equipment/PREquipmentManagerComponent.h"
+#include "ProjectReboot/Input/PREnhancedInputComponent.h"
 
 
 // Sets default values
@@ -48,14 +51,21 @@ APRPlayerCharacter::APRPlayerCharacter()
 	// Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 	
+	AbilitySystem = CreateDefaultSubobject<UPRAbilitySystemComponent>(TEXT("AbilitySystem"));
+	RogueliteAbilityHandler = CreateDefaultSubobject<URogueliteAbilityHandlerComponent>(TEXT("RogueliteAbilityHandler"));
 	EquipmentManager = CreateDefaultSubobject<UPREquipmentManagerComponent>(TEXT("EquipmentManager"));
+}
+
+UAbilitySystemComponent* APRPlayerCharacter::GetAbilitySystemComponent() const
+{
+	return AbilitySystem;
 }
 
 // Called to bind functionality to input
 void APRPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	// Set up action bindings
-	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
+	if (UPREnhancedInputComponent* EnhancedInputComponent = Cast<UPREnhancedInputComponent>(PlayerInputComponent))
 	{
 		// Crouching
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ThisClass::ToggleCrouch);
@@ -69,6 +79,11 @@ void APRPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
+		
+		if (InputConfig)
+		{
+			EnhancedInputComponent->BindInputActionsByConfig(InputConfig, this, &ThisClass::OnTaggedInputPressed, &ThisClass::OnTaggedInputReleased);
+		}
 	}
 }
 
@@ -84,6 +99,22 @@ void APRPlayerCharacter::NotifyControllerChanged()
 		{
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
+	}
+}
+
+void APRPlayerCharacter::OnTaggedInputPressed(FGameplayTag InputTag)
+{
+	if (AbilitySystem)
+	{
+		AbilitySystem->AbilityInputPressed(InputTag);
+	}
+}
+
+void APRPlayerCharacter::OnTaggedInputReleased(FGameplayTag InputTag)
+{
+	if (AbilitySystem)
+	{
+		AbilitySystem->AbilityInputReleased(InputTag);
 	}
 }
 

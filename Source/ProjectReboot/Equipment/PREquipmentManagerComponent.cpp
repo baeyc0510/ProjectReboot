@@ -7,6 +7,7 @@
 #include "RogueliteBlueprintLibrary.h"
 #include "RogueliteSubsystem.h"
 #include "GameFramework/Character.h"
+#include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/Roguelite/PREquipActionData.h"
 
 
@@ -16,7 +17,7 @@ UPREquipmentManagerComponent::UPREquipmentManagerComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 
 	// ...
-	ActionTagsToManage.AddTag(TAG_EQUIPMENT);
+	ActionTagsToManage.AddTag(TAG_Equipment);
 }
 
 // Called when the game starts

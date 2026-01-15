@@ -50,6 +50,16 @@ void UPREquipmentManagerComponent::Equip(UPREquipActionData* ActionData, bool bR
 	{
 		return;
 	}
+	
+	// 애니메이션 링크
+	if (USkeletalMeshComponent* SkeletalMeshComp = Cast<USkeletalMeshComponent>(GetAttachTarget()))
+	{
+		TArray<TSubclassOf<UAnimInstance>>& AnimLayersToLink = ActionData->EquipmentVisualSettings.AnimLayersToLink;
+		for (auto& Link : AnimLayersToLink)
+		{
+			SkeletalMeshComp->LinkAnimClassLayers(Link);
+		}
+	}
 
 	// 자식 Equipment
 	if (ActionData->bAttachToParentEquipment)
@@ -89,6 +99,22 @@ void UPREquipmentManagerComponent::Equip(UPREquipActionData* ActionData, bool bR
 	}
 }
 
+void UPREquipmentManagerComponent::UnequipByAction(UPREquipActionData* ActionData, bool bRefreshVisuals)
+{
+	if (!IsValid(ActionData))
+	{
+		return;
+	}
+	
+	if (ActionData != GetActionData(ActionData->EquipmentSlot))
+	{
+		return;
+	}
+	
+	Unequip(ActionData->EquipmentSlot);
+}
+
+
 void UPREquipmentManagerComponent::Unequip(FGameplayTag SlotTag, bool bRefreshVisuals)
 {
 	FEquipmentSlotEntry* Entry = Slots.Find(SlotTag);
@@ -102,6 +128,16 @@ void UPREquipmentManagerComponent::Unequip(FGameplayTag SlotTag, bool bRefreshVi
 	UEquipmentInstance* Instance = Entry->Instance;
 	UPREquipActionData* ActionData = Entry->ActionData;
 
+	// 애니메이션 언링크
+	if (USkeletalMeshComponent* SkeletalMeshComp = Cast<USkeletalMeshComponent>(GetAttachTarget()))
+	{
+		TArray<TSubclassOf<UAnimInstance>>& AnimLayersToLink = ActionData->EquipmentVisualSettings.AnimLayersToLink;
+		for (auto& Link : AnimLayersToLink)
+		{
+			SkeletalMeshComp->UnlinkAnimClassLayers(Link);
+		}
+	}
+	
 	if (IsParentEquipmentSlot(SlotTag))
 	{
 		Instance->Uninitialize();
@@ -114,9 +150,8 @@ void UPREquipmentManagerComponent::Unequip(FGameplayTag SlotTag, bool bRefreshVi
 			Instance->RefreshVisuals();	
 		}
 	}
-
+	
 	Slots.Remove(SlotTag);
-
 	OnUnequipped.Broadcast(SlotTag, Instance, ActionData);
 }
 

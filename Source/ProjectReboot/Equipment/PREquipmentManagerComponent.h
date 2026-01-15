@@ -49,6 +49,9 @@ public:
     void Equip(UPREquipActionData* ActionData, bool bRefreshVisuals = true);
 
     UFUNCTION(BlueprintCallable, Category = "Equipment")
+    void UnequipByAction(UPREquipActionData* ActionData, bool bRefreshVisuals = true);
+    
+    UFUNCTION(BlueprintCallable, Category = "Equipment")
     void Unequip(FGameplayTag SlotTag, bool bRefreshVisuals = true);
 
     UFUNCTION(BlueprintCallable, Category = "Equipment")
@@ -70,6 +73,7 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Equipment")
     bool IsParentEquipmentSlot(FGameplayTag SlotTag) const;
 
+    UFUNCTION(BlueprintCallable, Category = "Equipment")
     void RefreshAllVisuals();
 public:
     /*~ Delegates ~*/

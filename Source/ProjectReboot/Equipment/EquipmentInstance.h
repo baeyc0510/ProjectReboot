@@ -47,6 +47,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	TArray<UPREquipActionData*> GetAllAttachedActions() const;
 	
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	TArray<UPREquipActionData*> GetChildPartActions() const;
+	
 	// 외형 새로고침
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	void RefreshVisuals();
@@ -64,7 +67,7 @@ public:
 
 	// Getters
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
-	UPREquipActionData* GetActionData() const { return PrimaryActionData; }
+	UPREquipActionData* GetPrimaryActionData() const { return PrimaryActionData; }
 
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	FGameplayTag GetSlotTag() const;

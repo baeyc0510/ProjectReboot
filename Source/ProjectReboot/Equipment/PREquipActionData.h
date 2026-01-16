@@ -23,6 +23,9 @@ public:
 	FGameplayTag EquipmentSlot;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Equipment")
+	FGameplayTagContainer EquipmentTags;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Equipment")
 	bool bSpawnEquipmentInstance = false;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Equipment", meta = (EditCondition = "bSpawnEquipmentInstance"))

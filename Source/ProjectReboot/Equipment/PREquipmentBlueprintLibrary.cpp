@@ -2,11 +2,9 @@
 
 
 #include "PREquipmentBlueprintLibrary.h"
-
-#include <ProjectReboot/Roguelite/PREquipActionData.h>
-
 #include "EquipmentInstance.h"
 #include "PREquipmentManagerComponent.h"
+#include "ProjectReboot/Equipment/PREquipActionData.h"
 
 void UPREquipmentBlueprintLibrary::SyncEquipmentManager(AActor* From, AActor* To)
 {

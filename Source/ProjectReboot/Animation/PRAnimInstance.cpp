@@ -56,6 +56,7 @@ void UPRAnimInstance::UpdateAcceleration()
 	FVector AccelerationXY = FVector(Acceleration.X, Acceleration.Y, 0.0f); 
 	LocalAcceleration2D = ActorRotation.UnrotateVector(AccelerationXY);
 }
+
 void UPRAnimInstance::UpdateDirection()
 {
 	FRotator ActorRotation = PlayerCharacter->GetActorRotation();

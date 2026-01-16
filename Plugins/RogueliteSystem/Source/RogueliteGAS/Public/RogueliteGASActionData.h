@@ -28,8 +28,13 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
 	TArray<TSubclassOf<UGameplayEffect>> Effects;
 
+	// Ability와 Effect의 DynamicTags에 추가되는 태그 목록
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
 	FGameplayTagContainer DynamicTags;
+	
+	// TagsToGrant의 태그들을 AbilitySystemComponent에 적용할지 여부
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
+	bool bGrantTagsToAbilitySystem;
 	
 	/*~ 트리거 조건 ~*/
 
@@ -63,5 +68,5 @@ public:
 
 	// GAS 요소 보유 여부
 	UFUNCTION(BlueprintPure, Category = "Roguelite|GAS")
-	bool HasGASElements() const { return Abilities.Num() > 0 || Effects.Num() > 0; }
+	bool HasGASElements() const;
 };

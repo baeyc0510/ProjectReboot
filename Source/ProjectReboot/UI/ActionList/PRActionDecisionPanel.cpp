@@ -5,7 +5,7 @@
 #include "PRActionListItemWidget.h"
 #include "Components/VerticalBox.h"
 #include "ProjectReboot/Equipment/PREquipmentBlueprintLibrary.h"
-#include "ProjectReboot/Roguelite/PREquipActionData.h"
+#include "ProjectReboot/Equipment/PREquipActionData.h"
 #include "ProjectReboot/UI/Preview/PRActorPreviewPanel.h"
 
 void UPRActionDecisionPanel::SetSourceActor(AActor* InActor, TSubclassOf<AActor> PreviewActorClass)

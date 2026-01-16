@@ -11,9 +11,14 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/AbilitySystem/PRAbilitySystemComponent.h"
+#include "ProjectReboot/AbilitySystem/PRCommonAttributeSet.h"
+#include "ProjectReboot/AbilitySystem/PRWeaponAttributeSet.h"
 #include "ProjectReboot/Equipment/PREquipmentManagerComponent.h"
 #include "ProjectReboot/Input/PREnhancedInputComponent.h"
+#include "ProjectReboot/UI/Crosshair/PRCrosshairViewModel.h"
+#include "ProjectReboot/UI/ViewModel/PRViewModelSubsystem.h"
 
 
 // Sets default values
@@ -52,6 +57,8 @@ APRPlayerCharacter::APRPlayerCharacter()
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 	
 	AbilitySystem = CreateDefaultSubobject<UPRAbilitySystemComponent>(TEXT("AbilitySystem"));
+	CommonAttributeSet = CreateDefaultSubobject<UPRCommonAttributeSet>(TEXT("CommonAttributeSet"));
+	WeaponAttributeSet = CreateDefaultSubobject<UPRWeaponAttributeSet>(TEXT("WeaponAttributeSet"));
 	RogueliteAbilityHandler = CreateDefaultSubobject<URogueliteAbilityHandlerComponent>(TEXT("RogueliteAbilityHandler"));
 	EquipmentManager = CreateDefaultSubobject<UPREquipmentManagerComponent>(TEXT("EquipmentManager"));
 }
@@ -61,19 +68,40 @@ UAbilitySystemComponent* APRPlayerCharacter::GetAbilitySystemComponent() const
 	return AbilitySystem;
 }
 
+bool APRPlayerCharacter::IsCrouching() const
+{
+	if (AbilitySystem)
+	{
+		return AbilitySystem->HasMatchingGameplayTag(TAG_State_Crouch);
+	}
+	return false;
+}
+
+bool APRPlayerCharacter::IsSprinting() const
+{
+	if (AbilitySystem)
+	{
+		return AbilitySystem->HasMatchingGameplayTag(TAG_State_Sprint);
+	}
+	return false;
+}
+
+void APRPlayerCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	if (AbilitySystem)
+	{
+		AbilitySystem->GiveAbilitySet(DefaultAbilitySet, DefaultAbilitySetHandles);
+	}
+}
+
 // Called to bind functionality to input
 void APRPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	// Set up action bindings
 	if (UPREnhancedInputComponent* EnhancedInputComponent = Cast<UPREnhancedInputComponent>(PlayerInputComponent))
 	{
-		// Crouching
-		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ThisClass::ToggleCrouch);
-
-		// Sprinting
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ThisClass::Sprint);
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ThisClass::StopSprint);
-
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ThisClass::Move);
 
@@ -100,6 +128,24 @@ void APRPlayerCharacter::NotifyControllerChanged()
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
+}
+
+void APRPlayerCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	
+	if (AbilitySystem)
+	{
+		AbilitySystem->InitAbilityActorInfo(this, this);
+	}
+
+	BindCrosshairViewModel();
+}
+
+void APRPlayerCharacter::UnPossessed()
+{
+	UnbindCrosshairViewModel();
+	Super::UnPossessed();
 }
 
 void APRPlayerCharacter::OnTaggedInputPressed(FGameplayTag InputTag)
@@ -155,58 +201,41 @@ void APRPlayerCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
-void APRPlayerCharacter::ToggleCrouch()
+UPRCrosshairViewModel* APRPlayerCharacter::GetCrosshairViewModel() const
 {
-	if (IsCrouching())
+	APlayerController* PC = GetController<APlayerController>();
+	if (!PC)
 	{
-		UnCrouch();
+		return nullptr;
 	}
-	else
+
+	ULocalPlayer* LP = PC->GetLocalPlayer();
+	if (!LP)
 	{
-		Crouch();
+		return nullptr;
+	}
+
+	UPRViewModelSubsystem* VMS = LP->GetSubsystem<UPRViewModelSubsystem>();
+	if (!VMS)
+	{
+		return nullptr;
+	}
+
+	return VMS->GetOrCreateGlobalViewModel<UPRCrosshairViewModel>();
+}
+
+void APRPlayerCharacter::BindCrosshairViewModel()
+{
+	if (UPRCrosshairViewModel* VM = GetCrosshairViewModel())
+	{
+		VM->BindToASC(AbilitySystem);
 	}
 }
 
-void APRPlayerCharacter::Crouch()
+void APRPlayerCharacter::UnbindCrosshairViewModel()
 {
-	if (bIsSprinting)
+	if (UPRCrosshairViewModel* VM = GetCrosshairViewModel())
 	{
-		StopSprint();
+		VM->UnbindFromASC();
 	}
-
-	bIsCrouching = true;
-	GetCharacterMovement()->MaxWalkSpeed = BaseMoveSpeed * 0.5f;
-}
-
-void APRPlayerCharacter::UnCrouch()
-{
-	if (!bIsCrouching)
-	{
-		return;
-	}
-
-	bIsCrouching = false;
-	GetCharacterMovement()->MaxWalkSpeed = BaseMoveSpeed;
-}
-
-void APRPlayerCharacter::Sprint()
-{
-	if (bIsCrouching)
-	{
-		UnCrouch();
-	}
-
-	bIsSprinting = true;
-	GetCharacterMovement()->MaxWalkSpeed = BaseMoveSpeed * 1.5f;
-}
-
-void APRPlayerCharacter::StopSprint()
-{
-	if (!bIsSprinting)
-	{
-		return;
-	}
-
-	bIsSprinting = false;
-	GetCharacterMovement()->MaxWalkSpeed = BaseMoveSpeed;
 }

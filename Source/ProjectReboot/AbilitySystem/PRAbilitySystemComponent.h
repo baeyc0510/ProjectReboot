@@ -8,6 +8,11 @@
 #include "PRAbilitySystemComponent.generated.h"
 
 
+struct FPRAbilitySetHandles;
+class UPRAbilitySet;
+struct FPREffectEntry;
+struct FPRAbilityEntry;
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class PROJECTREBOOT_API UPRAbilitySystemComponent : public UAbilitySystemComponent
 {
@@ -15,7 +20,16 @@ class PROJECTREBOOT_API UPRAbilitySystemComponent : public UAbilitySystemCompone
 	
 public:
 	UPRAbilitySystemComponent();
+	
+	/** 단일 AbilityEntry 부여 */
+	void GiveAbilityEntry(const FPRAbilityEntry& AbilityEntry, FGameplayAbilitySpecHandle& OutHandle);
+	
+	/** 단일 EffectEntry 적용 */
+	void ApplyEffectEntry(const FPREffectEntry& EffectEntry, FActiveGameplayEffectHandle& OutHandle);
 
+	/** AbilitySet 전체 부여 */
+	void GiveAbilitySet(const UPRAbilitySet* AbilitySet, FPRAbilitySetHandles& OutHandles);
+	
 	void AbilityInputPressed(const FGameplayTag& InputTag);
 	void AbilityInputReleased(const FGameplayTag& InputTag);
 
@@ -25,7 +39,9 @@ public:
 
 protected:
 	virtual void OnGiveAbility(FGameplayAbilitySpec& AbilitySpec) override;
-
+	virtual void AbilitySpecInputPressed(FGameplayAbilitySpec& Spec) override;
+	virtual void AbilitySpecInputReleased(FGameplayAbilitySpec& Spec) override;
+	
 private:
 	EPRAbilityActivationPolicy GetActivationPolicy(const FGameplayAbilitySpec& Spec) const;
 	

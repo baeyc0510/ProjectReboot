@@ -5,10 +5,24 @@
 
 #include "AbilitySystemInterface.h"
 #include "ProjectReboot/AbilitySystem/PRAbilitySystemComponent.h"
+#include "ProjectReboot/UI/Crosshair/PRCrosshairViewModel.h"
+#include "ProjectReboot/UI/ViewModel/PRViewModelSubsystem.h"
 
 APRPlayerController::APRPlayerController(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	
+}
+
+void APRPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+	InitializeViewModels();
+}
+
+void APRPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	DeinitializeViewModels();
+	Super::EndPlay(EndPlayReason);
 }
 
 void APRPlayerController::PostProcessInput(const float DeltaTime, const bool bGamePaused)
@@ -28,4 +42,30 @@ UPRAbilitySystemComponent* APRPlayerController::GetPRAbilitySystemComponent() co
 		return Cast<UPRAbilitySystemComponent>(ASI->GetAbilitySystemComponent());
 	}
 	return nullptr;
+}
+
+void APRPlayerController::InitializeViewModels()
+{
+	ULocalPlayer* LP = GetLocalPlayer();
+	if (!LP)
+	{
+		return;
+	}
+
+	UPRViewModelSubsystem* VMS = LP->GetSubsystem<UPRViewModelSubsystem>();
+	if (!VMS)
+	{
+		return;
+	}
+
+	// Crosshair ViewModel 초기화
+	if (CrosshairConfig)
+	{
+		UPRCrosshairViewModel* CrosshairVM = VMS->GetOrCreateGlobalViewModel<UPRCrosshairViewModel>();
+		CrosshairVM->SetConfig(CrosshairConfig);
+	}
+}
+
+void APRPlayerController::DeinitializeViewModels()
+{
 }

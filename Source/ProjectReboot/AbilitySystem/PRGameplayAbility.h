@@ -13,7 +13,6 @@
 UENUM()
 enum class EPRAbilityActivationPolicy
 {
-	None,
 	OnInputTriggered,
 	WhileInputHeld,
 	OnGiven,

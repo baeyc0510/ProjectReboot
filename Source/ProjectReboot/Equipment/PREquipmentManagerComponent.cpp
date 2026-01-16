@@ -8,7 +8,7 @@
 #include "RogueliteSubsystem.h"
 #include "GameFramework/Character.h"
 #include "ProjectReboot/PRGameplayTags.h"
-#include "ProjectReboot/Roguelite/PREquipActionData.h"
+#include "ProjectReboot/Equipment/PREquipActionData.h"
 
 
 // Sets default values for this component's properties

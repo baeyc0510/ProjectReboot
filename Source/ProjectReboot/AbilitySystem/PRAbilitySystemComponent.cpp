@@ -3,10 +3,79 @@
 
 #include "PRAbilitySystemComponent.h"
 
+#include "PRAbilitySet.h"
 #include "PRGameplayAbility.h"
 
 UPRAbilitySystemComponent::UPRAbilitySystemComponent()
 {
+}
+
+void UPRAbilitySystemComponent::GiveAbilityEntry(const FPRAbilityEntry& AbilityEntry,
+    FGameplayAbilitySpecHandle& OutHandle)
+{
+    if (!AbilityEntry.IsValid())
+    {
+        return;
+    }
+    
+    FGameplayAbilitySpec AbilitySpec(AbilityEntry.AbilityClass, AbilityEntry.Level);
+    AbilitySpec.GetDynamicSpecSourceTags().AppendTags(AbilityEntry.DynamicTags);
+
+    OutHandle = GiveAbility(AbilitySpec);
+}
+
+void UPRAbilitySystemComponent::ApplyEffectEntry(const FPREffectEntry& EffectEntry, FActiveGameplayEffectHandle& OutHandle)
+{
+    if (!EffectEntry.IsValid())
+    {
+        return;
+    }
+    
+    FGameplayEffectContextHandle ContextHandle = MakeEffectContext();
+    ContextHandle.AddSourceObject(GetOwner());
+
+    FGameplayEffectSpecHandle SpecHandle = MakeOutgoingSpec(EffectEntry.EffectClass, EffectEntry.Level, ContextHandle);
+    
+    if (SpecHandle.IsValid())
+    {
+        SpecHandle.Data->AppendDynamicAssetTags(EffectEntry.DynamicTags);
+        OutHandle = ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+    }
+}
+
+void UPRAbilitySystemComponent::GiveAbilitySet(const UPRAbilitySet* AbilitySet, FPRAbilitySetHandles& OutHandles)
+{
+    OutHandles.Reset();
+    
+    if (!AbilitySet)
+    {
+        return;
+    }
+
+    OutHandles.AbilityHandles.Reserve(AbilitySet->Abilities.Num());
+    OutHandles.EffectHandles.Reserve(AbilitySet->Effects.Num());
+
+    for (const FPRAbilityEntry& Entry : AbilitySet->Abilities)
+    {
+        FGameplayAbilitySpecHandle Handle;
+        GiveAbilityEntry(Entry, Handle);
+        
+        if (Handle.IsValid())
+        {
+            OutHandles.AbilityHandles.Add(Handle);
+        }
+    }
+
+    for (const FPREffectEntry& Entry : AbilitySet->Effects)
+    {
+        FActiveGameplayEffectHandle Handle;
+        ApplyEffectEntry(Entry, Handle);
+        
+        if (Handle.IsValid())
+        {
+            OutHandles.EffectHandles.Add(Handle);
+        }
+    }
 }
 
 void UPRAbilitySystemComponent::OnGiveAbility(FGameplayAbilitySpec& AbilitySpec)

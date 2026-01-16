@@ -6,8 +6,10 @@
 #include "AbilitySystemInterface.h"
 #include "GameplayTagContainer.h"
 #include "GameFramework/Character.h"
+#include "ProjectReboot/AbilitySystem/PRAbilitySet.h"
 #include "PRPlayerCharacter.generated.h"
 
+class UPRAbilitySet;
 class URogueliteAbilityHandlerComponent;
 class UPRInputConfig;
 class UPRAbilitySystemComponent;
@@ -38,12 +40,18 @@ public:
 	
 	float GetDesiredLookDirection() const {return DesiredLookDirection;}
 	
-	bool IsCrouching() const {return bIsCrouching;}
-	bool IsSprinting() const {return bIsSprinting;}
+	bool IsCrouching() const;
+	bool IsSprinting() const;
 	
 protected:
+	/*~ AActor Interfaces ~*/
+	virtual void BeginPlay() override;
+	
+	/*~ APawn Interfaces ~*/
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void NotifyControllerChanged() override;
+	
+	/*~ APRPlayerCharacter Interfaces ~*/
 	
 	virtual void OnTaggedInputPressed(FGameplayTag InputTag);
 	virtual void OnTaggedInputReleased(FGameplayTag InputTag);
@@ -53,13 +61,6 @@ protected:
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
-
-	void ToggleCrouch();
-	void Crouch();
-	void UnCrouch();
-	
-	void Sprint();
-	void StopSprint();
 	
 protected:
 	/** Camera boom positioning the camera behind the character */
@@ -73,13 +74,6 @@ protected:
 	/** MappingContext */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	UInputMappingContext* DefaultMappingContext;
-
-	/** Event Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
-	UInputAction* CrouchAction;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
-	UInputAction* SprintAction;
 	
 	/** Move Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
@@ -97,11 +91,12 @@ protected:
 	float BaseMoveSpeed = 500.f;
 	
 	UPROPERTY(BlueprintReadOnly, Category = Movement)
-	bool bIsSprinting = false;
-	
-	UPROPERTY(BlueprintReadOnly, Category = Movement)
 	bool bIsCrouching = false;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = AbilitySystem)
+	TObjectPtr<UPRAbilitySet> DefaultAbilitySet;
+	
+	/*~ Components ~*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = AbilitySystem)
 	UPRAbilitySystemComponent* AbilitySystem;
 	
@@ -113,4 +108,5 @@ protected:
 	
 private:
 	float DesiredLookDirection;
+	FPRAbilitySetHandles DefaultAbilitySetHandles;
 };

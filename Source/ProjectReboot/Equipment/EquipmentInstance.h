@@ -60,10 +60,10 @@ public:
 
 	// 태그 조회
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
-	const FGameplayTagContainer& GetGrantedTags() const { return GrantedTags.GetTags(); }
+	const FGameplayTagContainer& GetGrantedTags() const { return EquipmentTags.GetTags(); }
 
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
-	bool HasTag(FGameplayTag Tag) const { return GrantedTags.HasTag(Tag); }
+	bool HasTag(FGameplayTag Tag) const { return EquipmentTags.HasTag(Tag); }
 
 	// Getters
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
@@ -91,7 +91,7 @@ protected:
 	TObjectPtr<UPREquipActionData> PrimaryActionData;
 
 	UPROPERTY()
-	FRogueliteTagCountContainer GrantedTags;
+	FRogueliteTagCountContainer EquipmentTags;
 
 	UPROPERTY()
 	TMap<UPREquipActionData*, FSpawnedVisualEntry> SpawnedVisuals;

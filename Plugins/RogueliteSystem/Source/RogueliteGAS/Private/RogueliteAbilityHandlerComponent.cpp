@@ -191,6 +191,7 @@ void URogueliteAbilityHandlerComponent::HandleActionRemoved(URogueliteActionData
 	// GAS 핸들 정리
 	if (CachedASC.IsValid())
 	{
+		RemoveTagsFromAbilitySystem(GASAction);
 		ClearAbilities(*Handles);
 		RemoveEffects(*Handles);
 	}
@@ -409,6 +410,32 @@ void URogueliteAbilityHandlerComponent::UnsubscribeFromAllEvents()
 	GameplayEventSubscriptions.Empty();
 }
 
+void URogueliteAbilityHandlerComponent::AddTagsToAbilitySystem(URogueliteGASActionData* Action)
+{
+	if (!CachedASC.IsValid() || !IsValid(Action))
+	{
+		return;
+	}
+	
+	if (Action->bGrantTagsToAbilitySystem)
+	{
+		CachedASC->AddLooseGameplayTags(Action->TagsToGrant);	
+	}
+}
+
+void URogueliteAbilityHandlerComponent::RemoveTagsFromAbilitySystem(URogueliteGASActionData* Action)
+{
+	if (!CachedASC.IsValid() || !IsValid(Action))
+	{
+		return;
+	}
+	
+	if (Action->bGrantTagsToAbilitySystem)
+	{
+		CachedASC->RemoveLooseGameplayTags(Action->TagsToGrant);	
+	}
+}
+
 void URogueliteAbilityHandlerComponent::GrantAbilities(URogueliteGASActionData* Action, int32 Level, FRogueliteGASHandles& OutHandles)
 {
 	if (!CachedASC.IsValid() || !IsValid(Action))
@@ -558,6 +585,8 @@ void URogueliteAbilityHandlerComponent::SetupActionGAS(URogueliteGASActionData* 
 	int32 AbilityLevel = (Action->StackScalingMode == ERogueliteStackScalingMode::Level) ? Stacks : 1;
 	GrantAbilities(Action, AbilityLevel, Handles);
 
+	AddTagsToAbilitySystem(Action);
+	
 	if (Action->HasTrigger())
 	{
 		// 트리거: 이벤트 구독 (Activate는 이벤트 발생 시)

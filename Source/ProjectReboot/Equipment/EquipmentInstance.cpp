@@ -4,7 +4,7 @@
 #include "EquipmentInstance.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "ProjectReboot/Roguelite/PREquipActionData.h"
+#include "ProjectReboot/Equipment/PREquipActionData.h"
 
 void UEquipmentInstance::Initialize(USceneComponent* InAttachTarget, UPREquipActionData* InPrimaryActionData)
 {
@@ -37,7 +37,7 @@ void UEquipmentInstance::AttachPart(UPREquipActionData* InActionData)
     }
 
     // 태그 추가
-    GrantedTags.AppendTags(InActionData->TagsToGrant);
+    EquipmentTags.AppendTags(InActionData->EquipmentTags);
 
     // 스폰 정보 선택
     FEquipmentMeshSpawnInfo SpawnInfo = SelectSpawnInfo(InActionData->EquipmentVisualSettings);
@@ -82,7 +82,7 @@ void UEquipmentInstance::DetachPart(UPREquipActionData* InActionData)
     SpawnedVisuals.Remove(InActionData);
 
     // 태그 제거
-    GrantedTags.RemoveTags(InActionData->TagsToGrant);
+    EquipmentTags.RemoveTags(InActionData->EquipmentTags);
 }
 
 TArray<UPREquipActionData*> UEquipmentInstance::GetAllAttachedActions() const
@@ -163,7 +163,7 @@ void UEquipmentInstance::DestroyAllVisuals()
     }
 
     SpawnedVisuals.Empty();
-    GrantedTags.Reset();
+    EquipmentTags.Reset();
 }
 
 FEquipmentMeshSpawnInfo UEquipmentInstance::SelectSpawnInfo(const FEquipmentVisualSettings& VisualSettings) const
@@ -183,7 +183,7 @@ FEquipmentMeshSpawnInfo UEquipmentInstance::SelectSpawnInfo(const FEquipmentVisu
     // 조건 충족하는 첫 번째 룰 반환
     for (const FRuleBasedMeshVisualSetting& Rule : SortedRules)
     {
-        if (GrantedTags.HasAll(Rule.RequiredTags))
+        if (EquipmentTags.HasAll(Rule.RequiredTags))
         {
             return Rule.MeshSpawnInfo;
         }

@@ -4,7 +4,7 @@
 #include "EquipmentInstance.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "ProjectReboot/Roguelite/PREquipActionData.h"
+#include "ProjectReboot/Equipment/PREquipActionData.h"
 
 void UEquipmentInstance::Initialize(USceneComponent* InAttachTarget, UPREquipActionData* InPrimaryActionData)
 {

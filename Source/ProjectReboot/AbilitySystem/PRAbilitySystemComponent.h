@@ -39,7 +39,9 @@ public:
 
 protected:
 	virtual void OnGiveAbility(FGameplayAbilitySpec& AbilitySpec) override;
-
+	virtual void AbilitySpecInputPressed(FGameplayAbilitySpec& Spec) override;
+	virtual void AbilitySpecInputReleased(FGameplayAbilitySpec& Spec) override;
+	
 private:
 	EPRAbilityActivationPolicy GetActivationPolicy(const FGameplayAbilitySpec& Spec) const;
 	

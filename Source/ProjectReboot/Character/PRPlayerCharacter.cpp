@@ -13,6 +13,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/AbilitySystem/PRAbilitySystemComponent.h"
+#include "ProjectReboot/AbilitySystem/PRCommonAttributeSet.h"
 #include "ProjectReboot/Equipment/PREquipmentManagerComponent.h"
 #include "ProjectReboot/Input/PREnhancedInputComponent.h"
 
@@ -53,6 +54,7 @@ APRPlayerCharacter::APRPlayerCharacter()
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 	
 	AbilitySystem = CreateDefaultSubobject<UPRAbilitySystemComponent>(TEXT("AbilitySystem"));
+	CommonAttributeSet = CreateDefaultSubobject<UPRCommonAttributeSet>(TEXT("CommonAttributeSet"));
 	RogueliteAbilityHandler = CreateDefaultSubobject<URogueliteAbilityHandlerComponent>(TEXT("RogueliteAbilityHandler"));
 	EquipmentManager = CreateDefaultSubobject<UPREquipmentManagerComponent>(TEXT("EquipmentManager"));
 }

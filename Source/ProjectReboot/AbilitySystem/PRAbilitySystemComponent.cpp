@@ -88,6 +88,68 @@ void UPRAbilitySystemComponent::OnGiveAbility(FGameplayAbilitySpec& AbilitySpec)
     }
 }
 
+void UPRAbilitySystemComponent::AbilitySpecInputPressed(FGameplayAbilitySpec& Spec)
+{
+    Super::AbilitySpecInputPressed(Spec);
+    
+    if (!Spec.IsActive())
+    {
+        return;
+    }
+    
+    // WaitInputPressed Task에 이벤트 전달하기위해 InvokeRelicatedEvent 사용
+    UGameplayAbility* AbilityCDO = Spec.Ability;
+    EGameplayAbilityInstancingPolicy::Type InstancingPolicy = AbilityCDO->GetInstancingPolicy();
+        
+    if (InstancingPolicy == EGameplayAbilityInstancingPolicy::Type::InstancedPerActor)
+    {
+        if (UGameplayAbility* AbilityInstance = Spec.GetPrimaryInstance())
+        {
+            FGameplayAbilityActivationInfo ActivationInfo = AbilityInstance->GetCurrentActivationInfo();
+            InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputPressed, Spec.Handle, ActivationInfo.GetActivationPredictionKey());    
+        }
+    }
+    else
+    {
+        for (UGameplayAbility* AbilityInstance : Spec.GetAbilityInstances())
+        {
+            FGameplayAbilityActivationInfo ActivationInfo = AbilityInstance->GetCurrentActivationInfo();
+            InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputPressed, Spec.Handle, ActivationInfo.GetActivationPredictionKey());
+        }
+    }
+}
+
+void UPRAbilitySystemComponent::AbilitySpecInputReleased(FGameplayAbilitySpec& Spec)
+{
+    Super::AbilitySpecInputReleased(Spec);
+    
+    if (!Spec.IsActive())
+    {
+        return;
+    }
+    
+    // WaitInputReleased Task에 이벤트 전달하기위해 InvokeRelicatedEvent 사용
+    UGameplayAbility* AbilityCDO = Spec.Ability;
+    EGameplayAbilityInstancingPolicy::Type InstancingPolicy = AbilityCDO->GetInstancingPolicy();
+        
+    if (InstancingPolicy == EGameplayAbilityInstancingPolicy::Type::InstancedPerActor)
+    {
+        if (UGameplayAbility* AbilityInstance = Spec.GetPrimaryInstance())
+        {
+            FGameplayAbilityActivationInfo ActivationInfo = AbilityInstance->GetCurrentActivationInfo();
+            InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputReleased, Spec.Handle, ActivationInfo.GetActivationPredictionKey());    
+        }
+    }
+    else
+    {
+        for (UGameplayAbility* AbilityInstance : Spec.GetAbilityInstances())
+        {
+            FGameplayAbilityActivationInfo ActivationInfo = AbilityInstance->GetCurrentActivationInfo();
+            InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputReleased, Spec.Handle, ActivationInfo.GetActivationPredictionKey());
+        }
+    }
+}
+
 void UPRAbilitySystemComponent::AbilityInputPressed(const FGameplayTag& InputTag)
 {
     if (!InputTag.IsValid())
@@ -204,5 +266,5 @@ EPRAbilityActivationPolicy UPRAbilitySystemComponent::GetActivationPolicy(const 
     {
         return PRAbility->GetActivationPolicy();
     }
-    return EPRAbilityActivationPolicy::None;
+    return EPRAbilityActivationPolicy::OnInputTriggered;
 }

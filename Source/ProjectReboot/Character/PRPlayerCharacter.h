@@ -9,6 +9,7 @@
 #include "ProjectReboot/AbilitySystem/PRAbilitySet.h"
 #include "PRPlayerCharacter.generated.h"
 
+class UPRCommonAttributeSet;
 class UPRAbilitySet;
 class URogueliteAbilityHandlerComponent;
 class UPRInputConfig;
@@ -93,19 +94,22 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = Movement)
 	bool bIsCrouching = false;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = AbilitySystem)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "PR AbilitySystem")
 	TObjectPtr<UPRAbilitySet> DefaultAbilitySet;
 	
 	/*~ Components ~*/
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = AbilitySystem)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PR AbilitySystem")
 	UPRAbilitySystemComponent* AbilitySystem;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = AbilitySystem)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PR AbilitySystem")
 	URogueliteAbilityHandlerComponent* RogueliteAbilityHandler;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "PR AbilitySystem")
+	UPRCommonAttributeSet* CommonAttributeSet;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Equipment)
 	UPREquipmentManagerComponent* EquipmentManager;
-	
+
 private:
 	float DesiredLookDirection;
 	FPRAbilitySetHandles DefaultAbilitySetHandles;

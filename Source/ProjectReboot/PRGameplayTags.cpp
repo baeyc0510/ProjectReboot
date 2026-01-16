@@ -2,6 +2,8 @@
 
 /*~ Input Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Input, "Input");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Crouch, "Input.Crouch");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Aim, "Input.Aim");
 
 /*~ Equipment Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment, "Equipment");

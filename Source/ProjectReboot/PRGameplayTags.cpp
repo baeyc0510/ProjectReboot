@@ -13,3 +13,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_State, "State");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Sprint, "State.Sprint");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Crouch, "State.Crouch");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_ADS, "State.ADS");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_CannotFire, "State.Weapon.CannotFire");
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_Crosshair, "State.Weapon.Crosshair");
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_Crosshair_Rifle, "State.Weapon.Crosshair.Rifle");

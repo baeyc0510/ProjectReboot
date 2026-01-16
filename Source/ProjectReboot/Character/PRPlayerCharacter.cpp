@@ -14,8 +14,11 @@
 #include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/AbilitySystem/PRAbilitySystemComponent.h"
 #include "ProjectReboot/AbilitySystem/PRCommonAttributeSet.h"
+#include "ProjectReboot/AbilitySystem/PRWeaponAttributeSet.h"
 #include "ProjectReboot/Equipment/PREquipmentManagerComponent.h"
 #include "ProjectReboot/Input/PREnhancedInputComponent.h"
+#include "ProjectReboot/UI/Crosshair/PRCrosshairViewModel.h"
+#include "ProjectReboot/UI/ViewModel/PRViewModelSubsystem.h"
 
 
 // Sets default values
@@ -55,6 +58,7 @@ APRPlayerCharacter::APRPlayerCharacter()
 	
 	AbilitySystem = CreateDefaultSubobject<UPRAbilitySystemComponent>(TEXT("AbilitySystem"));
 	CommonAttributeSet = CreateDefaultSubobject<UPRCommonAttributeSet>(TEXT("CommonAttributeSet"));
+	WeaponAttributeSet = CreateDefaultSubobject<UPRWeaponAttributeSet>(TEXT("WeaponAttributeSet"));
 	RogueliteAbilityHandler = CreateDefaultSubobject<URogueliteAbilityHandlerComponent>(TEXT("RogueliteAbilityHandler"));
 	EquipmentManager = CreateDefaultSubobject<UPREquipmentManagerComponent>(TEXT("EquipmentManager"));
 }
@@ -126,6 +130,24 @@ void APRPlayerCharacter::NotifyControllerChanged()
 	}
 }
 
+void APRPlayerCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	
+	if (AbilitySystem)
+	{
+		AbilitySystem->InitAbilityActorInfo(this, this);
+	}
+
+	BindCrosshairViewModel();
+}
+
+void APRPlayerCharacter::UnPossessed()
+{
+	UnbindCrosshairViewModel();
+	Super::UnPossessed();
+}
+
 void APRPlayerCharacter::OnTaggedInputPressed(FGameplayTag InputTag)
 {
 	if (AbilitySystem)
@@ -176,5 +198,44 @@ void APRPlayerCharacter::Look(const FInputActionValue& Value)
 		// add yaw and pitch input to controller
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
+	}
+}
+
+UPRCrosshairViewModel* APRPlayerCharacter::GetCrosshairViewModel() const
+{
+	APlayerController* PC = GetController<APlayerController>();
+	if (!PC)
+	{
+		return nullptr;
+	}
+
+	ULocalPlayer* LP = PC->GetLocalPlayer();
+	if (!LP)
+	{
+		return nullptr;
+	}
+
+	UPRViewModelSubsystem* VMS = LP->GetSubsystem<UPRViewModelSubsystem>();
+	if (!VMS)
+	{
+		return nullptr;
+	}
+
+	return VMS->GetOrCreateGlobalViewModel<UPRCrosshairViewModel>();
+}
+
+void APRPlayerCharacter::BindCrosshairViewModel()
+{
+	if (UPRCrosshairViewModel* VM = GetCrosshairViewModel())
+	{
+		VM->BindToASC(AbilitySystem);
+	}
+}
+
+void APRPlayerCharacter::UnbindCrosshairViewModel()
+{
+	if (UPRCrosshairViewModel* VM = GetCrosshairViewModel())
+	{
+		VM->UnbindFromASC();
 	}
 }

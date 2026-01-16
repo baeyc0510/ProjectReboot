@@ -9,6 +9,8 @@
 #include "ProjectReboot/AbilitySystem/PRAbilitySet.h"
 #include "PRPlayerCharacter.generated.h"
 
+class UPRWeaponAttributeSet;
+class UPRCrosshairViewModel;
 class UPRCommonAttributeSet;
 class UPRAbilitySet;
 class URogueliteAbilityHandlerComponent;
@@ -51,6 +53,8 @@ protected:
 	/*~ APawn Interfaces ~*/
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void NotifyControllerChanged() override;
+	virtual void PossessedBy(AController* NewController) override;
+	virtual void UnPossessed() override;
 	
 	/*~ APRPlayerCharacter Interfaces ~*/
 	
@@ -62,6 +66,13 @@ protected:
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
+	
+private:
+	/*~ ViewModel ~*/
+	UPRCrosshairViewModel* GetCrosshairViewModel() const;
+	void BindCrosshairViewModel();
+	void UnbindCrosshairViewModel();
+	
 	
 protected:
 	/** Camera boom positioning the camera behind the character */
@@ -106,6 +117,9 @@ protected:
 	
 	UPROPERTY(BlueprintReadOnly, Category = "PR AbilitySystem")
 	UPRCommonAttributeSet* CommonAttributeSet;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "PR AbilitySystem")
+	UPRWeaponAttributeSet* WeaponAttributeSet;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Equipment)
 	UPREquipmentManagerComponent* EquipmentManager;

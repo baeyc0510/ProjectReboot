@@ -3,9 +3,9 @@
 
 #include "PRCrosshairConfig.h"
 
-const FCrosshairSetting& UPRCrosshairConfig::GetCrosshairSetting(const FGameplayTag& CrosshairTag) const
+const FPRCrosshairSetting& UPRCrosshairConfig::GetCrosshairSetting(const FGameplayTag& CrosshairTag) const
 {
-	if (const FCrosshairSetting* Found = CrosshairSettings.Find(CrosshairTag))
+	if (const FPRCrosshairSetting* Found = CrosshairSettings.Find(CrosshairTag))
 	{
 		return *Found;
 	}

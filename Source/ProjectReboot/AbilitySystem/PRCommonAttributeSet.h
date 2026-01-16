@@ -31,8 +31,4 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	FGameplayAttributeData MoveSpeed;
 	ATTRIBUTE_ACCESSORS(UPRCommonAttributeSet, MoveSpeed)
-
-	UPROPERTY(BlueprintReadOnly, Category = "Movement")
-	FGameplayAttributeData MoveSpeedMultiplier;
-	ATTRIBUTE_ACCESSORS(UPRCommonAttributeSet, MoveSpeedMultiplier)
 };

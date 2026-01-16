@@ -11,7 +11,7 @@ void UPRCommonAttributeSet::PostAttributeChange(const FGameplayAttribute& Attrib
 {
 	Super::PostAttributeChange(Attribute, OldValue, NewValue);
 	
-	if (Attribute == GetMoveSpeedAttribute() || Attribute == GetMoveSpeedMultiplierAttribute())
+	if (Attribute == GetMoveSpeedAttribute())
 	{
 		UpdateCharacterWalkSpeed();
 	}
@@ -28,9 +28,7 @@ void UPRCommonAttributeSet::UpdateCharacterWalkSpeed()
 	{
 		if (UCharacterMovementComponent* CMC = Character->GetCharacterMovement())
 		{
-			float MoveSpeedCoeff = GetMoveSpeedMultiplier();
-			float BaseMoveSpeed = GetMoveSpeed();
-			CMC->MaxWalkSpeed =  MoveSpeedCoeff * BaseMoveSpeed;
+			CMC->MaxWalkSpeed = GetMoveSpeed();
 		}
 	}
 }

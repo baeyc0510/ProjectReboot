@@ -86,6 +86,10 @@ protected:
 	void UnsubscribeActionFromEvent(URogueliteGASActionData* Action);
 	void UnsubscribeFromAllEvents();
 
+	// 태그 추가 / 제거
+	void AddTagsToAbilitySystem(URogueliteGASActionData* Action);
+	void RemoveTagsFromAbilitySystem(URogueliteGASActionData* Action);
+	
 	// Ability 부여/해제
 	void GrantAbilities(URogueliteGASActionData* Action, int32 Level, FRogueliteGASHandles& OutHandles);
 	void ClearAbilities(FRogueliteGASHandles& Handles);

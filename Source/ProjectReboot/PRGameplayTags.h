@@ -11,6 +11,9 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Input_Fire);
 
 /*~ Equipment Tags ~*/
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Weapon_Type_Bullet);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Weapon_Type_Beam);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Weapon_Type_Missile);
 
 /*~ Character States ~*/
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_State);

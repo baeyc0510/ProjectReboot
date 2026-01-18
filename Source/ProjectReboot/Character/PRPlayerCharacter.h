@@ -8,6 +8,7 @@
 #include "ProjectReboot/AbilitySystem/PRAbilitySet.h"
 #include "PRPlayerCharacter.generated.h"
 
+class UPRViewModelSubsystem;
 class USpringArmComponent;
 class UPRWeaponAttributeSet;
 class UPRCrosshairViewModel;
@@ -66,9 +67,9 @@ protected:
 	
 private:
 	/*~ ViewModel ~*/
-	UPRCrosshairViewModel* GetCrosshairViewModel() const;
-	void BindCrosshairViewModel();
-	void UnbindCrosshairViewModel();
+	UPRViewModelSubsystem* GetViewModelSubsystem() const;
+	void BindViewModels();
+	void UnbindViewModels();
 
 protected:
 	// 카메라

@@ -6,6 +6,7 @@
 #include "GameplayEffectExtension.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "ProjectReboot/Character/PRCharacterBase.h"
 
 void UPRCommonAttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)
 {
@@ -24,11 +25,11 @@ void UPRCommonAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffe
 
 void UPRCommonAttributeSet::UpdateCharacterWalkSpeed()
 {
-	if (ACharacter* Character = Cast<ACharacter>(GetOwningActor()))
+	if (APRCharacterBase* Character = Cast<APRCharacterBase>(GetOwningActor()))
 	{
 		if (UCharacterMovementComponent* CMC = Character->GetCharacterMovement())
 		{
-			CMC->MaxWalkSpeed = GetMoveSpeed();
+			CMC->MaxWalkSpeed = Character->GetBaseMovementSpeed() * GetMoveSpeed();
 		}
 	}
 }

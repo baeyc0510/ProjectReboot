@@ -3,48 +3,41 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AbilitySystemInterface.h"
 #include "GameplayTagContainer.h"
-#include "GameFramework/Character.h"
+#include "PRCharacterBase.h"
 #include "ProjectReboot/AbilitySystem/PRAbilitySet.h"
 #include "PRPlayerCharacter.generated.h"
 
+class USpringArmComponent;
 class UPRWeaponAttributeSet;
 class UPRCrosshairViewModel;
-class UPRCommonAttributeSet;
 class UPRAbilitySet;
 class URogueliteAbilityHandlerComponent;
 class UPRInputConfig;
-class UPRAbilitySystemComponent;
 class UPREquipmentManagerComponent;
-class USpringArmComponent;
-class UCameraComponent;
+class UPRCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
 
 UCLASS()
-class PROJECTREBOOT_API APRPlayerCharacter : public ACharacter, public IAbilitySystemInterface
+class PROJECTREBOOT_API APRPlayerCharacter : public APRCharacterBase
 {
 	GENERATED_BODY()
 
 public:
 	APRPlayerCharacter();
-	
-	/*~ IAbilitySystemInterface ~*/
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	/*~ APRPlayerCharacter Interfaces ~*/
 
-	/** Returns CameraBoom subobject **/
-	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
-	/** Returns FollowCamera subobject **/
-	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	// 카메라 컴포넌트 반환
+	FORCEINLINE UPRCameraComponent* GetCameraComponent() const { return CameraComponent; }
 	
 	float GetDesiredLookDirection() const {return DesiredLookDirection;}
 	
 	bool IsCrouching() const;
 	bool IsSprinting() const;
+	bool IsAiming() const;
 	
 protected:
 	/*~ AActor Interfaces ~*/
@@ -66,22 +59,24 @@ protected:
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
+
+	/*~ States ~*/
+	UFUNCTION()
+	void HandleStateTagChanged(const FGameplayTag Tag, int32 NewCount);
 	
 private:
 	/*~ ViewModel ~*/
 	UPRCrosshairViewModel* GetCrosshairViewModel() const;
 	void BindCrosshairViewModel();
 	void UnbindCrosshairViewModel();
-	
-	
+
 protected:
-	/** Camera boom positioning the camera behind the character */
+	// 카메라
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 	USpringArmComponent* CameraBoom;
-
-	/** Follow camera */
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
-	UCameraComponent* FollowCamera;
+	UPRCameraComponent* CameraComponent;
 	
 	/** MappingContext */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
@@ -98,25 +93,14 @@ protected:
 	/** InputConfig */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	UPRInputConfig* InputConfig;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement)
-	float BaseMoveSpeed = 500.f;
 	
-	UPROPERTY(BlueprintReadOnly, Category = Movement)
-	bool bIsCrouching = false;
-	
+	/** AbilityConfig */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "PR AbilitySystem")
 	TObjectPtr<UPRAbilitySet> DefaultAbilitySet;
 	
 	/*~ Components ~*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PR AbilitySystem")
-	UPRAbilitySystemComponent* AbilitySystem;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PR AbilitySystem")
 	URogueliteAbilityHandlerComponent* RogueliteAbilityHandler;
-	
-	UPROPERTY(BlueprintReadOnly, Category = "PR AbilitySystem")
-	UPRCommonAttributeSet* CommonAttributeSet;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "PR AbilitySystem")
 	UPRWeaponAttributeSet* WeaponAttributeSet;
@@ -127,4 +111,5 @@ protected:
 private:
 	float DesiredLookDirection;
 	FPRAbilitySetHandles DefaultAbilitySetHandles;
+	FDelegateHandle StateChangedDelegateHandle;
 };

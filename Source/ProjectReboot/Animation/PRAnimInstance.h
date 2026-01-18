@@ -105,6 +105,9 @@ public:
 	bool bIsSprint;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	bool bIsAiming;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	ELandState LandState;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Movement|Aiming")

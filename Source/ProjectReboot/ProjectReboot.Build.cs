@@ -24,7 +24,7 @@ public class ProjectReboot : ModuleRules
 			"Slate",
 			"SlateCore",
 			"GameplayAbilities",
-			"GameplayTasks"
+			"GameplayTasks", "Niagara"
 		});
 
 		// Uncomment if you are using Slate UI

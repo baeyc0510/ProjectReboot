@@ -8,6 +8,9 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Fire, "Input.Fire");
 
 /*~ Equipment Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment, "Equipment");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type_Bullet, "Equipment.Weapon.Type.Bullet");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type_Beam, "Equipment.Weapon.Type.Beam");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type_Missile, "Equipment.Weapon.Type.Missile");
 
 /*~ Character States ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_State, "State");

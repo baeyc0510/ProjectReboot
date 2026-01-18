@@ -1,0 +1,106 @@
+#include "PRHUDWidget.h"
+#include "PRHUDViewModel.h"
+#include "ProjectReboot/UI/ViewModel/PRViewModelSubsystem.h"
+#include "Components/TextBlock.h"
+#include "Components/Image.h"
+#include "Components/ProgressBar.h"
+
+void UPRHUDWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+	BindViewModel();
+}
+
+void UPRHUDWidget::NativeDestruct()
+{
+	UnbindViewModel();
+	Super::NativeDestruct();
+}
+
+void UPRHUDWidget::BindViewModel()
+{
+	ULocalPlayer* LP = GetOwningLocalPlayer();
+	if (!LP)
+	{
+		return;
+	}
+
+	UPRViewModelSubsystem* VMS = LP->GetSubsystem<UPRViewModelSubsystem>();
+	if (!VMS)
+	{
+		return;
+	}
+
+	ViewModel = VMS->GetGlobalViewModel<UPRHUDViewModel>();
+	if (!ViewModel)
+	{
+		return;
+	}
+
+	ViewModel->OnAmmoChanged.AddDynamic(this, &UPRHUDWidget::HandleAmmoChanged);
+	ViewModel->OnWeaponTypeChanged.AddDynamic(this, &UPRHUDWidget::HandleWeaponTypeChanged);
+	ViewModel->OnHealthChanged.AddDynamic(this, &UPRHUDWidget::HandleHealthChanged);
+
+	ApplyInitialState();
+}
+
+void UPRHUDWidget::UnbindViewModel()
+{
+	if (!ViewModel)
+	{
+		return;
+	}
+
+	ViewModel->OnAmmoChanged.RemoveDynamic(this, &UPRHUDWidget::HandleAmmoChanged);
+	ViewModel->OnWeaponTypeChanged.RemoveDynamic(this, &UPRHUDWidget::HandleWeaponTypeChanged);
+	ViewModel->OnHealthChanged.RemoveDynamic(this, &UPRHUDWidget::HandleHealthChanged);
+
+	ViewModel = nullptr;
+}
+
+void UPRHUDWidget::ApplyInitialState()
+{
+	if (!ViewModel)
+	{
+		return;
+	}
+
+	HandleAmmoChanged(ViewModel->GetCurrentAmmo(), ViewModel->GetMaxAmmo());
+	HandleWeaponTypeChanged(ViewModel->GetWeaponTypeTag());
+	HandleHealthChanged(ViewModel->GetCurrentHealth(), ViewModel->GetMaxHealth());
+}
+
+void UPRHUDWidget::HandleAmmoChanged(int32 Current, int32 Max)
+{
+	if (AmmoText)
+	{
+		AmmoText->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), Current, Max)));
+	}
+}
+
+void UPRHUDWidget::HandleWeaponTypeChanged(const FGameplayTag& NewTag)
+{
+	if (!WeaponIcon)
+	{
+		return;
+	}
+
+	if (TObjectPtr<UTexture2D>* Icon = WeaponIconMap.Find(NewTag))
+	{
+		WeaponIcon->SetBrushFromTexture(*Icon);
+		WeaponIcon->SetVisibility(ESlateVisibility::HitTestInvisible);
+	}
+	else
+	{
+		WeaponIcon->SetVisibility(ESlateVisibility::Collapsed);
+	}
+}
+
+void UPRHUDWidget::HandleHealthChanged(float Current, float Max)
+{
+	if (HealthBar)
+	{
+		const float Percent = (Max > KINDA_SMALL_NUMBER) ? (Current / Max) : 0.0f;
+		HealthBar->SetPercent(Percent);
+	}
+}

@@ -18,6 +18,7 @@
 #include "ProjectReboot/Equipment/PREquipmentManagerComponent.h"
 #include "ProjectReboot/Input/PREnhancedInputComponent.h"
 #include "ProjectReboot/UI/Crosshair/PRCrosshairViewModel.h"
+#include "ProjectReboot/UI/HUD/PRHUDViewModel.h"
 #include "ProjectReboot/UI/ViewModel/PRViewModelSubsystem.h"
 
 
@@ -140,12 +141,12 @@ void APRPlayerCharacter::PossessedBy(AController* NewController)
 		AbilitySystem->GiveAbilitySet(DefaultAbilitySet, DefaultAbilitySetHandles);
 	}
 
-	BindCrosshairViewModel();
+	BindViewModels();
 }
 
 void APRPlayerCharacter::UnPossessed()
 {
-	UnbindCrosshairViewModel();
+	UnbindViewModels();
 	Super::UnPossessed();
 }
 
@@ -217,7 +218,7 @@ void APRPlayerCharacter::HandleStateTagChanged(const FGameplayTag Tag, int32 New
 	}
 }
 
-UPRCrosshairViewModel* APRPlayerCharacter::GetCrosshairViewModel() const
+UPRViewModelSubsystem* APRPlayerCharacter::GetViewModelSubsystem() const
 {
 	APlayerController* PC = GetController<APlayerController>();
 	if (!PC)
@@ -231,26 +232,42 @@ UPRCrosshairViewModel* APRPlayerCharacter::GetCrosshairViewModel() const
 		return nullptr;
 	}
 
-	UPRViewModelSubsystem* VMS = LP->GetSubsystem<UPRViewModelSubsystem>();
-	if (!VMS)
-	{
-		return nullptr;
-	}
-
-	return VMS->GetOrCreateGlobalViewModel<UPRCrosshairViewModel>();
+	return LP->GetSubsystem<UPRViewModelSubsystem>();
 }
 
-void APRPlayerCharacter::BindCrosshairViewModel()
+void APRPlayerCharacter::BindViewModels()
 {
-	if (UPRCrosshairViewModel* VM = GetCrosshairViewModel())
+	UPRViewModelSubsystem* ViewModelSubsystem = GetViewModelSubsystem();
+	if (!ViewModelSubsystem)
+	{
+		return;
+	}
+	
+	if (UPRCrosshairViewModel* VM = ViewModelSubsystem->GetOrCreateGlobalViewModel<UPRCrosshairViewModel>())
+	{
+		VM->BindToASC(AbilitySystem);
+	}
+	
+	if (UPRHUDViewModel* VM = ViewModelSubsystem->GetOrCreateGlobalViewModel<UPRHUDViewModel>())
 	{
 		VM->BindToASC(AbilitySystem);
 	}
 }
 
-void APRPlayerCharacter::UnbindCrosshairViewModel()
+void APRPlayerCharacter::UnbindViewModels()
 {
-	if (UPRCrosshairViewModel* VM = GetCrosshairViewModel())
+	UPRViewModelSubsystem* ViewModelSubsystem = GetViewModelSubsystem();
+	if (!ViewModelSubsystem)
+	{
+		return;
+	}
+	
+	if (UPRCrosshairViewModel* VM = ViewModelSubsystem->GetOrCreateGlobalViewModel<UPRCrosshairViewModel>())
+	{
+		VM->UnbindFromASC();
+	}
+	
+	if (UPRHUDViewModel* VM = ViewModelSubsystem->GetOrCreateGlobalViewModel<UPRHUDViewModel>())
 	{
 		VM->UnbindFromASC();
 	}

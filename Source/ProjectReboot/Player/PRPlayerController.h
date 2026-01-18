@@ -7,6 +7,7 @@
 #include "PRPlayerController.generated.h"
 
 class UPRCrosshairConfig;
+class UPRCameraConfig;
 class UPRAbilitySystemComponent;
 /**
  * 
@@ -25,12 +26,14 @@ public:
 	
 	/*~ APlayerController Interfaces ~*/
 	virtual void PostProcessInput(const float DeltaTime, const bool bGamePaused) override;
+	virtual void OnPossess(APawn* InPawn) override;
+	virtual void OnUnPossess() override;
 	
 	/*~ APRPlayerController ~*/
 	UPRAbilitySystemComponent* GetPRAbilitySystemComponent() const;
 	
 protected:
-	// 크로스헤어 설정 (에디터에서 지정)
+	// 크로스헤어 설정
 	UPROPERTY(EditDefaultsOnly, Category = "UI|Crosshair")
 	TObjectPtr<UPRCrosshairConfig> CrosshairConfig;
 	

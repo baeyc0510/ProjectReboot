@@ -48,7 +48,7 @@ void UPRCrosshairViewModel::BindToASC(UAbilitySystemComponent* InASC)
 	
 	// ADS 태그
     ADSTagHandle = InASC->RegisterGameplayTagEvent(
-        TAG_State_ADS,
+        TAG_State_Aiming,
         EGameplayTagEventType::NewOrRemoved
     ).AddUObject(this, &UPRCrosshairViewModel::HandleADSTagChanged);
 
@@ -74,7 +74,7 @@ void UPRCrosshairViewModel::BindToASC(UAbilitySystemComponent* InASC)
 
     // 현재 값으로 초기화
     HandleCrosshairTagChanged(TAG_State_Weapon_Crosshair, InASC->HasMatchingGameplayTag(TAG_State_Weapon_Crosshair) ? 1 : 0);
-    HandleADSTagChanged(TAG_State_ADS, InASC->HasMatchingGameplayTag(TAG_State_ADS) ? 1 : 0);
+    HandleADSTagChanged(TAG_State_Aiming, InASC->HasMatchingGameplayTag(TAG_State_Aiming) ? 1 : 0);
     HandleCannotFireTagChanged(TAG_State_Weapon_CannotFire, InASC->HasMatchingGameplayTag(TAG_State_Weapon_CannotFire) ? 1 : 0);
 
     if (const UPRWeaponAttributeSet* WeaponAttr = InASC->GetSet<UPRWeaponAttributeSet>())

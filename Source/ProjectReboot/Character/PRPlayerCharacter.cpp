@@ -7,10 +7,10 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "RogueliteAbilityHandlerComponent.h"
-#include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "ProjectReboot/Camera/PRCameraComponent.h"
 #include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/AbilitySystem/PRAbilitySystemComponent.h"
 #include "ProjectReboot/AbilitySystem/PRCommonAttributeSet.h"
@@ -44,29 +44,19 @@ APRPlayerCharacter::APRPlayerCharacter()
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 
-	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 400.0f; // The camera follows at this distance behind the character	
-	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
-
-	// Create a follow camera
-	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
-	// Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
-	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+	CameraBoom->TargetArmLength = 400.0f;
+	CameraBoom->bUsePawnControlRotation = true;
 	
-	AbilitySystem = CreateDefaultSubobject<UPRAbilitySystemComponent>(TEXT("AbilitySystem"));
-	CommonAttributeSet = CreateDefaultSubobject<UPRCommonAttributeSet>(TEXT("CommonAttributeSet"));
+	CameraComponent = CreateDefaultSubobject<UPRCameraComponent>(TEXT("CameraComponent"));
+	CameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+	
 	WeaponAttributeSet = CreateDefaultSubobject<UPRWeaponAttributeSet>(TEXT("WeaponAttributeSet"));
 	RogueliteAbilityHandler = CreateDefaultSubobject<URogueliteAbilityHandlerComponent>(TEXT("RogueliteAbilityHandler"));
 	EquipmentManager = CreateDefaultSubobject<UPREquipmentManagerComponent>(TEXT("EquipmentManager"));
 }
 
-UAbilitySystemComponent* APRPlayerCharacter::GetAbilitySystemComponent() const
-{
-	return AbilitySystem;
-}
 
 bool APRPlayerCharacter::IsCrouching() const
 {
@@ -86,13 +76,23 @@ bool APRPlayerCharacter::IsSprinting() const
 	return false;
 }
 
+bool APRPlayerCharacter::IsAiming() const
+{
+	if (AbilitySystem)
+	{
+		return AbilitySystem->HasMatchingGameplayTag(TAG_State_Aiming);
+	}
+	return false;
+}
+
 void APRPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
 	if (AbilitySystem)
 	{
-		AbilitySystem->GiveAbilitySet(DefaultAbilitySet, DefaultAbilitySetHandles);
+		AbilitySystem->RegisterGameplayTagEvent(TAG_State,EGameplayTagEventType::Type::NewOrRemoved)
+		.AddUObject(this, &ThisClass::HandleStateTagChanged);
 	}
 }
 
@@ -133,10 +133,11 @@ void APRPlayerCharacter::NotifyControllerChanged()
 void APRPlayerCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-	
+
 	if (AbilitySystem)
 	{
 		AbilitySystem->InitAbilityActorInfo(this, this);
+		AbilitySystem->GiveAbilitySet(DefaultAbilitySet, DefaultAbilitySetHandles);
 	}
 
 	BindCrosshairViewModel();
@@ -198,6 +199,21 @@ void APRPlayerCharacter::Look(const FInputActionValue& Value)
 		// add yaw and pitch input to controller
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
+	}
+}
+
+void APRPlayerCharacter::HandleStateTagChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	if (Tag.MatchesTag(TAG_State_Aiming))
+	{
+		if (NewCount > 0)
+		{
+			GetCharacterMovement()->RotationRate.Yaw = 660.f;
+		}
+		else
+		{
+			GetCharacterMovement()->RotationRate.Yaw = 540.f;
+		}
 	}
 }
 

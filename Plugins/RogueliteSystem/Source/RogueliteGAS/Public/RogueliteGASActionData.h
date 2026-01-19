@@ -8,6 +8,35 @@
 class UGameplayAbility;
 class UGameplayEffect;
 
+
+USTRUCT(BlueprintType)
+struct FRogueliteAbilityEntry
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
+	TSubclassOf<UGameplayAbility> AbilityClass;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
+	FGameplayTagContainer DynamicTags;
+	
+	FORCEINLINE bool IsValidData() const;
+};
+
+USTRUCT(BlueprintType)
+struct FRogueliteEffectEntry
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
+	TSubclassOf<UGameplayEffect> EffectClass;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
+	FGameplayTagContainer DynamicTags;
+	
+	FORCEINLINE bool IsValidData() const;
+};
+
 /**
  * GAS 확장 ActionData
  * Ability/Effect를 정의하고 트리거 조건을 설정
@@ -22,15 +51,11 @@ public:
 
 	// 부여할 Ability 클래스들
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
-	TArray<TSubclassOf<UGameplayAbility>> Abilities;
+	TArray<FRogueliteAbilityEntry> Abilities;
 
 	// 적용할 Effect 클래스들
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
-	TArray<TSubclassOf<UGameplayEffect>> Effects;
-
-	// Ability와 Effect의 DynamicTags에 추가되는 태그 목록
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
-	FGameplayTagContainer DynamicTags;
+	TArray<FRogueliteEffectEntry> Effects;
 	
 	// TagsToGrant의 태그들을 AbilitySystemComponent에 적용할지 여부
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")

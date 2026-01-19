@@ -66,4 +66,38 @@ public:
     UPROPERTY(BlueprintReadOnly, Category = "Damage")
     FGameplayAttributeData DamageMultiplier;
     ATTRIBUTE_ACCESSORS(UPRWeaponAttributeSet, DamageMultiplier)
+
+    /*~ Beam Weapon Attributes ~*/
+
+    // 현재 에너지
+    UPROPERTY(BlueprintReadOnly, Category = "Energy")
+    FGameplayAttributeData Energy;
+    ATTRIBUTE_ACCESSORS(UPRWeaponAttributeSet, Energy)
+
+    // 최대 에너지
+    UPROPERTY(BlueprintReadOnly, Category = "Energy")
+    FGameplayAttributeData MaxEnergy;
+    ATTRIBUTE_ACCESSORS(UPRWeaponAttributeSet, MaxEnergy)
+
+    // 초당 에너지 소모량
+    UPROPERTY(BlueprintReadOnly, Category = "Energy")
+    FGameplayAttributeData EnergyDrainRate;
+    ATTRIBUTE_ACCESSORS(UPRWeaponAttributeSet, EnergyDrainRate)
+
+    /*~ Missile Weapon Attributes ~*/
+
+    // 장전된 미사일 수
+    UPROPERTY(BlueprintReadOnly, Category = "Missile")
+    FGameplayAttributeData LoadedMissiles;
+    ATTRIBUTE_ACCESSORS(UPRWeaponAttributeSet, LoadedMissiles)
+
+    // 최대 미사일 장전 수
+    UPROPERTY(BlueprintReadOnly, Category = "Missile")
+    FGameplayAttributeData MaxLoadedMissiles;
+    ATTRIBUTE_ACCESSORS(UPRWeaponAttributeSet, MaxLoadedMissiles)
+
+    // 폭발 반경
+    UPROPERTY(BlueprintReadOnly, Category = "Missile")
+    FGameplayAttributeData ExplosionRadius;
+    ATTRIBUTE_ACCESSORS(UPRWeaponAttributeSet, ExplosionRadius)
 };

@@ -91,6 +91,7 @@ void UPRAnimInstance::UpdateFlags()
 	bIsFalling = CharacterMovement->IsFalling();
 	bIsCrouching = PlayerCharacter->IsCrouching();
 	bIsSprint = PlayerCharacter->IsSprinting();
+	bIsAiming = PlayerCharacter->IsAiming();
 	LandState = ELandState::Normal; // TODO: Character 상태 적용
 }
 
@@ -99,9 +100,9 @@ void UPRAnimInstance::UpdateAim()
 	FRotator AimRotation = PlayerCharacter->GetBaseAimRotation();
 	FRotator ActorRotation = PlayerCharacter->GetActorRotation();
 	FRotator DeltaRotator = UKismetMathLibrary::NormalizedDeltaRotator(AimRotation, ActorRotation);
-	
-	AimYaw = DeltaRotator.Yaw;
+    
 	AimPitch = DeltaRotator.Pitch;
+	AimYaw = -RootYawOffset;
 }
 
 void UPRAnimInstance::UpdateLean()
@@ -117,8 +118,8 @@ void UPRAnimInstance::UpdateTurnInPlace()
     const float TurnYawWeight = GetCurveValue(TurnYawWeightCurveName);
     const float CurveRemainingTurnYaw = GetCurveValue(RemainingTurnYawCurveName);
     
-    // TurnYawWeight가 0보다 크면 Turn 애니메이션 활성 상태
-    bIsTurningInPlace = TurnYawWeight > 0.0f;
+	// 조준 중이 아닐 때만 제자리 회전 애니메이션이 활성화되도록 제어
+	bIsTurningInPlace = TurnYawWeight > 0.0f;
     
     // Distance 커브 업데이트 (RemainingTurnYaw 사용)
     LastDistanceCurve = DistanceCurve;
@@ -132,7 +133,7 @@ void UPRAnimInstance::UpdateRootYawOffset()
 	LastMovingRotation = MovingRotation;
 	MovingRotation = PlayerCharacter->GetActorRotation();
     
-	if (bShouldMove || bIsFalling)
+	if (bShouldMove || bIsFalling || bIsAiming) 
 	{
 		RootYawOffset = FMath::FInterpTo(RootYawOffset, 0.0f, DeltaSeconds, RootYawOffsetInterpSpeed);
 	}

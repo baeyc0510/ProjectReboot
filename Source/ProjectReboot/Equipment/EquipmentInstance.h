@@ -79,6 +79,10 @@ public:
 	bool HasVisual(UPREquipActionData* ActionData) const;
 
 protected:
+	// 장비 태그 변경 시 호출되는 가상 함수
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	virtual void OnEquipmentTagsChanged();
+
 	FEquipmentMeshSpawnInfo SelectSpawnInfo(const FEquipmentVisualSettings& VisualSettings) const;
 	USceneComponent* CreateMeshComponent(const FEquipmentMeshSpawnInfo& SpawnInfo, bool bIsPrimaryMesh);
 	void ApplyAttachment(USceneComponent* Component, const FEquipmentAttachmentInfo& AttachInfo, bool bIsChild);

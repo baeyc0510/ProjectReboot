@@ -4,6 +4,7 @@
 
 UPRWeaponAttributeSet::UPRWeaponAttributeSet()
 {
+	// Bullet
 	InitAmmo(30.0f);
 	InitMaxAmmo(30.0f);
 	InitReserveAmmo(90.0f);
@@ -12,6 +13,16 @@ UPRWeaponAttributeSet::UPRWeaponAttributeSet()
 	InitReloadTime(2.0f);
 	InitBaseDamage(25.0f);
 	InitDamageMultiplier(1.0f);
+
+	// Beam
+	InitEnergy(100.0f);
+	InitMaxEnergy(100.0f);
+	InitEnergyDrainRate(20.0f);
+
+	// Missile
+	InitLoadedMissiles(4.0f);
+	InitMaxLoadedMissiles(4.0f);
+	InitExplosionRadius(300.0f);
 }
 
 void UPRWeaponAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
@@ -42,6 +53,24 @@ void UPRWeaponAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribu
 	{
 		NewValue = FMath::Max(0.0f, NewValue);
 	}
+	// Energy 클램핑
+	else if (Attribute == GetEnergyAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxEnergy());
+	}
+	// LoadedMissiles 클램핑
+	else if (Attribute == GetLoadedMissilesAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxLoadedMissiles());
+	}
+	// 음수 방지 (Max 값들, 비율들)
+	else if (Attribute == GetMaxEnergyAttribute() ||
+			 Attribute == GetEnergyDrainRateAttribute() ||
+			 Attribute == GetMaxLoadedMissilesAttribute() ||
+			 Attribute == GetExplosionRadiusAttribute())
+	{
+		NewValue = FMath::Max(0.0f, NewValue);
+	}
 }
 
 void UPRWeaponAttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)
@@ -62,6 +91,22 @@ void UPRWeaponAttributeSet::PostAttributeChange(const FGameplayAttribute& Attrib
 		if (GetReserveAmmo() > NewValue)
 		{
 			SetReserveAmmo(NewValue);
+		}
+	}
+	// MaxEnergy 변경 시 Energy 재클램핑
+	else if (Attribute == GetMaxEnergyAttribute())
+	{
+		if (GetEnergy() > NewValue)
+		{
+			SetEnergy(NewValue);
+		}
+	}
+	// MaxLoadedMissiles 변경 시 LoadedMissiles 재클램핑
+	else if (Attribute == GetMaxLoadedMissilesAttribute())
+	{
+		if (GetLoadedMissiles() > NewValue)
+		{
+			SetLoadedMissiles(NewValue);
 		}
 	}
 }

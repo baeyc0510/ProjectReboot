@@ -15,6 +15,7 @@
 #include "ProjectReboot/AbilitySystem/PRAbilitySystemComponent.h"
 #include "ProjectReboot/AbilitySystem/PRCommonAttributeSet.h"
 #include "ProjectReboot/AbilitySystem/PRWeaponAttributeSet.h"
+#include "ProjectReboot/Combat/CombatBlueprintFunctionLibrary.h"
 #include "ProjectReboot/Equipment/PREquipmentManagerComponent.h"
 #include "ProjectReboot/Input/PREnhancedInputComponent.h"
 #include "ProjectReboot/UI/Crosshair/PRCrosshairViewModel.h"
@@ -58,6 +59,23 @@ APRPlayerCharacter::APRPlayerCharacter()
 	EquipmentManager = CreateDefaultSubobject<UPREquipmentManagerComponent>(TEXT("EquipmentManager"));
 }
 
+UCameraComponent* APRPlayerCharacter::DetachCamera()
+{
+	if (!IsValid(CameraBoom))
+	{
+		return nullptr;
+	}
+
+	// SpringArm을 캐릭터에서 분리하여 월드 위치 고정
+	CameraBoom->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+
+	// 래그돌에 의한 회전 영향 방지
+	CameraBoom->bInheritPitch = false;
+	CameraBoom->bInheritYaw = false;
+	CameraBoom->bInheritRoll = false;
+	
+	return CameraComponent;
+}
 
 bool APRPlayerCharacter::IsCrouching() const
 {
@@ -150,6 +168,19 @@ void APRPlayerCharacter::UnPossessed()
 	Super::UnPossessed();
 }
 
+void APRPlayerCharacter::FinishDie()
+{
+	Super::FinishDie();
+	
+	DetachCamera();
+	
+	UCombatBlueprintFunctionLibrary::EnableRagdoll(this);
+	GetCharacterMovement()->bOrientRotationToMovement = false;
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
+	
+	GetWorldTimerManager().SetTimer(DeathTimerHandle, this, &ThisClass::HandleFullyDeath, 2.f);
+}
+
 void APRPlayerCharacter::OnTaggedInputPressed(FGameplayTag InputTag)
 {
 	if (AbilitySystem)
@@ -168,6 +199,10 @@ void APRPlayerCharacter::OnTaggedInputReleased(FGameplayTag InputTag)
 
 void APRPlayerCharacter::Move(const FInputActionValue& Value)
 {
+	if (IsDead())
+	{
+		return;
+	}
 	// input is a Vector2D
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
@@ -191,6 +226,10 @@ void APRPlayerCharacter::Move(const FInputActionValue& Value)
 
 void APRPlayerCharacter::Look(const FInputActionValue& Value)
 {
+	if (bIsFullyDead)
+	{
+		return;
+	}
 	// input is a Vector2D
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 	DesiredLookDirection = LookAxisVector.X;
@@ -271,4 +310,10 @@ void APRPlayerCharacter::UnbindViewModels()
 	{
 		VM->UnbindFromASC();
 	}
+}
+
+void APRPlayerCharacter::HandleFullyDeath()
+{
+	bIsFullyDead = true;
+	UCombatBlueprintFunctionLibrary::FreezeRagdoll(this);
 }

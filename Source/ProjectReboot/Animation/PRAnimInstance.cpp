@@ -31,11 +31,11 @@ void UPRAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	UpdateVelocity();
 	UpdateAcceleration();
 	UpdateDirection();
-	UpdateAim();
 	UpdateLean();
 	UpdateFlags();
 	UpdateTurnInPlace();
 	UpdateRootYawOffset();
+	UpdateAim();
 }
 
 void UPRAnimInstance::UpdateVelocity()

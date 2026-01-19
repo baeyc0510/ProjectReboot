@@ -8,6 +8,7 @@
 #include "ProjectReboot/AbilitySystem/PRAbilitySet.h"
 #include "PRPlayerCharacter.generated.h"
 
+class UCameraComponent;
 class UPRViewModelSubsystem;
 class USpringArmComponent;
 class UPRWeaponAttributeSet;
@@ -30,7 +31,9 @@ public:
 	APRPlayerCharacter();
 
 	/*~ APRPlayerCharacter Interfaces ~*/
-
+	UFUNCTION(BlueprintCallable, Category = "Camera")
+	UCameraComponent* DetachCamera();
+	
 	// 카메라 컴포넌트 반환
 	FORCEINLINE UPRCameraComponent* GetCameraComponent() const { return CameraComponent; }
 	
@@ -49,6 +52,9 @@ protected:
 	virtual void NotifyControllerChanged() override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void UnPossessed() override;
+	
+	/*~ IPRCombatInterface ~*/
+	virtual void FinishDie() override;
 	
 	/*~ APRPlayerCharacter Interfaces ~*/
 	
@@ -71,6 +77,9 @@ private:
 	void BindViewModels();
 	void UnbindViewModels();
 
+	UFUNCTION()
+	void HandleFullyDeath();
+	
 protected:
 	// 카메라
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
@@ -113,4 +122,6 @@ private:
 	float DesiredLookDirection;
 	FPRAbilitySetHandles DefaultAbilitySetHandles;
 	FDelegateHandle StateChangedDelegateHandle;
+	FTimerHandle DeathTimerHandle;
+	bool bIsFullyDead = false;
 };

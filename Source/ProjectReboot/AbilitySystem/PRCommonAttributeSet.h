@@ -22,18 +22,32 @@ class PROJECTREBOOT_API UPRCommonAttributeSet : public UAttributeSet
 	GENERATED_BODY()
 
 public:
+	/*~ UAttributeSet Interfaces ~*/
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 	virtual void PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) override;
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
+
+protected:
+	/*~ UPRCommonAttributeSet Interfaces ~*/
+	
+	// Health 변경 처리 (사망 체크 포함)
+	void HandleHealthChanged(const FGameplayEffectModCallbackData& Data);
+
+	// 사망 처리 (CombatInterface::Die 호출)
+	void HandleDeath(const FGameplayEffectModCallbackData& Data);
 	
 private:
 	void UpdateCharacterWalkSpeed();
 
 public:
+	/*~ Movement ~*/
+	
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	FGameplayAttributeData MoveSpeed;
 	ATTRIBUTE_ACCESSORS(UPRCommonAttributeSet, MoveSpeed)
 
+	/*~ Health ~*/
+	
 	UPROPERTY(BlueprintReadOnly, Category = "Health")
 	FGameplayAttributeData Health;
 	ATTRIBUTE_ACCESSORS(UPRCommonAttributeSet, Health)

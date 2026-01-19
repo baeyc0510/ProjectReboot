@@ -327,7 +327,7 @@ void URogueliteAbilityHandlerComponent::SubscribeActionToEvent(URogueliteGASActi
 	TWeakObjectPtr<URogueliteGASActionData> WeakAction = Action;
 
 	// 공통 핸들러
-	auto TriggerHandler = [this, WeakAction](const FGameplayEventData* Payload)
+	auto TriggerHandler = [this, WeakAction, EventTag](const FGameplayEventData* Payload)
 	{
 		URogueliteGASActionData* Action = WeakAction.Get();
 		if (!Action || !Payload)
@@ -338,7 +338,7 @@ void URogueliteAbilityHandlerComponent::SubscribeActionToEvent(URogueliteGASActi
 		FRogueliteGASHandles* Handles = ActionHandleMap.Find(Action);
 		if (Handles)
 		{
-			ProcessTrigger(Action, Payload, *Handles);
+			ProcessTrigger(Action,EventTag, Payload, *Handles);
 		}
 	};
 
@@ -443,15 +443,15 @@ void URogueliteAbilityHandlerComponent::GrantAbilities(URogueliteGASActionData* 
 		return;
 	}
 
-	for (TSubclassOf<UGameplayAbility> AbilityClass : Action->Abilities)
+	for (const auto& AbilityEntry : Action->Abilities)
 	{
-		if (!IsValid(AbilityClass))
+		if (!AbilityEntry.IsValidData())
 		{
 			continue;
 		}
 
-		FGameplayAbilitySpec Spec(AbilityClass, Level, INDEX_NONE, GetOwner());
-		Spec.GetDynamicSpecSourceTags().AppendTags(Action->DynamicTags);
+		FGameplayAbilitySpec Spec(AbilityEntry.AbilityClass, Level, INDEX_NONE, GetOwner());
+		Spec.GetDynamicSpecSourceTags().AppendTags(AbilityEntry.DynamicTags);
 		FGameplayAbilitySpecHandle Handle = CachedASC->GiveAbility(Spec);
 
 		if (Handle.IsValid())
@@ -486,9 +486,9 @@ void URogueliteAbilityHandlerComponent::ApplyEffectsInternal(URogueliteGASAction
 		return;
 	}
 
-	for (TSubclassOf<UGameplayEffect> EffectClass : Action->Effects)
+	for (auto& EffectEntry : Action->Effects)
 	{
-		if (!IsValid(EffectClass))
+		if (!EffectEntry.IsValidData())
 		{
 			continue;
 		}
@@ -503,10 +503,10 @@ void URogueliteAbilityHandlerComponent::ApplyEffectsInternal(URogueliteGASAction
 		}
 
 		int32 EffectLevel = (Action->StackScalingMode == ERogueliteStackScalingMode::Level) ? Stacks : 1;
-		FGameplayEffectSpecHandle SpecHandle = CachedASC->MakeOutgoingSpec(EffectClass, EffectLevel, Context);
+		FGameplayEffectSpecHandle SpecHandle = CachedASC->MakeOutgoingSpec(EffectEntry.EffectClass, EffectLevel, Context);
 		if ( auto Spec = SpecHandle.Data.Get())
 		{
-			Spec->AppendDynamicAssetTags(Action->DynamicTags);
+			Spec->AppendDynamicAssetTags(EffectEntry.DynamicTags);
 		}
 		
 		if (SpecHandle.IsValid())
@@ -630,7 +630,7 @@ void URogueliteAbilityHandlerComponent::RefreshForStackChange(URogueliteGASActio
 	Handles.AppliedStacks = NewStacks;
 }
 
-void URogueliteAbilityHandlerComponent::ProcessTrigger(URogueliteGASActionData* Action, const FGameplayEventData* Payload, FRogueliteGASHandles& Handles)
+void URogueliteAbilityHandlerComponent::ProcessTrigger(URogueliteGASActionData* Action,const FGameplayTag& EventTag, const FGameplayEventData* Payload, FRogueliteGASHandles& Handles)
 {
 	const FRogueliteTriggerCondition& Condition = Action->TriggerCondition;
 
@@ -658,7 +658,8 @@ void URogueliteAbilityHandlerComponent::ProcessTrigger(URogueliteGASActionData* 
 
 	for (const FGameplayAbilitySpecHandle& Handle : Handles.GrantedAbilities)
 	{
-		CachedASC->TryActivateAbility(Handle);
+		FGameplayAbilityActorInfo* ActorInfo = CachedASC->AbilityActorInfo.Get();
+		CachedASC->TriggerAbilityFromGameplayEvent(Handle, ActorInfo,EventTag, Payload, *CachedASC);
 	}
 
 	// Effect Apply (트리거 시에는 Payload와 함께)

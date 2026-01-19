@@ -108,7 +108,7 @@ protected:
 	void SetupActionGAS(URogueliteGASActionData* Action, int32 Stacks, FRogueliteGASHandles& Handles);
 
 	// 트리거 처리
-	void ProcessTrigger(URogueliteGASActionData* Action, const FGameplayEventData* Payload, FRogueliteGASHandles& Handles);
+	void ProcessTrigger(URogueliteGASActionData* Action, const FGameplayTag& EventTag, const FGameplayEventData* Payload, FRogueliteGASHandles& Handles);
 
 	// 이벤트 구독 해제 헬퍼
 	void RemoveEventSubscription(URogueliteGASActionData* Action, const FDelegateHandle& Handle);

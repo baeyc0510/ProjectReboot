@@ -23,6 +23,7 @@ void UPRLinkedAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	
 	bIsSprint = MainAnimInstance->bIsSprint;
 	bIsCrouching = MainAnimInstance->bIsCrouching;
+	bIsAiming = MainAnimInstance->bIsAiming;
 	F_OrientationAngle = MainAnimInstance->F_OrientationAngle;
 	R_OrientationAngle = MainAnimInstance->R_OrientationAngle;
 	B_OrientationAngle = MainAnimInstance->B_OrientationAngle;

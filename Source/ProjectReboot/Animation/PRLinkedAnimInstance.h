@@ -30,6 +30,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	bool bIsCrouching;
 	
+	UPROPERTY(BlueprintReadOnly)
+	bool bIsAiming;
+	
 	// 전방 기준 방향 각도
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	float F_OrientationAngle;

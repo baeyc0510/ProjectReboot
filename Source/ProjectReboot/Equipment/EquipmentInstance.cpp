@@ -38,6 +38,7 @@ void UEquipmentInstance::AttachPart(UPREquipActionData* InActionData)
 
     // 태그 추가
     EquipmentTags.AppendTags(InActionData->EquipmentTags);
+    OnEquipmentTagsChanged();
 
     // 스폰 정보 선택
     FEquipmentMeshSpawnInfo SpawnInfo = SelectSpawnInfo(InActionData->EquipmentVisualSettings);
@@ -83,6 +84,7 @@ void UEquipmentInstance::DetachPart(UPREquipActionData* InActionData)
 
     // 태그 제거
     EquipmentTags.RemoveTags(InActionData->EquipmentTags);
+    OnEquipmentTagsChanged();
 }
 
 TArray<UPREquipActionData*> UEquipmentInstance::GetAllAttachedActions() const
@@ -288,4 +290,9 @@ USceneComponent* UEquipmentInstance::GetPrimaryComponent() const
 bool UEquipmentInstance::HasVisual(UPREquipActionData* InActionData) const
 {
     return SpawnedVisuals.Contains(InActionData);
+}
+
+void UEquipmentInstance::OnEquipmentTagsChanged()
+{
+    // 하위 클래스에서 override하여 태그 변경에 따른 처리 수행
 }

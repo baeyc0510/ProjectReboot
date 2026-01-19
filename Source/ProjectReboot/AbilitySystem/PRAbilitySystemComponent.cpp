@@ -39,6 +39,8 @@ void UPRAbilitySystemComponent::ApplyEffectEntry(const FPREffectEntry& EffectEnt
     if (SpecHandle.IsValid())
     {
         SpecHandle.Data->AppendDynamicAssetTags(EffectEntry.DynamicTags);
+        const bool bIsNetAuthority = IsOwnerActorAuthoritative(); // Debug
+        const bool bHasAuth = HasNetworkAuthorityToApplyGameplayEffect(FPredictionKey());
         OutHandle = ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
     }
 }

@@ -5,12 +5,14 @@
 
 #include "AbilitySystemInterface.h"
 #include "ProjectReboot/AbilitySystem/PRAbilitySystemComponent.h"
+#include "ProjectReboot/Camera/PRCameraConfig.h"
+#include "ProjectReboot/Camera/PRPlayerCameraManager.h"
 #include "ProjectReboot/UI/Crosshair/PRCrosshairViewModel.h"
 #include "ProjectReboot/UI/ViewModel/PRViewModelSubsystem.h"
 
 APRPlayerController::APRPlayerController(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-	
+	PlayerCameraManagerClass = APRPlayerCameraManager::StaticClass();
 }
 
 void APRPlayerController::BeginPlay()
@@ -68,4 +70,29 @@ void APRPlayerController::InitializeViewModels()
 
 void APRPlayerController::DeinitializeViewModels()
 {
+}
+
+void APRPlayerController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	// CameraManager에 ASC 바인딩
+	if (APRPlayerCameraManager* CameraManager = Cast<APRPlayerCameraManager>(PlayerCameraManager))
+	{
+		if (UPRAbilitySystemComponent* ASC = GetPRAbilitySystemComponent())
+		{
+			CameraManager->BindToASC(ASC);
+		}
+	}
+}
+
+void APRPlayerController::OnUnPossess()
+{
+	// CameraManager ASC 바인딩 해제
+	if (APRPlayerCameraManager* CameraManager = Cast<APRPlayerCameraManager>(PlayerCameraManager))
+	{
+		CameraManager->UnbindFromASC();
+	}
+
+	Super::OnUnPossess();
 }

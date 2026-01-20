@@ -4,9 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "PRCharacterBase.h"
+#include "ProjectReboot/AbilitySystem/PRAbilitySet.h"
 #include "PREnemyCharacter.generated.h"
 
 
+class UPRAbilitySet;
 struct FPRAICombatConfig;
 class UPRAIConfig;
 
@@ -29,9 +31,18 @@ public:
 	bool IsStrafeMode() const {return bIsStrafeMode;}
 	
 protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, BlueprintGetter=GetAIConfig,  Category = "AI")
+	/*~ AActor Interfaces ~*/
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, BlueprintGetter=GetAIConfig,  Category = "PR Enemy")
 	TObjectPtr<UPRAIConfig> AIConfig;
+	
+	/** AbilityConfig */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "PR Enemy")
+	TObjectPtr<UPRAbilitySet> EnemyAbilitySet;
 	
 private:
 	bool bIsStrafeMode;
+	FPRAbilitySetHandles AbilitySetHandles;
 };

@@ -29,8 +29,8 @@ void UPRSTT_FaceTarget::NativeReceivedTick(FStateTreeExecutionContext& Context, 
 	const FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(PawnLocation, TargetLocation);
 
 	// Yaw만 보간
-	const FRotator CurrentRotation = Controller->GetControlRotation();
+	const FRotator CurrentRotation = Pawn->GetActorRotation();
 	const FRotator NewRotation = FMath::RInterpTo(CurrentRotation, LookAtRotation, DeltaTime, RotationRate / 360.f * 10.f);
 
-	Controller->SetControlRotation(FRotator(0.f, NewRotation.Yaw, 0.f));
+	Pawn->SetActorRotation(NewRotation);
 }

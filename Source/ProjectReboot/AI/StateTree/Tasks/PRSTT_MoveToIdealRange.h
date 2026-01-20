@@ -29,6 +29,9 @@ public:
 	// 도착 허용 오차
 	UPROPERTY(EditAnywhere, Category = "Input")
 	float AcceptanceRadius = 50.f;
+	
+	UPROPERTY(EditAnywhere)
+	bool bCanStrafe = false;
 
 protected:
 	virtual void OnEnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;

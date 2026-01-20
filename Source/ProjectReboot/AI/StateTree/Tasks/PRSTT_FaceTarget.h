@@ -22,7 +22,7 @@ public:
 
 	// 회전 속도
 	UPROPERTY(EditAnywhere, Category = "Input")
-	float RotationRate = 360.f;
+	float RotationRate = 120.f;
 
 protected:
 	virtual void NativeReceivedTick(FStateTreeExecutionContext& Context, const float DeltaTime) override;

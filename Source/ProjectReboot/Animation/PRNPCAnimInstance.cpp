@@ -5,6 +5,7 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "ProjectReboot/Character/PREnemyCharacter.h"
 
 void UPRNPCAnimInstance::NativeInitializeAnimation()
 {
@@ -29,11 +30,14 @@ void UPRNPCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		return;
 	}
 
-	// 데이터 캐싱
 	CachedVelocity = MovementComponent->Velocity;
 	CachedForward = OwningPawn->GetActorForwardVector();
 	CachedRotation = OwningPawn->GetActorRotation();
-	bCachedOrientToMovement = MovementComponent->bOrientRotationToMovement;
+	
+	if (APREnemyCharacter* EnemyCharacter = Cast<APREnemyCharacter>(OwningPawn.Get()))
+	{
+		bIsStrafing = EnemyCharacter->IsStrafeMode();
+	}
 }
 
 void UPRNPCAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
@@ -44,16 +48,17 @@ void UPRNPCAnimInstance::NativeThreadSafeUpdateAnimation(float DeltaSeconds)
 	bIsMoving = CurrentSpeed > MoveThreshold;
 
 	UpdateDirection();
-
-	// Strafe 상태
-	bIsStrafing = !bCachedOrientToMovement;
 }
 
 void UPRNPCAnimInstance::UpdateDirection()
 {
-	FRotator ActorRotation = CachedRotation;
 	FVector Velocity2D = CachedVelocity.GetSafeNormal2D();
-	float Direction =  UKismetAnimationLibrary::CalculateDirection(Velocity2D,ActorRotation);
+	if (CachedVelocity.SizeSquared2D() < 1.0f)
+	{
+		return;
+	}
+	
+	float Direction =  UKismetAnimationLibrary::CalculateDirection(Velocity2D,CachedRotation);
 	
 	if (Direction >= -70.f && Direction <= 70.f)
 	{

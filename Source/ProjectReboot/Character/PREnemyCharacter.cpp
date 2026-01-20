@@ -3,19 +3,14 @@
 
 #include "PREnemyCharacter.h"
 
-#include "GameFramework/CharacterMovementComponent.h"
-#include "ProjectReboot/AI/PRAIConfig.h"
-
-
 // Sets default values
 APREnemyCharacter::APREnemyCharacter()
 {
 	PrimaryActorTick.bCanEverTick = false;
+	bUseControllerRotationYaw = false;
 }
 
 void APREnemyCharacter::SetStrafeMode(bool bEnable)
 {
 	bIsStrafeMode = bEnable;
-	GetCharacterMovement()->bOrientRotationToMovement = !bEnable;
-	bUseControllerRotationYaw = bEnable;
 }

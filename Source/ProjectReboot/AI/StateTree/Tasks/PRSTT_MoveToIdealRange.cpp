@@ -29,6 +29,7 @@ void UPRSTT_MoveToIdealRange::OnEnterState(FStateTreeExecutionContext& Context, 
 	MoveReq.SetGoalLocation(Destination);
 	MoveReq.SetAcceptanceRadius(AcceptanceRadius);
 	MoveReq.SetUsePathfinding(true);
+	MoveReq.SetCanStrafe(bCanStrafe);
 
 	// UAITask_MoveTo 생성 및 설정 (엔진의 PrepareMoveToTask 로직)
 	if (!MoveToTask)

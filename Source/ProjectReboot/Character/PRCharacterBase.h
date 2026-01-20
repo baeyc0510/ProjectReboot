@@ -35,6 +35,7 @@ public:
 	/*~ APRCharacterBase Interface ~*/
 	float GetBaseMovementSpeed() const {return BaseMovementSpeed;}
 	virtual void HandleCollisionAndMovementOnDeath();
+	
 protected:
 	/** MovementConfigs */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")

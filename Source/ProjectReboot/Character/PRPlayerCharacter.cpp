@@ -10,6 +10,9 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perception/AISense_Hearing.h"
+#include "Perception/AISense_Sight.h"
 #include "ProjectReboot/Camera/PRCameraComponent.h"
 #include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/AbilitySystem/PRAbilitySystemComponent.h"
@@ -57,6 +60,14 @@ APRPlayerCharacter::APRPlayerCharacter()
 	WeaponAttributeSet = CreateDefaultSubobject<UPRWeaponAttributeSet>(TEXT("WeaponAttributeSet"));
 	RogueliteAbilityHandler = CreateDefaultSubobject<URogueliteAbilityHandlerComponent>(TEXT("RogueliteAbilityHandler"));
 	EquipmentManager = CreateDefaultSubobject<UPREquipmentManagerComponent>(TEXT("EquipmentManager"));
+	StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSourceComponent"));
+	
+	if (StimuliSourceComponent)
+	{
+		StimuliSourceComponent->bAutoRegister = true;
+		StimuliSourceComponent->RegisterForSense(UAISense_Sight::StaticClass());
+		StimuliSourceComponent->RegisterForSense(UAISense_Hearing::StaticClass());
+	}
 }
 
 UCameraComponent* APRPlayerCharacter::DetachCamera()

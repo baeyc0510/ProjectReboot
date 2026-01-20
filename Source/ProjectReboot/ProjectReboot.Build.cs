@@ -10,7 +10,11 @@ public class ProjectReboot : ModuleRules
 	
 		PublicDependencyModuleNames.AddRange(new string[]
 		{
-			"Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput"
+			"Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput",
+			"GameplayStateTreeModule",
+			"StateTreeModule",
+			"AIModule",
+			"NavigationSystem",
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[]
@@ -24,7 +28,8 @@ public class ProjectReboot : ModuleRules
 			"Slate",
 			"SlateCore",
 			"GameplayAbilities",
-			"GameplayTasks", "Niagara"
+			"GameplayTasks", "Niagara",
+
 		});
 
 		// Uncomment if you are using Slate UI

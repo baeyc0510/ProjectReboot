@@ -8,6 +8,7 @@
 #include "ProjectReboot/AbilitySystem/PRAbilitySet.h"
 #include "PRPlayerCharacter.generated.h"
 
+class UAIPerceptionStimuliSourceComponent;
 class UCameraComponent;
 class UPRViewModelSubsystem;
 class USpringArmComponent;
@@ -115,9 +116,11 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "PR AbilitySystem")
 	UPRWeaponAttributeSet* WeaponAttributeSet;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Equipment)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Equipment")
 	UPREquipmentManagerComponent* EquipmentManager;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
+	UAIPerceptionStimuliSourceComponent* StimuliSourceComponent;
 private:
 	float DesiredLookDirection;
 	FPRAbilitySetHandles DefaultAbilitySetHandles;

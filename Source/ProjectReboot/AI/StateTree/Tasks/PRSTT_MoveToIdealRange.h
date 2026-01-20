@@ -40,6 +40,7 @@ protected:
 
 	FVector CalculateIdealLocation(APawn* Pawn) const;
 
+private:
 	UPROPERTY()
 	TWeakObjectPtr<AAIController> CachedController;
 

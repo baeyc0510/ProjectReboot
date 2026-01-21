@@ -11,6 +11,7 @@ class UPREquipActionData;
 class UVerticalBox;
 class UPRActionListItemWidget;
 class UPRActorPreviewPanel;
+class UButton;
 
 /**
  * 액션 선택 패널 - 목록에서 액션을 선택하고 프리뷰 표시
@@ -46,9 +47,16 @@ public:
 	URogueliteActionData* GetSelectedActionData() const;
 
 protected:
+	virtual void NativeConstruct() override;
+
+protected:
 	// 아이템 클릭 핸들러
 	UFUNCTION()
 	void HandleItemClicked(UPRActionListItemWidget* ClickedItem);
+
+	// 선택 확정 버튼 클릭 핸들러
+	UFUNCTION()
+	void HandleConfirmButtonClicked();
 
 	// 아이템 선택 처리
 	void SelectItem(UPRActionListItemWidget* Item);
@@ -59,12 +67,19 @@ protected:
 	// EquipAction 처리
 	void HandleEquipAction(UPREquipActionData* EquipAction, bool bEquip);
 
+	// 선택 여부에 따라 버튼 활성화 갱신
+	void UpdateConfirmButtonState();
+
 public:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UPRActorPreviewPanel> ActorPreviewPanel;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UPanelWidget> DecisionListBox;
+
+	// 선택 확정 버튼
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UButton> ConfirmButton;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDecision")
 	TSubclassOf<UPRActionListItemWidget> DecisionItemWidgetClass;

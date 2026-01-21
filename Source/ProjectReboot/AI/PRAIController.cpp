@@ -6,13 +6,13 @@
 #include "PRAIConfig.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "ProjectReboot/Character/PREnemyCharacter.h"
-#include "StateTree/PRStateTreeComponent.h"
+#include "StateTree/PRStateTreeAIComponent.h"
 
 APRAIController::APRAIController()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	
-	StateTreeComponent = CreateDefaultSubobject<UPRStateTreeComponent>(TEXT("StateTreeComponent"));
+	StateTreeComponent = CreateDefaultSubobject<UPRStateTreeAIComponent>(TEXT("StateTreeComponent"));
 	PerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("PerceptionComponent"));
 }
 

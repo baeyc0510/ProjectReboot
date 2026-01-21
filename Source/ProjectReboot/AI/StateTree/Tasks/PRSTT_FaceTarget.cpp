@@ -7,6 +7,7 @@
 #include "StateTreeExecutionContext.h"
 #include "Kismet/KismetMathLibrary.h"
 
+
 void UPRSTT_FaceTarget::NativeReceivedTick(FStateTreeExecutionContext& Context, const float DeltaTime)
 {
 	Super::NativeReceivedTick(Context, DeltaTime);
@@ -27,10 +28,11 @@ void UPRSTT_FaceTarget::NativeReceivedTick(FStateTreeExecutionContext& Context, 
 	const FVector PawnLocation = Pawn->GetActorLocation();
 	const FVector TargetLocation = TargetActor->GetActorLocation();
 	const FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(PawnLocation, TargetLocation);
-
-	// Yaw만 보간
+	
 	const FRotator CurrentRotation = Pawn->GetActorRotation();
 	const FRotator NewRotation = FMath::RInterpTo(CurrentRotation, LookAtRotation, DeltaTime, RotationRate / 360.f * 10.f);
-
+	
 	Pawn->SetActorRotation(NewRotation);
+	
+	// 태스크가 매 Tick 계속 실행되어야 하므로 Finish 없음
 }

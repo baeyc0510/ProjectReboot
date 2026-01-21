@@ -6,7 +6,7 @@
 #include "Runtime/AIModule/Classes/AIController.h"
 #include "PRAIController.generated.h"
 
-class UPRStateTreeComponent;
+class UPRStateTreeAIComponent;
 class UStateTreeAIComponent;
 class UPRAIConfig;
 
@@ -29,7 +29,7 @@ public:
 	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PR AI")
-	TObjectPtr<UPRStateTreeComponent> StateTreeComponent;
+	TObjectPtr<UPRStateTreeAIComponent> StateTreeComponent;
 	
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<UPRAIConfig> AIConfig;

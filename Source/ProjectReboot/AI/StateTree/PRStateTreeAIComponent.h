@@ -5,16 +5,16 @@
 #include "CoreMinimal.h"
 #include "Components/StateTreeAIComponent.h"
 #include "Components/StateTreeComponent.h"
-#include "PRStateTreeComponent.generated.h"
+#include "PRStateTreeAIComponent.generated.h"
 
 
 UCLASS(meta=(BlueprintSpawnableComponent))
-class PROJECTREBOOT_API UPRStateTreeComponent : public UStateTreeAIComponent
+class PROJECTREBOOT_API UPRStateTreeAIComponent : public UStateTreeAIComponent
 {
 	GENERATED_BODY()
 
 public:
-	UPRStateTreeComponent(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+	UPRStateTreeAIComponent(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 	
 	/*~ UPRStateTreeComponent Interfaces ~*/
 	UFUNCTION(BlueprintCallable, Category = "PR|AI")

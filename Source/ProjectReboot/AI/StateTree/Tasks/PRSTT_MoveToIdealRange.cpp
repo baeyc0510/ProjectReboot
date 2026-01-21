@@ -38,7 +38,7 @@ void UPRSTT_MoveToIdealRange::OnEnterState(FStateTreeExecutionContext& Context, 
 	}
 	MoveToTask->SetUp(Controller, MoveReq);
 
-	// 3. 태스크 활성화
+	// 태스크 활성화
 	if (MoveToTask->IsActive())
 	{
 		MoveToTask->ConditionalPerformMove();
@@ -51,7 +51,9 @@ void UPRSTT_MoveToIdealRange::OnEnterState(FStateTreeExecutionContext& Context, 
 	// 즉시 종료 확인 (이미 도착한 경우 등)
 	if (MoveToTask->GetState() == EGameplayTaskState::Finished)
 	{
-		FinishTask(MoveToTask->WasMoveSuccessful());
+		bool bWasMoveSuccessful = MoveToTask->WasMoveSuccessful();
+		UE_LOG(LogTemp,Warning, TEXT("AI Move Was %s"), (bWasMoveSuccessful ? TEXT("Successful") : TEXT("Failed")));
+		FinishTask(bWasMoveSuccessful);
 	}
 }
 

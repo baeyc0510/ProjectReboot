@@ -3,10 +3,25 @@
 #include "PRActionDecisionPanel.h"
 
 #include "PRActionListItemWidget.h"
+#include "RogueliteBlueprintLibrary.h"
+#include "Components/Button.h"
 #include "Components/VerticalBox.h"
 #include "ProjectReboot/Equipment/PREquipmentBlueprintLibrary.h"
 #include "ProjectReboot/Equipment/PREquipActionData.h"
+#include "ProjectReboot/UI/PRUIBlueprintLibrary.h"
+#include "ProjectReboot/UI/PRUIManagerSubsystem.h"
 #include "ProjectReboot/UI/Preview/PRActorPreviewPanel.h"
+
+void UPRActionDecisionPanel::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	if (ConfirmButton)
+	{
+		ConfirmButton->OnClicked.AddDynamic(this, &UPRActionDecisionPanel::HandleConfirmButtonClicked);
+		ConfirmButton->SetIsEnabled(false);
+	}
+}
 
 void UPRActionDecisionPanel::SetSourceActor(AActor* InActor, TSubclassOf<AActor> PreviewActorClass)
 {
@@ -79,6 +94,9 @@ void UPRActionDecisionPanel::ClearDecisionList()
 		DeselectItem(SelectedItem);
 	}
 
+	SelectedItem = nullptr;
+	UpdateConfirmButtonState();
+
 	// 위젯 제거
 	if (DecisionListBox)
 	{
@@ -105,6 +123,7 @@ void UPRActionDecisionPanel::HandleItemClicked(UPRActionListItemWidget* ClickedI
 	{
 		DeselectItem(ClickedItem);
 		SelectedItem = nullptr;
+		UpdateConfirmButtonState();
 		return;
 	}
 
@@ -117,6 +136,25 @@ void UPRActionDecisionPanel::HandleItemClicked(UPRActionListItemWidget* ClickedI
 	// 새 아이템 선택
 	SelectItem(ClickedItem);
 	SelectedItem = ClickedItem;
+	UpdateConfirmButtonState();
+}
+
+void UPRActionDecisionPanel::HandleConfirmButtonClicked()
+{
+	if (SelectedItem)
+	{
+		if (URogueliteActionData* ActionToAcquire = SelectedItem->GetActionData())
+		{
+			URogueliteBlueprintLibrary::AcquireAction(this, ActionToAcquire);
+		}
+	}
+	
+	UPRUIBlueprintLibrary::PopUI(GetOwningPlayer(), this);
+	
+	if (IsInViewport())
+	{
+		RemoveFromParent();
+	}
 }
 
 void UPRActionDecisionPanel::SelectItem(UPRActionListItemWidget* Item)
@@ -173,5 +211,13 @@ void UPRActionDecisionPanel::HandleEquipAction(UPREquipActionData* EquipAction, 
 	{
 		// 장비 해제 후 SourceActor의 원래 장비 상태로 동기화
 		RefreshWidget();
+	}
+}
+
+void UPRActionDecisionPanel::UpdateConfirmButtonState()
+{
+	if (ConfirmButton)
+	{
+		ConfirmButton->SetIsEnabled(SelectedItem != nullptr);
 	}
 }

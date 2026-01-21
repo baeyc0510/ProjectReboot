@@ -150,6 +150,7 @@ void UPREquipmentManagerComponent::Unequip(FGameplayTag SlotTag, bool bRefreshVi
 		{
 			Instance->RefreshVisuals();	
 		}
+		Entry->Instance = nullptr;
 	}
 	
 	Slots.Remove(SlotTag);
@@ -269,7 +270,7 @@ void UPREquipmentManagerComponent::UnequipChildren(FGameplayTag ParentSlotTag)
 	TArray<FGameplayTag> ChildSlots = FindChildSlots(ParentSlotTag);
 	for (const FGameplayTag& ChildSlot : ChildSlots)
 	{
-		Unequip(ChildSlot);
+		Unequip(ChildSlot, false);
 	}
 }
 
@@ -393,7 +394,7 @@ void UPREquipmentManagerComponent::HandleActionAcquired(URogueliteActionData* Ac
 	{
 		return;
 	}
-	HandleActionRemoved_Internal(EquipAction,true);
+	HandleActionAcquired_Internal(EquipAction,true);
 }
 
 void UPREquipmentManagerComponent::HandleActionRemoved(URogueliteActionData* Action, int32 OldStacks, int32 NewStacks)
@@ -425,15 +426,35 @@ void UPREquipmentManagerComponent::HandleActionAcquired_Internal(UPREquipActionD
 {
 	FGameplayTag SlotToEquip = EquipAction->EquipmentSlot;
 	
+	TArray<UPREquipActionData*> PartActions;
+	PartActions.Add(EquipAction);
+	
 	// 이미 슬롯이 사용중?
 	if (HasEquipment(SlotToEquip))
 	{
+		// 부모라면 자식 부품들을 부착 목록에 추가
+		if (IsParentEquipmentSlot(SlotToEquip))
+		{
+			if (UEquipmentInstance* EquipmentInstance = GetEquipmentInstance(SlotToEquip))
+			{
+				PartActions.Append(EquipmentInstance->GetChildPartActions());
+			}
+		}
 		// Remove Action -> HandleActionRemoved 에서 장착 해제
 		UPREquipActionData* EquippedAction = GetActionData(SlotToEquip);
 		URogueliteBlueprintLibrary::RemoveAction(this, EquippedAction);
 	}
 	
-	Equip(EquipAction, bRefreshVisuals);
+	for (UPREquipActionData* PartAction : PartActions)
+	{
+		// 비주얼 처리는 한번에 하기 위해 bRefreshVisuals = false
+		Equip(PartAction, false);
+	}
+	
+	if (UEquipmentInstance* EquipmentInstance = GetEquipmentInstance(SlotToEquip))
+	{
+		EquipmentInstance->RefreshVisuals();
+	}
 }
 
 void UPREquipmentManagerComponent::HandleActionRemoved_Internal(UPREquipActionData* EquipAction, bool bRefreshVisuals)

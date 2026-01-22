@@ -45,7 +45,7 @@ float UBeamWeaponInstance::GetCurrentEnergy() const
 	if (IsValid(ASC))
 	{
 		bool bFound = false;
-		float Energy = ASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetEnergyAttribute(), bFound);
+		float Energy = ASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetAmmoAttribute(), bFound);
 		if (bFound)
 		{
 			return Energy;
@@ -64,20 +64,21 @@ void UBeamWeaponInstance::ConsumeEnergy(float DeltaTime)
 	}
 
 	bool bFoundEnergy = false;
-	bool bFoundDrainRate = false;
+	bool bFoundFireRate = false;
 
-	float CurrentEnergy = ASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetEnergyAttribute(), bFoundEnergy);
-	float DrainRate = ASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetEnergyDrainRateAttribute(), bFoundDrainRate);
-
-	if (!bFoundEnergy || !bFoundDrainRate)
+	float CurrentEnergy = ASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetAmmoAttribute(), bFoundEnergy);
+	float FireRate = ASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetFireRateAttribute(), bFoundFireRate);
+	
+	if (!bFoundEnergy || !bFoundFireRate)
 	{
 		return;
 	}
 
+	float DrainRate =  FireRate / 60;
 	float EnergyToConsume = DrainRate * DeltaTime;
 	float NewEnergy = FMath::Max(0.0f, CurrentEnergy - EnergyToConsume);
 
-	ASC->SetNumericAttributeBase(UPRWeaponAttributeSet::GetEnergyAttribute(), NewEnergy);
+	ASC->SetNumericAttributeBase(UPRWeaponAttributeSet::GetAmmoAttribute(), NewEnergy);
 
 	// 에너지 소진 시 자동 정지
 	if (NewEnergy <= 0.0f)

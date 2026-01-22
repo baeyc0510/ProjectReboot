@@ -33,13 +33,15 @@ public:
 	virtual UAnimMontage* FindMontageByGameplayTag(const FGameplayTag& MontageTag) const override;
 	
 	/*~ APRCharacterBase Interface ~*/
-	float GetBaseMovementSpeed() const {return BaseMovementSpeed;}
+	float GetBaseMoveSpeed() const {return BaseMoveSpeed;}
+	float GetMaxMoveSpeed() const;
+	
 	virtual void HandleCollisionAndMovementOnDeath();
 	
 protected:
 	/** MovementConfigs */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
-	float BaseMovementSpeed = 500.f;
+	float BaseMoveSpeed = 500.f;
 	
 	/** Animations */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "PR Animation")

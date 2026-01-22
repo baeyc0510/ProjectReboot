@@ -5,7 +5,7 @@
 #include "Engine/LocalPlayer.h"
 #include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/AbilitySystem/PRCommonAttributeSet.h"
-#include "ProjectReboot/AbilitySystem/PRWeaponAttributeSet.h"
+#include "ProjectReboot/Character/PRCharacterBase.h"
 #include "ProjectReboot/Crosshair/PRCrosshairConfig.h"
 
 void UPRCrosshairViewModel::InitializeForPlayer(ULocalPlayer* InLocalPlayer)
@@ -19,6 +19,8 @@ void UPRCrosshairViewModel::InitializeForPlayer(ULocalPlayer* InLocalPlayer)
 
 void UPRCrosshairViewModel::Deinitialize()
 {
+	UnbindFromASC();
+
 	if (TickHandle.IsValid())
 	{
 		FTSTicker::GetCoreTicker().RemoveTicker(TickHandle);
@@ -27,6 +29,11 @@ void UPRCrosshairViewModel::Deinitialize()
 
 	Config = nullptr;
 	Super::Deinitialize();
+}
+
+void UPRCrosshairViewModel::SetCharacter(APRCharacterBase* InCharacter)
+{
+	PlayerCharacter = InCharacter;
 }
 
 void UPRCrosshairViewModel::BindToASC(UAbilitySystemComponent* InASC)
@@ -46,8 +53,8 @@ void UPRCrosshairViewModel::BindToASC(UAbilitySystemComponent* InASC)
         EGameplayTagEventType::NewOrRemoved
     ).AddUObject(this, &UPRCrosshairViewModel::HandleCrosshairTagChanged);
 	
-	// ADS 태그
-    ADSTagHandle = InASC->RegisterGameplayTagEvent(
+	// Aiming 태그
+    AimingTagHandle = InASC->RegisterGameplayTagEvent(
         TAG_State_Aiming,
         EGameplayTagEventType::NewOrRemoved
     ).AddUObject(this, &UPRCrosshairViewModel::HandleADSTagChanged);
@@ -58,40 +65,41 @@ void UPRCrosshairViewModel::BindToASC(UAbilitySystemComponent* InASC)
         EGameplayTagEventType::NewOrRemoved
     ).AddUObject(this, &UPRCrosshairViewModel::HandleCannotFireTagChanged);
 
-    // 탄약 Attribute
-    AmmoHandle = InASC->GetGameplayAttributeValueChangeDelegate(
-        UPRWeaponAttributeSet::GetAmmoAttribute()
-    ).AddUObject(this, &UPRCrosshairViewModel::HandleAmmoChanged);
-
-    MaxAmmoHandle = InASC->GetGameplayAttributeValueChangeDelegate(
-        UPRWeaponAttributeSet::GetMaxAmmoAttribute()
-    ).AddUObject(this, &UPRCrosshairViewModel::HandleMaxAmmoChanged);
-
-    // 이동 속도 Attribute
-    MoveSpeedHandle = InASC->GetGameplayAttributeValueChangeDelegate(
-        UPRCommonAttributeSet::GetMoveSpeedAttribute()
-    ).AddUObject(this, &UPRCrosshairViewModel::HandleMoveSpeedChanged);
-
     // 현재 값으로 초기화
     HandleCrosshairTagChanged(TAG_State_Weapon_Crosshair, InASC->HasMatchingGameplayTag(TAG_State_Weapon_Crosshair) ? 1 : 0);
     HandleADSTagChanged(TAG_State_Aiming, InASC->HasMatchingGameplayTag(TAG_State_Aiming) ? 1 : 0);
     HandleCannotFireTagChanged(TAG_State_Weapon_CannotFire, InASC->HasMatchingGameplayTag(TAG_State_Weapon_CannotFire) ? 1 : 0);
 
-    if (const UPRWeaponAttributeSet* WeaponAttr = InASC->GetSet<UPRWeaponAttributeSet>())
-    {
-        CurrentAmmo = FMath::TruncToInt(WeaponAttr->GetAmmo());
-        MaxAmmo = FMath::TruncToInt(WeaponAttr->GetMaxAmmo());
-        OnAmmoChanged.Broadcast(CurrentAmmo, MaxAmmo);
-    }
-
     if (const UPRCommonAttributeSet* CommonAttr = InASC->GetSet<UPRCommonAttributeSet>())
     {
-        MovementSpeed = CommonAttr->GetMoveSpeed();
+        CurrentMovementSpeed = CommonAttr->GetMoveSpeed();
     }
 }
 
 void UPRCrosshairViewModel::UnbindFromASC()
 {
+	if (BoundASC.IsValid())
+	{
+		if (CrosshairTagHandle.IsValid())
+		{
+			BoundASC->RegisterGameplayTagEvent(TAG_State_Weapon_Crosshair, EGameplayTagEventType::NewOrRemoved).Remove(CrosshairTagHandle);
+			CrosshairTagHandle.Reset();
+		}
+
+		if (AimingTagHandle.IsValid())
+		{
+			BoundASC->RegisterGameplayTagEvent(TAG_State_Aiming, EGameplayTagEventType::NewOrRemoved).Remove(AimingTagHandle);
+			AimingTagHandle.Reset();
+		}
+
+		if (CannotFireTagHandle.IsValid())
+		{
+			BoundASC->RegisterGameplayTagEvent(TAG_State_Weapon_CannotFire, EGameplayTagEventType::NewOrRemoved).Remove(CannotFireTagHandle);
+			CannotFireTagHandle.Reset();
+		}
+	}
+
+	BoundASC.Reset();
 }
 
 void UPRCrosshairViewModel::SetConfig(UPRCrosshairConfig* InConfig)
@@ -146,17 +154,7 @@ void UPRCrosshairViewModel::OnFired()
 
 void UPRCrosshairViewModel::SetMovementSpeed(float Speed)
 {
-	MovementSpeed = FMath::Max(0.0f, Speed);
-}
-
-void UPRCrosshairViewModel::SetAmmo(int32 Current, int32 Max)
-{
-	if (CurrentAmmo != Current || MaxAmmo != Max)
-	{
-		CurrentAmmo = Current;
-		MaxAmmo = Max;
-		OnAmmoChanged.Broadcast(CurrentAmmo, MaxAmmo);
-	}
+	CurrentMovementSpeed = FMath::Max(0.0f, Speed);
 }
 
 void UPRCrosshairViewModel::SetCanFire(bool bNewCanFire)
@@ -199,6 +197,12 @@ const FPRCrosshairSetting& UPRCrosshairViewModel::GetCurrentSetting() const
 
 bool UPRCrosshairViewModel::Tick(float DeltaTime)
 {
+	if (PlayerCharacter.Get())
+	{
+		CurrentMovementSpeed = PlayerCharacter->GetVelocity().Length();
+		MaxMovementSpeed = PlayerCharacter->GetMaxMoveSpeed();
+	}
+	
 	UpdateADSAlpha(DeltaTime);
 	RecalculateSpread(DeltaTime);
 	return true;
@@ -208,7 +212,7 @@ void UPRCrosshairViewModel::UpdateADSAlpha(float DeltaTime)
 {
 	const float TargetADSAlpha = bIsADS ? 1.0f : 0.0f;
 
-	if (!FMath::IsNearlyEqual(ADSAlpha, TargetADSAlpha, KINDA_SMALL_NUMBER))
+	if (!FMath::IsNearlyEqual(ADSAlpha, TargetADSAlpha))
 	{
 		ADSAlpha = FMath::FInterpTo(ADSAlpha, TargetADSAlpha, DeltaTime, ADSTransitionSpeed);
 		OnADSAlphaChanged.Broadcast(ADSAlpha);
@@ -263,21 +267,6 @@ void UPRCrosshairViewModel::HandleCannotFireTagChanged(const FGameplayTag Tag, i
 	SetCanFire(NewCount == 0);
 }
 
-void UPRCrosshairViewModel::HandleAmmoChanged(const FOnAttributeChangeData& Data)
-{
-	SetAmmo(FMath::TruncToInt(Data.NewValue), MaxAmmo);
-}
-
-void UPRCrosshairViewModel::HandleMaxAmmoChanged(const FOnAttributeChangeData& Data)
-{
-	SetAmmo(CurrentAmmo, FMath::TruncToInt(Data.NewValue));
-}
-
-void UPRCrosshairViewModel::HandleMoveSpeedChanged(const FOnAttributeChangeData& Data)
-{
-	SetMovementSpeed(Data.NewValue);
-}
-
 void UPRCrosshairViewModel::RecalculateSpread(float DeltaTime)
 {
 	if (!Config)
@@ -297,7 +286,7 @@ void UPRCrosshairViewModel::RecalculateSpread(float DeltaTime)
 	float BaseSpread = Setting.BaseSpread;
 
 	// 이동에 의한 스프레드 증가
-	const float MovementFactor = FMath::Clamp(MovementSpeed / MaxWalkSpeed, 0.0f, 1.0f);
+	const float MovementFactor = FMath::Clamp(CurrentMovementSpeed / MaxMovementSpeed, 0.0f, 1.0f);
 	const float MovementSpread = BaseSpread * (Setting.MovementSpreadMultiplier - 1.0f) * MovementFactor;
 
 	// 총 스프레드

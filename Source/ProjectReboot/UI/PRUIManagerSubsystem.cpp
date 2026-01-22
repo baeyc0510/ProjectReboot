@@ -78,6 +78,7 @@ void UPRUIManagerSubsystem::UpdateInputMode()
 		InputMode.SetWidgetToFocus(UIStack.Last()->TakeWidget());
 		PlayerController->SetInputMode(InputMode);
 		PlayerController->bShowMouseCursor = true;
+		PlayerController->FlushPressedKeys();
 	}
 	else
 	{

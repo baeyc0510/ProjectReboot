@@ -36,6 +36,9 @@ protected:
 	UFUNCTION()
 	void HandleHealthChanged(float Current, float Max);
 
+	UFUNCTION()
+	void HandleShieldChanged(float Current, float Max);
+
 protected:
 	// 탄약 텍스트
 	UPROPERTY(meta = (BindWidget))
@@ -48,6 +51,10 @@ protected:
 	// 체력 바
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UProgressBar> HealthBar;
+
+	// 실드 바
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UProgressBar> ShieldBar;
 
 	// 무기 타입별 아이콘 매핑
 	UPROPERTY(EditDefaultsOnly, Category = "HUD")

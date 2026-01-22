@@ -41,18 +41,38 @@ private:
 
 public:
 	/*~ Movement ~*/
-	
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	FGameplayAttributeData MoveSpeed;
 	ATTRIBUTE_ACCESSORS(UPRCommonAttributeSet, MoveSpeed)
 
 	/*~ Health ~*/
-	
-	UPROPERTY(BlueprintReadOnly, Category = "Health")
+	UPROPERTY(BlueprintReadOnly, Category = "Combat")
 	FGameplayAttributeData Health;
 	ATTRIBUTE_ACCESSORS(UPRCommonAttributeSet, Health)
 
-	UPROPERTY(BlueprintReadOnly, Category = "Health")
+	UPROPERTY(BlueprintReadOnly, Category = "Combat")
 	FGameplayAttributeData MaxHealth;
 	ATTRIBUTE_ACCESSORS(UPRCommonAttributeSet, MaxHealth)
+
+	/*~ Shield ~*/
+	// 실드
+	UPROPERTY(BlueprintReadOnly, Category = "Combat")
+	FGameplayAttributeData Shield;
+	ATTRIBUTE_ACCESSORS(UPRCommonAttributeSet, Shield)
+
+	// 최대 실드
+	UPROPERTY(BlueprintReadOnly, Category = "Combat")
+	FGameplayAttributeData MaxShield;
+	ATTRIBUTE_ACCESSORS(UPRCommonAttributeSet, MaxShield)
+
+	/*~ Hit Stagger ~*/
+	// 경직 수치
+	UPROPERTY(BlueprintReadOnly, Category = "Combat")
+	FGameplayAttributeData Stagger;
+	ATTRIBUTE_ACCESSORS(UPRCommonAttributeSet, Stagger)
+
+	// 피격 임계치
+	UPROPERTY(BlueprintReadOnly, Category = "Combat")
+	FGameplayAttributeData HitImmunity;
+	ATTRIBUTE_ACCESSORS(UPRCommonAttributeSet, HitImmunity)
 };

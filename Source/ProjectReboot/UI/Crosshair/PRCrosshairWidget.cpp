@@ -46,7 +46,6 @@ void UPRCrosshairWidget::BindViewModel()
     ViewModel->OnSpreadChanged.AddDynamic(this, &UPRCrosshairWidget::HandleSpreadChanged);
     ViewModel->OnADSAlphaChanged.AddDynamic(this, &UPRCrosshairWidget::HandleADSAlphaChanged);
     ViewModel->OnCanFireChanged.AddDynamic(this, &UPRCrosshairWidget::HandleCanFireChanged);
-    ViewModel->OnAmmoChanged.AddDynamic(this, &UPRCrosshairWidget::HandleAmmoChanged);
     ViewModel->OnVisibilityChanged.AddDynamic(this, &UPRCrosshairWidget::HandleVisibilityChanged);
     ViewModel->OnTargetingEnemyChanged.AddDynamic(this, &UPRCrosshairWidget::HandleTargetingEnemyChanged);
     ViewModel->OnCrosshairTagChanged.AddDynamic(this, &UPRCrosshairWidget::HandleCrosshairTagChanged);
@@ -64,7 +63,6 @@ void UPRCrosshairWidget::UnbindViewModel()
     ViewModel->OnSpreadChanged.RemoveDynamic(this, &UPRCrosshairWidget::HandleSpreadChanged);
     ViewModel->OnADSAlphaChanged.RemoveDynamic(this, &UPRCrosshairWidget::HandleADSAlphaChanged);
     ViewModel->OnCanFireChanged.RemoveDynamic(this, &UPRCrosshairWidget::HandleCanFireChanged);
-    ViewModel->OnAmmoChanged.RemoveDynamic(this, &UPRCrosshairWidget::HandleAmmoChanged);
     ViewModel->OnVisibilityChanged.RemoveDynamic(this, &UPRCrosshairWidget::HandleVisibilityChanged);
     ViewModel->OnTargetingEnemyChanged.RemoveDynamic(this, &UPRCrosshairWidget::HandleTargetingEnemyChanged);
     ViewModel->OnCrosshairTagChanged.RemoveDynamic(this, &UPRCrosshairWidget::HandleCrosshairTagChanged);
@@ -88,7 +86,6 @@ void UPRCrosshairWidget::ApplyInitialState()
     HandleSpreadChanged(ViewModel->GetCurrentSpread());
     HandleADSAlphaChanged(ViewModel->GetADSAlpha());
     HandleVisibilityChanged(ViewModel->IsVisible());
-    HandleAmmoChanged(ViewModel->GetCurrentAmmo(), ViewModel->GetMaxAmmo());
 }
 
 void UPRCrosshairWidget::HandleSpreadChanged(float NewSpread)
@@ -109,14 +106,6 @@ void UPRCrosshairWidget::HandleCanFireChanged(bool bNewCanFire)
 {
     bCanFire = bNewCanFire;
     UpdateCrosshairColor();
-}
-
-void UPRCrosshairWidget::HandleAmmoChanged(int32 Current, int32 Max)
-{
-    if (AmmoText)
-    {
-        AmmoText->SetText(FText::FromString(FString::Printf(TEXT("%d / %d"), Current, Max)));
-    }
 }
 
 void UPRCrosshairWidget::HandleVisibilityChanged(bool bVisible)

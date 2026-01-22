@@ -91,6 +91,15 @@ UAnimMontage* APRCharacterBase::FindMontageByGameplayTag(const FGameplayTag& Mon
 	return nullptr;
 }
 
+float APRCharacterBase::GetMaxMoveSpeed() const
+{
+	if (CommonAttributeSet)
+	{
+		return CommonAttributeSet->GetMoveSpeed() * BaseMoveSpeed;
+	}
+	return BaseMoveSpeed;
+}
+
 void APRCharacterBase::HandleCollisionAndMovementOnDeath()
 {
 	// 콜리전 비활성화

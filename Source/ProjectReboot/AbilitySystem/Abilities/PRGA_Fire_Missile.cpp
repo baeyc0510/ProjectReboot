@@ -48,12 +48,14 @@ void UPRGA_Fire_Missile::FireMissile()
 	FVector LaunchDir = (AimPoint - MuzzleTransform.GetLocation()).GetSafeNormal();
 	MuzzleTransform.SetRotation(LaunchDir.ToOrientationQuat());
 
+	// 발사체 스폰
 	AActor* Projectile = SpawnProjectile(MuzzleTransform);
 	if (IsValid(Projectile))
 	{
 		UProjectileMovementComponent* MoveComp = Projectile->FindComponentByClass<UProjectileMovementComponent>();
 		if (IsValid(MoveComp))
 		{
+			// 초기 속도 설정
 			MoveComp->InitialSpeed = ProjectileSpeed;
 			MoveComp->MaxSpeed = ProjectileSpeed;
 			MoveComp->Velocity = LaunchDir * ProjectileSpeed;
@@ -72,6 +74,7 @@ AActor* UPRGA_Fire_Missile::SpawnProjectile(const FTransform& SpawnTransform)
 		return nullptr;
 	}
 
+	// 발사체 소유자 지정
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = GetAvatarActorFromActorInfo();
 	SpawnParams.Instigator = Cast<APawn>(SpawnParams.Owner);

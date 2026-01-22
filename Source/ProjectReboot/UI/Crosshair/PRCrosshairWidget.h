@@ -39,10 +39,7 @@ protected:
 
     UFUNCTION()
     void HandleCanFireChanged(bool bCanFire);
-
-    UFUNCTION()
-    void HandleAmmoChanged(int32 Current, int32 Max);
-
+    
     UFUNCTION()
     void HandleVisibilityChanged(bool bVisible);
 
@@ -53,10 +50,6 @@ protected:
     void HandleCrosshairTagChanged(const FGameplayTag& NewTag);
 
 protected:
-    // 탄약 텍스트 (선택적)
-    UPROPERTY(meta = (BindWidgetOptional))
-    TObjectPtr<UTextBlock> AmmoText;
-
     // 크로스헤어 요소들
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UImage> CrosshairTop;

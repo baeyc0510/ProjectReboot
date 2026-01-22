@@ -39,15 +39,20 @@ void UPRGA_Fire_Bullet::FireOnce()
 		return;
 	}
 
-	FHitResult HitResult;
-	bool bHit = PerformHitscanWithSpread(HitResult, BaseSpreadAngle);
+	// 스프레드 적용 히트스캔
+	const TArray<FHitResult> HitResults = PerformHitscanWithSpread(BaseSpreadAngle);
 
 	Weapon->PlayMuzzleFlash();
 
-	if (bHit)
+	if (HitResults.Num() > 0)
 	{
-		Weapon->PlayImpact(HitResult);
-		ApplyWeaponDamage(HitResult);
+		// 관통 순서대로 데미지 적용
+		for (int32 HitIndex = 0; HitIndex < HitResults.Num(); ++HitIndex)
+		{
+			const FHitResult& HitResult = HitResults[HitIndex];
+			Weapon->PlayImpact(HitResult);
+			ApplyWeaponDamage(HitResult, HitIndex);
+		}
 	}
 
 	Weapon->OnFired();

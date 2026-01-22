@@ -20,7 +20,7 @@ struct FRogueliteAbilityEntry
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
 	FGameplayTagContainer DynamicTags;
 	
-	FORCEINLINE bool IsValidData() const;
+	bool IsValidData() const;
 };
 
 USTRUCT(BlueprintType)
@@ -34,7 +34,7 @@ struct FRogueliteEffectEntry
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
 	FGameplayTagContainer DynamicTags;
 	
-	FORCEINLINE bool IsValidData() const;
+	bool IsValidData() const;
 };
 
 /**
@@ -68,11 +68,6 @@ public:
 	FRogueliteTriggerCondition TriggerCondition;
 
 	/*~ 스케일링 ~*/
-
-	// Values 태그를 SetByCaller 태그로 매핑
-	// Key: ActionData의 Value 태그, Value: Effect의 SetByCaller 태그
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS|Scaling")
-	TMap<FGameplayTag, FGameplayTag> ValueToSetByCallerMap;
 
 	// 스택 변경 시 Effect 처리 방식
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS|Scaling")

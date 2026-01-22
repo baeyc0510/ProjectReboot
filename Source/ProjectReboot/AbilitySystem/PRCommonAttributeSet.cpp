@@ -6,9 +6,9 @@
 #include "GameplayEffectExtension.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Net/UnrealNetwork.h"
 #include "ProjectReboot/Character/PRCharacterBase.h"
 #include "ProjectReboot/Combat/PRCombatInterface.h"
+#include "ProjectReboot/PRGameplayTags.h"
 
 void UPRCommonAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 {
@@ -19,9 +19,27 @@ void UPRCommonAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribu
 	{
 		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxHealth());
 	}
+	// Shield 클램핑 (0 ~ MaxShield)
+	else if (Attribute == GetShieldAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxShield());
+	}
+	// Stagger 클램핑 (0 ~ HitImmunity)
+	else if (Attribute == GetStaggerAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.0f, GetHitImmunity());
+	}
 	else if (Attribute == GetMaxHealthAttribute())
 	{
 		NewValue = FMath::Max(NewValue, 1.0f);
+	}
+	else if (Attribute == GetMaxShieldAttribute())
+	{
+		NewValue = FMath::Max(NewValue, 0.0f);
+	}
+	else if (Attribute == GetHitImmunityAttribute())
+	{
+		NewValue = FMath::Max(NewValue, 0.0f);
 	}
 }
 
@@ -41,6 +59,22 @@ void UPRCommonAttributeSet::PostAttributeChange(const FGameplayAttribute& Attrib
 			SetHealth(NewValue);
 		}
 	}
+	else if (Attribute == GetMaxShieldAttribute())
+	{
+		// MaxShield보다 커지지 않도록 클램핑
+		if (GetShield() > NewValue)
+		{
+			SetShield(NewValue);
+		}
+	}
+	else if (Attribute == GetHitImmunityAttribute())
+	{
+		// HitImmunity보다 커지지 않도록 클램핑
+		if (GetStagger() > NewValue)
+		{
+			SetStagger(NewValue);
+		}
+	}
 }
 
 void UPRCommonAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
@@ -51,6 +85,34 @@ void UPRCommonAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
 		HandleHealthChanged(Data);
+	}
+	// Shield 클램핑
+	else if (Data.EvaluatedData.Attribute == GetShieldAttribute())
+	{
+		const float ClampedShield = FMath::Clamp(GetShield(), 0.0f, GetMaxShield());
+		SetShield(ClampedShield);
+	}
+	// Stagger 처리
+	else if (Data.EvaluatedData.Attribute == GetStaggerAttribute())
+	{
+		const float ClampedStagger = FMath::Clamp(GetStagger(), 0.0f, GetHitImmunity());
+		SetStagger(ClampedStagger);
+
+		if (ClampedStagger >= GetHitImmunity() && GetHitImmunity() > 0.0f)
+		{
+			if (UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent())
+			{
+				FGameplayEventData EventData;
+				EventData.EventTag = TAG_Event_Hit;
+				EventData.Instigator = Data.EffectSpec.GetEffectContext().GetInstigator();
+				EventData.Target = GetOwningActor();
+				EventData.ContextHandle = Data.EffectSpec.GetEffectContext();
+				ASC->HandleGameplayEvent(TAG_Event_Hit, &EventData);
+			}
+
+			// 경직 수치 초기화
+			SetStagger(0.0f);
+		}
 	}
 }
 
@@ -95,7 +157,10 @@ void UPRCommonAttributeSet::UpdateCharacterWalkSpeed()
 	{
 		if (UCharacterMovementComponent* CMC = Character->GetCharacterMovement())
 		{
-			CMC->MaxWalkSpeed = Character->GetBaseMovementSpeed() * GetMoveSpeed();
+			float MaxMoveSpeed = Character->GetBaseMoveSpeed() * GetMoveSpeed();
+			CMC->MaxWalkSpeed = MaxMoveSpeed;
+			CMC->MaxFlySpeed = MaxMoveSpeed;
+			CMC->MaxSwimSpeed = MaxMoveSpeed;
 		}
 	}
 }

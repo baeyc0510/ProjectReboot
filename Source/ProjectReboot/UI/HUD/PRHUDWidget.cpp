@@ -40,6 +40,7 @@ void UPRHUDWidget::BindViewModel()
 	ViewModel->OnAmmoChanged.AddDynamic(this, &UPRHUDWidget::HandleAmmoChanged);
 	ViewModel->OnWeaponTypeChanged.AddDynamic(this, &UPRHUDWidget::HandleWeaponTypeChanged);
 	ViewModel->OnHealthChanged.AddDynamic(this, &UPRHUDWidget::HandleHealthChanged);
+	ViewModel->OnShieldChanged.AddDynamic(this, &UPRHUDWidget::HandleShieldChanged);
 
 	ApplyInitialState();
 }
@@ -54,6 +55,7 @@ void UPRHUDWidget::UnbindViewModel()
 	ViewModel->OnAmmoChanged.RemoveDynamic(this, &UPRHUDWidget::HandleAmmoChanged);
 	ViewModel->OnWeaponTypeChanged.RemoveDynamic(this, &UPRHUDWidget::HandleWeaponTypeChanged);
 	ViewModel->OnHealthChanged.RemoveDynamic(this, &UPRHUDWidget::HandleHealthChanged);
+	ViewModel->OnShieldChanged.RemoveDynamic(this, &UPRHUDWidget::HandleShieldChanged);
 
 	ViewModel = nullptr;
 }
@@ -68,6 +70,7 @@ void UPRHUDWidget::ApplyInitialState()
 	HandleAmmoChanged(ViewModel->GetCurrentAmmo(), ViewModel->GetMaxAmmo());
 	HandleWeaponTypeChanged(ViewModel->GetWeaponTypeTag());
 	HandleHealthChanged(ViewModel->GetCurrentHealth(), ViewModel->GetMaxHealth());
+	HandleShieldChanged(ViewModel->GetCurrentShield(), ViewModel->GetMaxShield());
 }
 
 void UPRHUDWidget::HandleAmmoChanged(int32 Current, int32 Max)
@@ -102,5 +105,14 @@ void UPRHUDWidget::HandleHealthChanged(float Current, float Max)
 	{
 		const float Percent = (Max > KINDA_SMALL_NUMBER) ? (Current / Max) : 0.0f;
 		HealthBar->SetPercent(Percent);
+	}
+}
+
+void UPRHUDWidget::HandleShieldChanged(float Current, float Max)
+{
+	if (ShieldBar)
+	{
+		const float Percent = (Max > KINDA_SMALL_NUMBER) ? (Current / Max) : 0.0f;
+		ShieldBar->SetPercent(Percent);
 	}
 }

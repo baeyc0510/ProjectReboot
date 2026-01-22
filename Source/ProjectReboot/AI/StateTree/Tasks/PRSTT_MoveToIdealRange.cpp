@@ -52,7 +52,6 @@ void UPRSTT_MoveToIdealRange::OnEnterState(FStateTreeExecutionContext& Context, 
 	if (MoveToTask->GetState() == EGameplayTaskState::Finished)
 	{
 		bool bWasMoveSuccessful = MoveToTask->WasMoveSuccessful();
-		UE_LOG(LogTemp,Warning, TEXT("AI Move Was %s"), (bWasMoveSuccessful ? TEXT("Successful") : TEXT("Failed")));
 		FinishTask(bWasMoveSuccessful);
 	}
 }

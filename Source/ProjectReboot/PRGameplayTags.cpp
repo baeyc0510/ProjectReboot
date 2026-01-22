@@ -8,9 +8,16 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Fire, "Input.Fire");
 
 /*~ Equipment Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment, "Equipment");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type, "Equipment.Weapon.Type");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type_Bullet, "Equipment.Weapon.Type.Bullet");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type_Beam, "Equipment.Weapon.Type.Beam");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type_Missile, "Equipment.Weapon.Type.Missile");
+
+/*~ Damage Type Tags ~*/
+UE_DEFINE_GAMEPLAY_TAG(TAG_DamageType, "DamageType");
+UE_DEFINE_GAMEPLAY_TAG(TAG_DamageType_Kinetic, "DamageType.Kinetic");
+UE_DEFINE_GAMEPLAY_TAG(TAG_DamageType_Plasma, "DamageType.Plasma");
+UE_DEFINE_GAMEPLAY_TAG(TAG_DamageType_Explosion, "DamageType.Explosion");
 
 /*~ Character States ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_State, "State");
@@ -26,6 +33,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_Crosshair_Rifle, "State.Weapon.Crosshair
 /*~ Event Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event, "Event");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Death, "Event.Death");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Hit, "Event.Hit");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Room, "Event.Room");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Room_Clear, "Event.Room.Clear");
 
@@ -36,6 +44,12 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Death_Front, "Montage.Death.Front");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Death_Right,"Montage.Death.Right");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Death_Back,"Montage.Death.Back");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Death_Left,"Montage.Death.Left");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Hit, "Montage.Hit");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Hit_Front, "Montage.Hit.Front");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Hit_Right, "Montage.Hit.Right");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Hit_Back, "Montage.Hit.Back");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Hit_Left, "Montage.Hit.Left");
 
 /*~ Ability Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability, "Ability");
@@ -54,9 +68,10 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_FireRate, "SetByCaller.Weapon.Fire
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_ReloadTime, "SetByCaller.Weapon.ReloadTime");
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_BaseDamage, "SetByCaller.Weapon.BaseDamage");
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_DamageMultiplier, "SetByCaller.Weapon.DamageMultiplier");
-UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_Energy, "SetByCaller.Weapon.Energy");
-UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_MaxEnergy, "SetByCaller.Weapon.MaxEnergy");
-UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_EnergyDrainRate, "SetByCaller.Weapon.EnergyDrainRate");
-UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_LoadedMissiles, "SetByCaller.Weapon.LoadedMissiles");
-UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_MaxLoadedMissiles, "SetByCaller.Weapon.MaxLoadedMissiles");
-UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_ExplosionRadius, "SetByCaller.Weapon.ExplosionRadius");
+UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_MaxPenetration, "SetByCaller.Weapon.MaxPenetration");
+UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_PenetrationDamageFalloff, "SetByCaller.Weapon.PenetrationDamageFalloff");
+UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_EffectRadius, "SetByCaller.Weapon.EffectRadius");
+
+/*~ SetByCaller Tags - Combat Attributes ~*/
+UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Combat_Damage, "SetByCaller.Combat.Damage");
+UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Combat_PenetrationCount, "SetByCaller.Combat.PenetrationCount");

@@ -51,7 +51,7 @@ int32 UMissileWeaponInstance::GetLoadedMissiles() const
 	if (IsValid(ASC))
 	{
 		bool bFound = false;
-		float Missiles = ASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetLoadedMissilesAttribute(), bFound);
+		float Missiles = ASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetAmmoAttribute(), bFound);
 		if (bFound)
 		{
 			return FMath::FloorToInt(Missiles);
@@ -70,11 +70,11 @@ void UMissileWeaponInstance::ConsumeMissile()
 	}
 
 	bool bFound = false;
-	float CurrentMissiles = ASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetLoadedMissilesAttribute(), bFound);
+	float CurrentMissiles = ASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetAmmoAttribute(), bFound);
 	if (bFound)
 	{
 		float NewMissiles = FMath::Max(0.0f, CurrentMissiles - 1.0f);
-		ASC->SetNumericAttributeBase(UPRWeaponAttributeSet::GetLoadedMissilesAttribute(), NewMissiles);
+		ASC->SetNumericAttributeBase(UPRWeaponAttributeSet::GetAmmoAttribute(), NewMissiles);
 	}
 }
 
@@ -84,7 +84,7 @@ float UMissileWeaponInstance::GetExplosionRadius() const
 	if (IsValid(ASC))
 	{
 		bool bFound = false;
-		float Radius = ASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetExplosionRadiusAttribute(), bFound);
+		float Radius = ASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetEffectRadiusAttribute(), bFound);
 		if (bFound)
 		{
 			return Radius;

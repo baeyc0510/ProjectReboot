@@ -563,10 +563,13 @@ void URogueliteAbilityHandlerComponent::ApplySetByCallerValues(URogueliteGASActi
 	}
 
 	// ActionData의 Values를 SetByCaller로 매핑
-	for (const auto& Mapping : Action->ValueToSetByCallerMap)
+	for (const auto& ValueEntry : Action->Values)
 	{
-		float Value = Action->GetValue(Mapping.Key);
-		SpecHandle.Data->SetSetByCallerMagnitude(Mapping.Value, Value * Stacks);
+		if (!ValueEntry.Key.IsValid())
+		{
+			continue;
+		}
+		SpecHandle.Data->SetSetByCallerMagnitude(ValueEntry.Key, ValueEntry.Value * Stacks);
 	}
 
 	// 트리거 발동 시 EventMagnitude를 설정된 SetByCaller 태그로 전달

@@ -29,37 +29,15 @@ void UPRHUDViewModel::BindToASC(UAbilitySystemComponent* InASC)
 	BoundASC = InASC;
 
 	// 무기 타입 태그 변경 등록
-	BulletTagHandle = InASC->RegisterGameplayTagEvent(
-		TAG_Equipment_Weapon_Type_Bullet,
+	WeaponTypeTagHandle = InASC->RegisterGameplayTagEvent(
+		TAG_Equipment_Weapon_Type,
 		EGameplayTagEventType::NewOrRemoved
 	).AddUObject(this, &UPRHUDViewModel::HandleWeaponTagChanged);
+	
 
-	BeamTagHandle = InASC->RegisterGameplayTagEvent(
-		TAG_Equipment_Weapon_Type_Beam,
-		EGameplayTagEventType::NewOrRemoved
-	).AddUObject(this, &UPRHUDViewModel::HandleWeaponTagChanged);
-
-	MissileTagHandle = InASC->RegisterGameplayTagEvent(
-		TAG_Equipment_Weapon_Type_Missile,
-		EGameplayTagEventType::NewOrRemoved
-	).AddUObject(this, &UPRHUDViewModel::HandleWeaponTagChanged);
-
-	// 체력 어트리뷰트 바인딩
-	HealthChangeHandle = InASC->GetGameplayAttributeValueChangeDelegate(
-		UPRCommonAttributeSet::GetHealthAttribute()
-	).AddUObject(this, &UPRHUDViewModel::HandleHealthChanged);
-
-	MaxHealthChangeHandle = InASC->GetGameplayAttributeValueChangeDelegate(
-		UPRCommonAttributeSet::GetMaxHealthAttribute()
-	).AddUObject(this, &UPRHUDViewModel::HandleMaxHealthChanged);
-
-	// 초기 체력 값 설정
-	bool bFoundHealth = false;
-	bool bFoundMaxHealth = false;
-	float ValHealth = InASC->GetGameplayAttributeValue(UPRCommonAttributeSet::GetHealthAttribute(), bFoundHealth);
-	float ValMaxHealth = InASC->GetGameplayAttributeValue(UPRCommonAttributeSet::GetMaxHealthAttribute(), bFoundMaxHealth);
-	SetHealth(ValHealth, ValMaxHealth);
-
+	// 어트리뷰트 바인딩
+	UpdateAttributesBindings();
+	
 	// 현재 무기 상태 확인
 	if (InASC->HasMatchingGameplayTag(TAG_Equipment_Weapon_Type_Bullet))
 	{
@@ -81,38 +59,19 @@ void UPRHUDViewModel::BindToASC(UAbilitySystemComponent* InASC)
 
 void UPRHUDViewModel::UnbindFromASC()
 {
-	ClearAttributeBindings();
-
+	// 태그 이벤트 바인딩 제거
 	if (BoundASC.IsValid())
 	{
-		if (BulletTagHandle.IsValid())
+		if (WeaponTypeTagHandle.IsValid())
 		{
-			BoundASC->RegisterGameplayTagEvent(TAG_Equipment_Weapon_Type_Bullet, EGameplayTagEventType::NewOrRemoved).Remove(BulletTagHandle);
-			BulletTagHandle.Reset();
-		}
-		if (BeamTagHandle.IsValid())
-		{
-			BoundASC->RegisterGameplayTagEvent(TAG_Equipment_Weapon_Type_Beam, EGameplayTagEventType::NewOrRemoved).Remove(BeamTagHandle);
-			BeamTagHandle.Reset();
-		}
-		if (MissileTagHandle.IsValid())
-		{
-			BoundASC->RegisterGameplayTagEvent(TAG_Equipment_Weapon_Type_Missile, EGameplayTagEventType::NewOrRemoved).Remove(MissileTagHandle);
-			MissileTagHandle.Reset();
-		}
-
-		if (HealthChangeHandle.IsValid())
-		{
-			BoundASC->GetGameplayAttributeValueChangeDelegate(UPRCommonAttributeSet::GetHealthAttribute()).Remove(HealthChangeHandle);
-			HealthChangeHandle.Reset();
-		}
-		if (MaxHealthChangeHandle.IsValid())
-		{
-			BoundASC->GetGameplayAttributeValueChangeDelegate(UPRCommonAttributeSet::GetMaxHealthAttribute()).Remove(MaxHealthChangeHandle);
-			MaxHealthChangeHandle.Reset();
+			BoundASC->UnregisterGameplayTagEvent(WeaponTypeTagHandle,TAG_Equipment_Weapon_Type,EGameplayTagEventType::NewOrRemoved);
+			WeaponTypeTagHandle.Reset();
 		}
 	}
 
+	// 어트리뷰트 바인딩 제거
+	ClearAttributeBindings();
+	
 	BoundASC.Reset();
 }
 
@@ -136,13 +95,22 @@ void UPRHUDViewModel::SetHealth(float NewCurrent, float NewMax)
 	}
 }
 
+void UPRHUDViewModel::SetShield(float NewCurrent, float NewMax)
+{
+	if (!FMath::IsNearlyEqual(CurrentShield, NewCurrent) || !FMath::IsNearlyEqual(MaxShield, NewMax))
+	{
+		CurrentShield = NewCurrent;
+		MaxShield = NewMax;
+		OnShieldChanged.Broadcast(CurrentShield, MaxShield);
+	}
+}
+
 void UPRHUDViewModel::SetWeaponType(const FGameplayTag& NewType)
 {
 	if (WeaponTypeTag != NewType)
 	{
 		WeaponTypeTag = NewType;
 		OnWeaponTypeChanged.Broadcast(WeaponTypeTag);
-		UpdateAttributesBindings();
 	}
 }
 
@@ -163,18 +131,19 @@ void UPRHUDViewModel::ClearAttributeBindings()
 		UnbindSafe(UPRWeaponAttributeSet::GetAmmoAttribute(), AmmoChangeHandle);
 		UnbindSafe(UPRWeaponAttributeSet::GetMaxAmmoAttribute(), MaxAmmoChangeHandle);
 		
-		UnbindSafe(UPRWeaponAttributeSet::GetEnergyAttribute(), AmmoChangeHandle);
-		UnbindSafe(UPRWeaponAttributeSet::GetMaxEnergyAttribute(), MaxAmmoChangeHandle);
-		
-		UnbindSafe(UPRWeaponAttributeSet::GetLoadedMissilesAttribute(), AmmoChangeHandle);
-		UnbindSafe(UPRWeaponAttributeSet::GetMaxLoadedMissilesAttribute(), MaxAmmoChangeHandle);
-		
 		UnbindSafe(UPRCommonAttributeSet::GetHealthAttribute(), HealthChangeHandle);
 		UnbindSafe(UPRCommonAttributeSet::GetMaxHealthAttribute(), MaxHealthChangeHandle);
+
+		UnbindSafe(UPRCommonAttributeSet::GetShieldAttribute(), ShieldChangeHandle);
+		UnbindSafe(UPRCommonAttributeSet::GetMaxShieldAttribute(), MaxShieldChangeHandle);
 	}
 	
 	AmmoChangeHandle.Reset();
 	MaxAmmoChangeHandle.Reset();
+	HealthChangeHandle.Reset();
+	MaxHealthChangeHandle.Reset();
+	ShieldChangeHandle.Reset();
+	MaxShieldChangeHandle.Reset();
 }
 
 void UPRHUDViewModel::UpdateAttributesBindings()
@@ -185,58 +154,54 @@ void UPRHUDViewModel::UpdateAttributesBindings()
 	{
 		return;
 	}
+	
+	// 체력 어트리뷰트 바인딩
+	HealthChangeHandle = BoundASC->GetGameplayAttributeValueChangeDelegate(
+		UPRCommonAttributeSet::GetHealthAttribute()
+	).AddUObject(this, &UPRHUDViewModel::HandleHealthChanged);
 
-	if (WeaponTypeTag.MatchesTag(TAG_Equipment_Weapon_Type_Bullet))
-	{
-		AmmoChangeHandle = BoundASC->GetGameplayAttributeValueChangeDelegate(
-			UPRWeaponAttributeSet::GetAmmoAttribute()
-		).AddUObject(this, &UPRHUDViewModel::HandleAmmoChanged);
+	MaxHealthChangeHandle = BoundASC->GetGameplayAttributeValueChangeDelegate(
+		UPRCommonAttributeSet::GetMaxHealthAttribute()
+	).AddUObject(this, &UPRHUDViewModel::HandleMaxHealthChanged);
 
-		MaxAmmoChangeHandle = BoundASC->GetGameplayAttributeValueChangeDelegate(
-			UPRWeaponAttributeSet::GetMaxAmmoAttribute()
-		).AddUObject(this, &UPRHUDViewModel::HandleMaxAmmoChanged);
+	// 초기 체력 값 설정
+	bool bFoundHealth = false;
+	bool bFoundMaxHealth = false;
+	float ValHealth = BoundASC->GetGameplayAttributeValue(UPRCommonAttributeSet::GetHealthAttribute(), bFoundHealth);
+	float ValMaxHealth = BoundASC->GetGameplayAttributeValue(UPRCommonAttributeSet::GetMaxHealthAttribute(), bFoundMaxHealth);
+	SetHealth(ValHealth, ValMaxHealth);
 
-		// 초기 업데이트
-		bool bFoundCurrent = false;
-		bool bFoundMax = false;
-		float ValCurrent = BoundASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetAmmoAttribute(), bFoundCurrent);
-		float ValMax = BoundASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetMaxAmmoAttribute(), bFoundMax);
-		SetAmmo(FMath::TruncToInt(ValCurrent), FMath::TruncToInt(ValMax));
-	}
-	else if (WeaponTypeTag.MatchesTag(TAG_Equipment_Weapon_Type_Beam))
-	{
-		AmmoChangeHandle = BoundASC->GetGameplayAttributeValueChangeDelegate(
-			UPRWeaponAttributeSet::GetEnergyAttribute()
-		).AddUObject(this, &UPRHUDViewModel::HandleEnergyChanged);
+	// 실드 어트리뷰트 바인딩
+	ShieldChangeHandle = BoundASC->GetGameplayAttributeValueChangeDelegate(
+		UPRCommonAttributeSet::GetShieldAttribute()
+	).AddUObject(this, &UPRHUDViewModel::HandleShieldChanged);
 
-		MaxAmmoChangeHandle = BoundASC->GetGameplayAttributeValueChangeDelegate(
-			UPRWeaponAttributeSet::GetMaxEnergyAttribute()
-		).AddUObject(this, &UPRHUDViewModel::HandleMaxEnergyChanged);
+	MaxShieldChangeHandle = BoundASC->GetGameplayAttributeValueChangeDelegate(
+		UPRCommonAttributeSet::GetMaxShieldAttribute()
+	).AddUObject(this, &UPRHUDViewModel::HandleMaxShieldChanged);
 
-		// 초기 업데이트
-		bool bFoundCurrent = false;
-		bool bFoundMax = false;
-		float ValCurrent = BoundASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetEnergyAttribute(), bFoundCurrent);
-		float ValMax = BoundASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetMaxEnergyAttribute(), bFoundMax);
-		SetAmmo(FMath::TruncToInt(ValCurrent), FMath::TruncToInt(ValMax));
-	}
-	else if (WeaponTypeTag.MatchesTag(TAG_Equipment_Weapon_Type_Missile))
-	{
-		AmmoChangeHandle = BoundASC->GetGameplayAttributeValueChangeDelegate(
-			UPRWeaponAttributeSet::GetLoadedMissilesAttribute()
-		).AddUObject(this, &UPRHUDViewModel::HandleMissileChanged);
+	// 초기 실드 값 설정
+	bool bFoundShield = false;
+	bool bFoundMaxShield = false;
+	float ValShield = BoundASC->GetGameplayAttributeValue(UPRCommonAttributeSet::GetShieldAttribute(), bFoundShield);
+	float ValMaxShield = BoundASC->GetGameplayAttributeValue(UPRCommonAttributeSet::GetMaxShieldAttribute(), bFoundMaxShield);
+	SetShield(ValShield, ValMaxShield);
+	
+	// Ammo 어트리뷰트 바인딩
+	AmmoChangeHandle = BoundASC->GetGameplayAttributeValueChangeDelegate(
+		UPRWeaponAttributeSet::GetAmmoAttribute()
+	).AddUObject(this, &UPRHUDViewModel::HandleAmmoChanged);
 
-		MaxAmmoChangeHandle = BoundASC->GetGameplayAttributeValueChangeDelegate(
-			UPRWeaponAttributeSet::GetMaxLoadedMissilesAttribute()
-		).AddUObject(this, &UPRHUDViewModel::HandleMaxMissileChanged);
+	MaxAmmoChangeHandle = BoundASC->GetGameplayAttributeValueChangeDelegate(
+		UPRWeaponAttributeSet::GetMaxAmmoAttribute()
+	).AddUObject(this, &UPRHUDViewModel::HandleMaxAmmoChanged);
 
-		// 초기 업데이트
-		bool bFoundCurrent = false;
-		bool bFoundMax = false;
-		float ValCurrent = BoundASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetLoadedMissilesAttribute(), bFoundCurrent);
-		float ValMax = BoundASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetMaxLoadedMissilesAttribute(), bFoundMax);
-		SetAmmo(FMath::TruncToInt(ValCurrent), FMath::TruncToInt(ValMax));
-	}
+	// 초기 업데이트
+	bool bFoundCurrent = false;
+	bool bFoundMax = false;
+	float ValCurrent = BoundASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetAmmoAttribute(), bFoundCurrent);
+	float ValMax = BoundASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetMaxAmmoAttribute(), bFoundMax);
+	SetAmmo(FMath::TruncToInt(ValCurrent), FMath::TruncToInt(ValMax));
 }
 
 void UPRHUDViewModel::HandleWeaponTagChanged(const FGameplayTag Tag, int32 NewCount)
@@ -268,26 +233,6 @@ void UPRHUDViewModel::HandleMaxAmmoChanged(const FOnAttributeChangeData& Data)
 	SetAmmo(CurrentAmmo, FMath::TruncToInt(Data.NewValue));
 }
 
-void UPRHUDViewModel::HandleEnergyChanged(const FOnAttributeChangeData& Data)
-{
-	SetAmmo(FMath::TruncToInt(Data.NewValue), MaxAmmo);
-}
-
-void UPRHUDViewModel::HandleMaxEnergyChanged(const FOnAttributeChangeData& Data)
-{
-	SetAmmo(CurrentAmmo, FMath::TruncToInt(Data.NewValue));
-}
-
-void UPRHUDViewModel::HandleMissileChanged(const FOnAttributeChangeData& Data)
-{
-	SetAmmo(FMath::TruncToInt(Data.NewValue), MaxAmmo);
-}
-
-void UPRHUDViewModel::HandleMaxMissileChanged(const FOnAttributeChangeData& Data)
-{
-	SetAmmo(CurrentAmmo, FMath::TruncToInt(Data.NewValue));
-}
-
 void UPRHUDViewModel::HandleHealthChanged(const FOnAttributeChangeData& Data)
 {
 	SetHealth(Data.NewValue, MaxHealth);
@@ -296,4 +241,14 @@ void UPRHUDViewModel::HandleHealthChanged(const FOnAttributeChangeData& Data)
 void UPRHUDViewModel::HandleMaxHealthChanged(const FOnAttributeChangeData& Data)
 {
 	SetHealth(CurrentHealth, Data.NewValue);
+}
+
+void UPRHUDViewModel::HandleShieldChanged(const FOnAttributeChangeData& Data)
+{
+	SetShield(Data.NewValue, MaxShield);
+}
+
+void UPRHUDViewModel::HandleMaxShieldChanged(const FOnAttributeChangeData& Data)
+{
+	SetShield(CurrentShield, Data.NewValue);
 }

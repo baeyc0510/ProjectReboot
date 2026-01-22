@@ -197,12 +197,14 @@ void UPRGA_Die::FinishDie()
 	AActor* AvatarActor = GetAvatarActorFromActorInfo();
 	if (!IsValid(AvatarActor))
 	{
+		// 소유 액터 없음
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 		return;
 	}
 	
 	if (IPRCombatInterface* CombatInterface = Cast<IPRCombatInterface>(AvatarActor))
 	{
+		// 전투 인터페이스를 통한 마무리
 		CombatInterface->FinishDie();
 	}
 }

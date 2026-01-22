@@ -6,7 +6,6 @@
 #include "GameplayEffectExtension.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Net/UnrealNetwork.h"
 #include "ProjectReboot/Character/PRCharacterBase.h"
 #include "ProjectReboot/Combat/PRCombatInterface.h"
 
@@ -19,9 +18,18 @@ void UPRCommonAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribu
 	{
 		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxHealth());
 	}
+	// Shield 클램핑 (0 ~ MaxShield)
+	else if (Attribute == GetShieldAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxShield());
+	}
 	else if (Attribute == GetMaxHealthAttribute())
 	{
 		NewValue = FMath::Max(NewValue, 1.0f);
+	}
+	else if (Attribute == GetMaxShieldAttribute())
+	{
+		NewValue = FMath::Max(NewValue, 0.0f);
 	}
 }
 
@@ -41,6 +49,14 @@ void UPRCommonAttributeSet::PostAttributeChange(const FGameplayAttribute& Attrib
 			SetHealth(NewValue);
 		}
 	}
+	else if (Attribute == GetMaxShieldAttribute())
+	{
+		// MaxShield보다 커지지 않도록 클램핑
+		if (GetShield() > NewValue)
+		{
+			SetShield(NewValue);
+		}
+	}
 }
 
 void UPRCommonAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
@@ -51,6 +67,12 @@ void UPRCommonAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
 		HandleHealthChanged(Data);
+	}
+	// Shield 클램핑
+	else if (Data.EvaluatedData.Attribute == GetShieldAttribute())
+	{
+		const float ClampedShield = FMath::Clamp(GetShield(), 0.0f, GetMaxShield());
+		SetShield(ClampedShield);
 	}
 }
 
@@ -95,7 +117,10 @@ void UPRCommonAttributeSet::UpdateCharacterWalkSpeed()
 	{
 		if (UCharacterMovementComponent* CMC = Character->GetCharacterMovement())
 		{
-			CMC->MaxWalkSpeed = Character->GetBaseMovementSpeed() * GetMoveSpeed();
+			float MaxMoveSpeed = Character->GetBaseMoveSpeed() * GetMoveSpeed();
+			CMC->MaxWalkSpeed = MaxMoveSpeed;
+			CMC->MaxFlySpeed = MaxMoveSpeed;
+			CMC->MaxSwimSpeed = MaxMoveSpeed;
 		}
 	}
 }

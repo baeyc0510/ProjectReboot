@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "PRCharacterBase.h"
 #include "ProjectReboot/AbilitySystem/PRAbilitySet.h"
+#include "ProjectReboot/Equipment/PREquipmentInterface.h"
 #include "PRPlayerCharacter.generated.h"
 
 class UAIPerceptionStimuliSourceComponent;
@@ -24,7 +25,7 @@ class UInputAction;
 struct FInputActionValue;
 
 UCLASS()
-class PROJECTREBOOT_API APRPlayerCharacter : public APRCharacterBase
+class PROJECTREBOOT_API APRPlayerCharacter : public APRCharacterBase, public IPREquipmentInterface
 {
 	GENERATED_BODY()
 
@@ -56,6 +57,9 @@ protected:
 	
 	/*~ IPRCombatInterface ~*/
 	virtual void FinishDie() override;
+	
+	/*~ IPREquipmentInterface ~*/
+	virtual UPREquipmentManagerComponent* GetEquipmentManager() const override {return EquipmentManager;}
 	
 	/*~ APRPlayerCharacter Interfaces ~*/
 	

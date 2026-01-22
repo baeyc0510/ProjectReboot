@@ -46,7 +46,7 @@ protected:
 
 #if WITH_EDITORONLY_DATA
 	/** 에디터 뷰포트에서 특정 상태의 카메라 배치를 미리보기 위한 태그 */
-	UPROPERTY(EditAnywhere, Category = "Camera|Editor", meta = (Categories = "State"))
+	UPROPERTY(EditAnywhere, Category = "Camera")
 	FGameplayTag PreviewStateTag;
 #endif
 	

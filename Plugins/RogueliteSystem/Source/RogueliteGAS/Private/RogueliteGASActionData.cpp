@@ -1,5 +1,4 @@
 #include "RogueliteGASActionData.h"
-
 #include "Abilities/GameplayAbility.h"
 
 

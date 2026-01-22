@@ -8,6 +8,7 @@
 #include "PREnemyCharacter.generated.h"
 
 
+class UWidgetComponent;
 class UPRAbilitySet;
 struct FPRAICombatConfig;
 class UPRAIConfig;
@@ -34,6 +35,9 @@ protected:
 	/*~ AActor Interfaces ~*/
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	
+	virtual void BindViewModels();
+	virtual void UnBindViewModels();
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, BlueprintGetter=GetAIConfig,  Category = "PR Enemy")
 	TObjectPtr<UPRAIConfig> AIConfig;
@@ -41,6 +45,10 @@ protected:
 	/** AbilityConfig */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "PR Enemy")
 	TObjectPtr<UPRAbilitySet> EnemyAbilitySet;
+	
+	/*~ Components ~*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widget")
+	TObjectPtr<UWidgetComponent> StatusWidgetComponent;
 	
 private:
 	bool bIsStrafeMode;

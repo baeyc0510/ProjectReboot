@@ -39,15 +39,15 @@ protected:
 
 	// Hitscan 유틸리티: 카메라 기준 라인 트레이스
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
-	bool PerformHitscan(FHitResult& OutHitResult, float Range = 10000.0f) const;
+	TArray<FHitResult> PerformHitscan(float Range = 10000.0f) const;
 
 	// Hitscan with spread
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
-	bool PerformHitscanWithSpread(FHitResult& OutHitResult, float SpreadAngle, float Range = 10000.0f) const;
+	TArray<FHitResult> PerformHitscanWithSpread(float SpreadAngle, float Range = 10000.0f) const;
 
 	// 데미지 적용 (GameplayEffect 사용)
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
-	void ApplyWeaponDamage(const FHitResult& HitResult);
+	void ApplyWeaponDamage(const FHitResult& HitResult, int32 PenetrationCount = 0);
 
 protected:
 	// 카메라 시작점 및 방향 계산

@@ -3,13 +3,20 @@
 
 #include "PREnemyCharacter.h"
 
+#include "Components/WidgetComponent.h"
 #include "ProjectReboot/AbilitySystem/PRAbilitySystemComponent.h"
+#include "ProjectReboot/UI/Enemy/PREnemyStatusViewModel.h"
+#include "ProjectReboot/UI/Enemy/PREnemyStatusWidget.h"
+#include "ProjectReboot/UI/ViewModel/PRViewModelSubsystem.h"
 
 // Sets default values
 APREnemyCharacter::APREnemyCharacter()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	bUseControllerRotationYaw = false;
+	
+	StatusWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("StatusWidgetComponent"));
+	StatusWidgetComponent->SetupAttachment(RootComponent);
 }
 
 void APREnemyCharacter::SetStrafeMode(bool bEnable)
@@ -26,6 +33,8 @@ void APREnemyCharacter::BeginPlay()
 		AbilitySystem->InitAbilityActorInfo(this,this);
 		AbilitySystem->GiveAbilitySet(EnemyAbilitySet, AbilitySetHandles);
 	}
+	
+	BindViewModels();
 }
 
 void APREnemyCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -35,5 +44,52 @@ void APREnemyCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	if (AbilitySystem)
 	{
 		AbilitySetHandles.RemoveFromAbilitySystem();
+	}
+	
+	UnBindViewModels();
+}
+
+void APREnemyCharacter::BindViewModels()
+{
+	check(StatusWidgetComponent);
+	check(StatusWidgetComponent->GetWidget())
+	
+	if (!StatusWidgetComponent)
+	{
+		return;
+	}
+	
+	UPREnemyStatusWidget* EnemyStatusWidget = Cast<UPREnemyStatusWidget>(StatusWidgetComponent->GetWidget());
+	if (!EnemyStatusWidget)
+	{
+		return;
+	}
+	
+	ULocalPlayer* LP = GetWorld()->GetFirstLocalPlayerFromController();
+	if (!LP)
+	{
+		return;
+	}
+	
+	UPRViewModelSubsystem* ViewModelSubsystem = LP->GetSubsystem<UPRViewModelSubsystem>();
+	if (!ViewModelSubsystem)
+	{
+		return;
+	}
+	
+	if (UPREnemyStatusViewModel* VM = ViewModelSubsystem->GetOrCreateActorViewModel<UPREnemyStatusViewModel>(this))
+	{
+		EnemyStatusWidget->BindViewModel(VM);
+	}
+}
+
+void APREnemyCharacter::UnBindViewModels()
+{
+	if (ULocalPlayer* LP = GetWorld()->GetFirstLocalPlayerFromController())
+	{
+		if (UPRViewModelSubsystem* ViewModelSubsystem = LP->GetSubsystem<UPRViewModelSubsystem>())
+		{
+			ViewModelSubsystem->RemoveAllViewModelsForActor(this);
+		}
 	}
 }

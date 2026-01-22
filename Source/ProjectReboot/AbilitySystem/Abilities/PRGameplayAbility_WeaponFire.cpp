@@ -4,6 +4,9 @@
 #include "AbilitySystemGlobals.h"
 #include "Abilities/GameplayAbilityTargetTypes.h"
 #include "GameFramework/PlayerController.h"
+#include "ProjectReboot/PRGameplayTags.h"
+#include "ProjectReboot/AbilitySystem/PRWeaponAttributeSet.h"
+#include "ProjectReboot/Equipment/PREquipmentInterface.h"
 #include "ProjectReboot/Equipment/PREquipmentManagerComponent.h"
 #include "ProjectReboot/Equipment/Weapon/WeaponInstance.h"
 
@@ -19,6 +22,7 @@ void UPRGameplayAbility_WeaponFire::ActivateAbility(const FGameplayAbilitySpecHa
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	
+	// 쿨다운 커밋 후 발사 처리
 	if (CommitAbilityCooldown(Handle,ActorInfo,ActivationInfo,false))
 	{
 		OnActivateAbility(Handle,ActorInfo,ActivationInfo,TriggerEventData);
@@ -45,16 +49,14 @@ UWeaponInstance* UPRGameplayAbility_WeaponFire::GetWeaponInstance() const
 
 UPREquipmentManagerComponent* UPRGameplayAbility_WeaponFire::GetEquipmentManager() const
 {
-	AActor* AvatarActor = GetAvatarActorFromActorInfo();
-	if (!IsValid(AvatarActor))
+	if (IPREquipmentInterface* EI = Cast<IPREquipmentInterface>(GetAvatarActorFromActorInfo()))
 	{
-		return nullptr;
+		return EI->GetEquipmentManager();
 	}
-
-	return AvatarActor->FindComponentByClass<UPREquipmentManagerComponent>();
+	return nullptr;
 }
 
-bool UPRGameplayAbility_WeaponFire::PerformHitscan(FHitResult& OutHitResult, float Range) const
+TArray<FHitResult> UPRGameplayAbility_WeaponFire::PerformHitscan(float Range) const
 {
 	FVector Start;
 	FVector Direction;
@@ -70,13 +72,56 @@ bool UPRGameplayAbility_WeaponFire::PerformHitscan(FHitResult& OutHitResult, flo
 	UWorld* World = GetWorld();
 	if (!IsValid(World))
 	{
-		return false;
+		return {};
 	}
 
-	return World->LineTraceSingleByChannel(OutHitResult, Start, End, TraceChannel, QueryParams);
+	// 관통 0이면 단일 트레이스 사용
+	int32 MaxPenetration = 0;
+	if (const UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+	{
+		MaxPenetration = FMath::Max(0, FMath::TruncToInt(ASC->GetNumericAttribute(UPRWeaponAttributeSet::GetMaxPenetrationAttribute())));
+	}
+
+	if (MaxPenetration <= 0)
+	{
+		FHitResult SingleHit;
+		if (World->LineTraceSingleByChannel(SingleHit, Start, End, TraceChannel, QueryParams))
+		{
+			return { SingleHit };
+		}
+		return {};
+	}
+
+	// 관통 횟수만큼 반복 트레이스
+	TArray<FHitResult> HitResults;
+	HitResults.Reserve(MaxPenetration + 1);
+
+	FVector TraceStart = Start;
+	const int32 MaxHits = MaxPenetration + 1;
+	for (int32 HitIndex = 0; HitIndex < MaxHits; ++HitIndex)
+	{
+		FHitResult Hit;
+		if (!World->LineTraceSingleByChannel(Hit, TraceStart, End, TraceChannel, QueryParams))
+		{
+			break;
+		}
+
+		HitResults.Add(Hit);
+
+		// 동일 액터 재히트 방지
+		if (AActor* HitActor = Hit.GetActor())
+		{
+			QueryParams.AddIgnoredActor(HitActor);
+		}
+
+		// 다음 트레이스 시작점 오프셋
+		TraceStart = Hit.ImpactPoint + Direction * 1.0f;
+	}
+
+	return HitResults;
 }
 
-bool UPRGameplayAbility_WeaponFire::PerformHitscanWithSpread(FHitResult& OutHitResult, float SpreadAngle, float Range) const
+TArray<FHitResult> UPRGameplayAbility_WeaponFire::PerformHitscanWithSpread(float SpreadAngle, float Range) const
 {
 	FVector Start;
 	FVector Direction;
@@ -99,13 +144,56 @@ bool UPRGameplayAbility_WeaponFire::PerformHitscanWithSpread(FHitResult& OutHitR
 	UWorld* World = GetWorld();
 	if (!IsValid(World))
 	{
-		return false;
+		return {};
 	}
 
-	return World->LineTraceSingleByChannel(OutHitResult, Start, End, TraceChannel, QueryParams);
+	// 관통 0이면 단일 트레이스 사용
+	int32 MaxPenetration = 0;
+	if (const UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+	{
+		MaxPenetration = FMath::Max(0, FMath::TruncToInt(ASC->GetNumericAttribute(UPRWeaponAttributeSet::GetMaxPenetrationAttribute())));
+	}
+
+	if (MaxPenetration <= 0)
+	{
+		FHitResult SingleHit;
+		if (World->LineTraceSingleByChannel(SingleHit, Start, End, TraceChannel, QueryParams))
+		{
+			return { SingleHit };
+		}
+		return {};
+	}
+
+	// 관통 횟수만큼 반복 트레이스
+	TArray<FHitResult> HitResults;
+	HitResults.Reserve(MaxPenetration + 1);
+
+	FVector TraceStart = Start;
+	const int32 MaxHits = MaxPenetration + 1;
+	for (int32 HitIndex = 0; HitIndex < MaxHits; ++HitIndex)
+	{
+		FHitResult Hit;
+		if (!World->LineTraceSingleByChannel(Hit, TraceStart, End, TraceChannel, QueryParams))
+		{
+			break;
+		}
+
+		HitResults.Add(Hit);
+
+		// 동일 액터 재히트 방지
+		if (AActor* HitActor = Hit.GetActor())
+		{
+			QueryParams.AddIgnoredActor(HitActor);
+		}
+
+		// 다음 트레이스 시작점 오프셋
+		TraceStart = Hit.ImpactPoint + Direction * 1.0f;
+	}
+
+	return HitResults;
 }
 
-void UPRGameplayAbility_WeaponFire::ApplyWeaponDamage(const FHitResult& HitResult)
+void UPRGameplayAbility_WeaponFire::ApplyWeaponDamage(const FHitResult& HitResult, int32 PenetrationCount)
 {
 	if (!IsValid(DamageEffectClass))
 	{
@@ -127,6 +215,23 @@ void UPRGameplayAbility_WeaponFire::ApplyWeaponDamage(const FHitResult& HitResul
 	FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(DamageEffectClass, GetAbilityLevel());
 	if (SpecHandle.IsValid())
 	{
+		// 기본 데미지 * 배율 전달
+		if (const UAbilitySystemComponent* SourceASC = GetAbilitySystemComponentFromActorInfo())
+		{
+			const float BaseDamage = SourceASC->GetNumericAttribute(UPRWeaponAttributeSet::GetBaseDamageAttribute());
+			const float DamageMultiplier = SourceASC->GetNumericAttribute(UPRWeaponAttributeSet::GetDamageMultiplierAttribute());
+			SpecHandle.Data->SetSetByCallerMagnitude(TAG_SetByCaller_Combat_Damage, BaseDamage * DamageMultiplier);
+		}
+
+		// 관통 카운트 전달
+		SpecHandle.Data->SetSetByCallerMagnitude(TAG_SetByCaller_Combat_PenetrationCount, static_cast<float>(FMath::Max(0, PenetrationCount)));
+		
+		// 무기 태그 전달
+		if (UWeaponInstance* WeaponInstance = GetWeaponInstance())
+		{
+			SpecHandle.Data->AppendDynamicAssetTags(WeaponInstance->GetGrantedTags());	
+		}
+		
 		FGameplayAbilityTargetDataHandle TargetDataHandle;
 		FGameplayAbilityTargetData_SingleTargetHit* TargetData = new FGameplayAbilityTargetData_SingleTargetHit(HitResult);
 		TargetDataHandle.Add(TargetData);

@@ -40,6 +40,7 @@ void UPRGA_Fire_Beam::OnActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	UWorld* World = GetWorld();
 	if (IsValid(World))
 	{
+		// 고정 간격으로 빔 데미지 처리
 		World->GetTimerManager().SetTimer(
 			BeamTickTimerHandle,
 			FTimerDelegate::CreateUObject(this, &UPRGA_Fire_Beam::TickBeam, 0.016f),
@@ -88,11 +89,17 @@ void UPRGA_Fire_Beam::TickBeam(float DeltaTime)
 	{
 		LastDamageTime = 0.0f;
 
-		FHitResult HitResult;
-		if (PerformHitscan(HitResult))
+		// 관통 히트 처리
+		const TArray<FHitResult> HitResults = PerformHitscan();
+		if (HitResults.Num() > 0)
 		{
-			ApplyWeaponDamage(HitResult);
-			Weapon->PlayImpact(HitResult);
+			// 관통 순서대로 데미지 적용
+			for (int32 HitIndex = 0; HitIndex < HitResults.Num(); ++HitIndex)
+			{
+				const FHitResult& HitResult = HitResults[HitIndex];
+				ApplyWeaponDamage(HitResult, HitIndex);
+				Weapon->PlayImpact(HitResult);
+			}
 		}
 	}
 }

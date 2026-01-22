@@ -295,6 +295,7 @@ void APRPlayerCharacter::BindViewModels()
 	
 	if (UPRCrosshairViewModel* VM = ViewModelSubsystem->GetOrCreateGlobalViewModel<UPRCrosshairViewModel>())
 	{
+		VM->SetCharacter(this);
 		VM->BindToASC(AbilitySystem);
 	}
 	

@@ -10,11 +10,12 @@ struct FOnAttributeChangeData;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHUDAmmoChanged, int32, Current, int32, Max);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHUDHealthChanged, float, Current, float, Max);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHUDShieldChanged, float, Current, float, Max);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHUDWeaponTypeChanged, const FGameplayTag&, WeaponTypeTag);
 
 /**
  * HUD 뷰모델
- * 무기 타입(실탄, 빔, 미사일)에 따른 탄약/에너지 표시 관리
+ * 무기 공통 탄약 표시 관리
  * 플레이어 체력 표시 관리
  */
 UCLASS(BlueprintType)
@@ -45,6 +46,12 @@ public:
 	float GetMaxHealth() const { return MaxHealth; }
 
 	UFUNCTION(BlueprintPure, Category = "HUD")
+	float GetCurrentShield() const { return CurrentShield; }
+
+	UFUNCTION(BlueprintPure, Category = "HUD")
+	float GetMaxShield() const { return MaxShield; }
+
+	UFUNCTION(BlueprintPure, Category = "HUD")
 	FGameplayTag GetWeaponTypeTag() const { return WeaponTypeTag; }
 
 	UPROPERTY(BlueprintAssignable, Category = "HUD|Events")
@@ -54,11 +61,15 @@ public:
 	FOnHUDHealthChanged OnHealthChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "HUD|Events")
+	FOnHUDShieldChanged OnShieldChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "HUD|Events")
 	FOnHUDWeaponTypeChanged OnWeaponTypeChanged;
 
 private:
 	void SetAmmo(int32 NewCurrent, int32 NewMax);
 	void SetHealth(float NewCurrent, float NewMax);
+	void SetShield(float NewCurrent, float NewMax);
 	void SetWeaponType(const FGameplayTag& NewType);
 
 	void UpdateAttributesBindings();
@@ -69,15 +80,12 @@ private:
 	
 	void HandleAmmoChanged(const FOnAttributeChangeData& Data);
 	void HandleMaxAmmoChanged(const FOnAttributeChangeData& Data);
-	
-	void HandleEnergyChanged(const FOnAttributeChangeData& Data);
-	void HandleMaxEnergyChanged(const FOnAttributeChangeData& Data);
-	
-	void HandleMissileChanged(const FOnAttributeChangeData& Data);
-	void HandleMaxMissileChanged(const FOnAttributeChangeData& Data);
 
 	void HandleHealthChanged(const FOnAttributeChangeData& Data);
 	void HandleMaxHealthChanged(const FOnAttributeChangeData& Data);
+
+	void HandleShieldChanged(const FOnAttributeChangeData& Data);
+	void HandleMaxShieldChanged(const FOnAttributeChangeData& Data);
 
 private:
 	UPROPERTY()
@@ -88,15 +96,17 @@ private:
 	int32 MaxAmmo = 0;
 	float CurrentHealth = 0.0f;
 	float MaxHealth = 0.0f;
+	float CurrentShield = 0.0f;
+	float MaxShield = 0.0f;
 
 	// 어트리뷰트 델리게이트 핸들
 	FDelegateHandle AmmoChangeHandle;
 	FDelegateHandle MaxAmmoChangeHandle;
 	FDelegateHandle HealthChangeHandle;
 	FDelegateHandle MaxHealthChangeHandle;
+	FDelegateHandle ShieldChangeHandle;
+	FDelegateHandle MaxShieldChangeHandle;
 	
 	// 태그 델리게이트 핸들
-	FDelegateHandle BulletTagHandle;
-	FDelegateHandle BeamTagHandle;
-	FDelegateHandle MissileTagHandle;
+	FDelegateHandle WeaponTypeTagHandle;
 };

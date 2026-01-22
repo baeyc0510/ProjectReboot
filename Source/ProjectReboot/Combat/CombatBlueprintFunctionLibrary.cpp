@@ -14,8 +14,8 @@ EPRHitDirection UCombatBlueprintFunctionLibrary::GetHitDirectionFromHitResult(co
 		return EPRHitDirection::Front;
 	}
 
-	// 피격 방향 계산 (TraceStart 로부터 ImpactPoint)
-	FVector HitDirection = (HitResult.ImpactPoint - HitResult.TraceStart).GetSafeNormal();
+	// 피격 방향 계산 (ImpactPoint -> TraceStart)
+	FVector HitDirection = (HitResult.TraceStart - HitResult.ImpactPoint).GetSafeNormal();
 	
 	// 월드 to 로컬 방향 변환
 	FVector LocalDirection = HitActor->GetActorRotation().UnrotateVector(HitDirection);
@@ -38,7 +38,7 @@ EPRHitDirection UCombatBlueprintFunctionLibrary::GetHitDirectionFromInstigator(c
 		return EPRHitDirection::Front;
 	}
 
-	FVector HitDirection = (HitActor->GetActorLocation() - Instigator->GetActorLocation()).GetSafeNormal();
+	FVector HitDirection = (Instigator->GetActorLocation() - HitActor->GetActorLocation()).GetSafeNormal();
 	FVector LocalDirection = HitActor->GetActorRotation().UnrotateVector(HitDirection);
 
 	if (FMath::Abs(LocalDirection.X) >= FMath::Abs(LocalDirection.Y))

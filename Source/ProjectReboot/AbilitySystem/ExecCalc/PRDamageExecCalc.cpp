@@ -100,6 +100,17 @@ void UPRDamageExecCalc::Execute_Implementation(const FGameplayEffectCustomExecut
 			EGameplayModOp::Additive,
 			-RemainingDamage));
 	}
+
+	// 경직 수치 증가 적용 (RemainingDamage기준)
+	const float HitImmunityMultiplier = GetHitImmunityDamageMultiplier(DamageTypeTag);
+	const float StaggerAmount = RemainingDamage * HitImmunityMultiplier;
+	if (StaggerAmount > 0.0f)
+	{
+		OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
+			UPRCommonAttributeSet::GetStaggerAttribute(),
+			EGameplayModOp::Additive,
+			StaggerAmount));
+	}
 }
 
 bool UPRDamageExecCalc::GetWeaponTypeTag(const FGameplayTagContainer& InTags, FGameplayTag& OutWeaponTypeTag) const
@@ -144,6 +155,12 @@ float UPRDamageExecCalc::GetDamageTypeMultiplier(const FGameplayTag& DamageTypeT
 
 float UPRDamageExecCalc::GetShieldDamageMultiplier(const FGameplayTag& WeaponTypeTag) const
 {
-	const float* Multiplier = ShieldDamageMultipliers.Find(WeaponTypeTag);
+	const float* Multiplier = DamageTypeShieldMultipliers.Find(WeaponTypeTag);
+	return Multiplier ? *Multiplier : 1.0f;
+}
+
+float UPRDamageExecCalc::GetHitImmunityDamageMultiplier(const FGameplayTag& DamageTypeTag) const
+{
+	const float* Multiplier = DamageTypeHitImmunityMultipliers.Find(DamageTypeTag);
 	return Multiplier ? *Multiplier : 1.0f;
 }

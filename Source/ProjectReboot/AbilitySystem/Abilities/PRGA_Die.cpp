@@ -127,8 +127,8 @@ UAnimMontage* UPRGA_Die::GetDeathMontage(const FGameplayEventData* TriggerEventD
 		return DirectionalMontage;
 	}
 
-	// Fallback: FrontDeathMontage 태그
-	if (UAnimMontage* FrontDeathMontage = ARI->FindMontageByGameplayTag(TAG_Montage_Death_Front))
+	// Fallback: BackDeathMontage 태그
+	if (UAnimMontage* FrontDeathMontage = ARI->FindMontageByGameplayTag(TAG_Montage_Death_Back))
 	{
 		return FrontDeathMontage;
 	}

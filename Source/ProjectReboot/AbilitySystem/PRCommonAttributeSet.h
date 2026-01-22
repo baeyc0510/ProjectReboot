@@ -64,4 +64,15 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Combat")
 	FGameplayAttributeData MaxShield;
 	ATTRIBUTE_ACCESSORS(UPRCommonAttributeSet, MaxShield)
+
+	/*~ Hit Stagger ~*/
+	// 경직 수치
+	UPROPERTY(BlueprintReadOnly, Category = "Combat")
+	FGameplayAttributeData Stagger;
+	ATTRIBUTE_ACCESSORS(UPRCommonAttributeSet, Stagger)
+
+	// 피격 임계치
+	UPROPERTY(BlueprintReadOnly, Category = "Combat")
+	FGameplayAttributeData HitImmunity;
+	ATTRIBUTE_ACCESSORS(UPRCommonAttributeSet, HitImmunity)
 };

@@ -38,6 +38,9 @@ private:
 
 	// 무기 타입에 따른 실드 데미지 배율 계산
 	float GetShieldDamageMultiplier(const FGameplayTag& WeaponTypeTag) const;
+
+	// 데미지 타입에 따른 피격 면역 감소 배율 계산
+	float GetHitImmunityDamageMultiplier(const FGameplayTag& DamageTypeTag) const;
 	
 protected:
 	// 무기 타입별 배율 (에디터에서 추가/수정)
@@ -50,5 +53,9 @@ protected:
 
 	// 데미지 타입별 실드 추가 데미지 배율 (에디터에서 추가/수정)
 	UPROPERTY(EditDefaultsOnly, Category = "Damage Configuration")
-	TMap<FGameplayTag, float> ShieldDamageMultipliers;
+	TMap<FGameplayTag, float> DamageTypeShieldMultipliers;
+
+	// 데미지 타입별 피격 면역 감소 배율 (에디터에서 추가/수정)
+	UPROPERTY(EditDefaultsOnly, Category = "Damage Configuration")
+	TMap<FGameplayTag, float> DamageTypeHitImmunityMultipliers;
 };

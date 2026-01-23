@@ -28,7 +28,7 @@ public class ProjectReboot : ModuleRules
 			"Slate",
 			"SlateCore",
 			"GameplayAbilities",
-			"GameplayTasks", "Niagara",
+			"GameplayTasks", "Niagara", "MotionWarping",
 
 		});
 

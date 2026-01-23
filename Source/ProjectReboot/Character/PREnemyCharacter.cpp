@@ -3,6 +3,7 @@
 
 #include "PREnemyCharacter.h"
 
+#include "MotionWarpingComponent.h"
 #include "Components/WidgetComponent.h"
 #include "ProjectReboot/AbilitySystem/PRAbilitySystemComponent.h"
 #include "ProjectReboot/UI/Enemy/PREnemyStatusViewModel.h"
@@ -17,6 +18,8 @@ APREnemyCharacter::APREnemyCharacter()
 	
 	StatusWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("StatusWidgetComponent"));
 	StatusWidgetComponent->SetupAttachment(RootComponent);
+	
+	MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarpingComponent"));
 }
 
 void APREnemyCharacter::SetStrafeMode(bool bEnable)
@@ -27,6 +30,14 @@ void APREnemyCharacter::SetStrafeMode(bool bEnable)
 void APREnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	if (USkeletalMeshComponent* MeshComponent = GetMesh())
+	{
+		for (TSubclassOf<UAnimInstance>& AnimLayerClass : EnemyAnimLayers)
+		{
+			MeshComponent->LinkAnimClassLayers(AnimLayerClass);	
+		}
+	}
 	
 	if (AbilitySystem)
 	{
@@ -51,9 +62,6 @@ void APREnemyCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void APREnemyCharacter::BindViewModels()
 {
-	check(StatusWidgetComponent);
-	check(StatusWidgetComponent->GetWidget())
-	
 	if (!StatusWidgetComponent)
 	{
 		return;

@@ -6,6 +6,7 @@
 #include "Perception/AIPerceptionComponent.h"
 #include "ProjectReboot/AI/PRAIController.h"
 #include "ProjectReboot/Character/PREnemyCharacter.h"
+#include "ProjectReboot/Character/PRPlayerCharacter.h"
 
 void UPRSTE_Combat::TreeStart(FStateTreeExecutionContext& Context)
 {
@@ -40,10 +41,10 @@ void UPRSTE_Combat::TreeStop(FStateTreeExecutionContext& Context)
 		CachedPerceptionComponent->OnTargetPerceptionUpdated.RemoveDynamic(this, &UPRSTE_Combat::OnPerceptionUpdated);
 	}
 
+	CachedController->SetCombatTarget(nullptr);
 	CachedController.Reset();
 	CachedPawn.Reset();
 	CachedPerceptionComponent.Reset();
-	TargetActor = nullptr;
 
 	Super::TreeStop(Context);
 }
@@ -52,7 +53,14 @@ void UPRSTE_Combat::Tick(FStateTreeExecutionContext& Context, const float DeltaT
 {
 	Super::Tick(Context, DeltaTime);
 
-	bHasValidTarget = IsValid(TargetActor);
+	if (IsValid(CachedController.Get()))
+	{
+		bHasValidTarget = IsValid(CachedController->GetCombatTarget());	
+	}
+	else
+	{
+		bHasValidTarget = false;
+	}
 
 	if (bHasValidTarget)
 	{
@@ -66,12 +74,20 @@ void UPRSTE_Combat::Tick(FStateTreeExecutionContext& Context, const float DeltaT
 
 void UPRSTE_Combat::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
+	if (!IsValid(CachedController.Get()))
+	{
+		return;
+	}
+	
+	
 	if (Stimulus.WasSuccessfullySensed())
 	{
 		// 타겟 획득
-		if (!IsValid(TargetActor))
+		if (!IsValid(TargetActor) && Cast<APRPlayerCharacter>(Actor))
 		{
+			CachedController->SetCombatTarget(Actor);
 			TargetActor = Actor;
+			bHasValidTarget = true;
 		}
 	}
 	else
@@ -79,14 +95,20 @@ void UPRSTE_Combat::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 		// 타겟 상실
 		if (TargetActor == Actor)
 		{
-			TargetActor = nullptr;
+			CachedController->SetCombatTarget(nullptr);
+			bHasValidTarget = false;
 		}
 	}
 }
 
 float UPRSTE_Combat::CalculateDistanceToTarget() const
 {
-	if (!IsValid(CachedPawn.Get()) || !IsValid(TargetActor))
+	if (!IsValid(CachedPawn.Get()) || !IsValid(CachedController.Get()))
+	{
+		return MAX_FLT;
+	}
+	
+	if (!IsValid(TargetActor))
 	{
 		return MAX_FLT;
 	}

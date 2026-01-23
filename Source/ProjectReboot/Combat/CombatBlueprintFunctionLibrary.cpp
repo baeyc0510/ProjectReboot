@@ -2,8 +2,10 @@
 
 
 #include "CombatBlueprintFunctionLibrary.h"
-
 #include "Components/CapsuleComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "DrawDebugHelpers.h"
+#include "Engine/Engine.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -49,6 +51,50 @@ EPRHitDirection UCombatBlueprintFunctionLibrary::GetHitDirectionFromInstigator(c
 	{
 		return LocalDirection.Y >= 0.0f ? EPRHitDirection::Right : EPRHitDirection::Left;
 	}
+}
+
+/*~ Trace ~*/
+
+bool UCombatBlueprintFunctionLibrary::SphereSweepTraceByStartEnd(
+	const UObject* WorldContextObject,
+	const FVector& Start,
+	const FVector& End,
+	const FVector& Direction,
+	float Radius,
+	TEnumAsByte<ECollisionChannel> TraceChannel,
+	const FCollisionQueryParams& QueryParams,
+	TArray<FHitResult>& OutHits,
+	bool bDrawDebug,
+	float DebugDrawTime)
+{
+	OutHits.Reset();
+
+	UWorld* World = GEngine ? GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::ReturnNull) : nullptr;
+	if (!IsValid(World))
+	{
+		return false;
+	}
+
+	const bool bHit = World->SweepMultiByChannel(
+		OutHits,
+		Start,
+		End,
+		FQuat::Identity,
+		TraceChannel,
+		FCollisionShape::MakeSphere(FMath::Max(0.0f, Radius)),
+		QueryParams
+	);
+
+	if (bDrawDebug)
+	{
+		const FColor DebugColor = bHit ? FColor::Red : FColor::Green;
+		DrawDebugLine(World, Start, End, DebugColor, false, DebugDrawTime, 0, 1.0f);
+		DrawDebugSphere(World, Start, Radius, 12, DebugColor, false, DebugDrawTime);
+		DrawDebugSphere(World, End, Radius, 12, DebugColor, false, DebugDrawTime);
+		DrawDebugDirectionalArrow(World, Start, Start + Direction.GetSafeNormal() * 50.0f, 20.0f, DebugColor, false, DebugDrawTime);
+	}
+
+	return bHit;
 }
 
 /*~ Ragdoll ~*/

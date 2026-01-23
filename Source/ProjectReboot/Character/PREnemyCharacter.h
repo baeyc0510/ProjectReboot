@@ -8,6 +8,7 @@
 #include "PREnemyCharacter.generated.h"
 
 
+class UMotionWarpingComponent;
 class UWidgetComponent;
 class UPRAbilitySet;
 struct FPRAICombatConfig;
@@ -31,6 +32,9 @@ public:
 	UFUNCTION(BlueprintPure)
 	bool IsStrafeMode() const {return bIsStrafeMode;}
 	
+	UFUNCTION(BlueprintPure)
+	UMotionWarpingComponent* GetMotionWarpingComponent() const { return MotionWarpingComponent; }
+	
 protected:
 	/*~ AActor Interfaces ~*/
 	virtual void BeginPlay() override;
@@ -39,6 +43,10 @@ protected:
 	virtual void BindViewModels();
 	virtual void UnBindViewModels();
 protected:
+	/** Animation */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "PR Animation")
+	TArray<TSubclassOf<UAnimInstance>> EnemyAnimLayers;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, BlueprintGetter=GetAIConfig,  Category = "PR Enemy")
 	TObjectPtr<UPRAIConfig> AIConfig;
 	
@@ -49,6 +57,9 @@ protected:
 	/*~ Components ~*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widget")
 	TObjectPtr<UWidgetComponent> StatusWidgetComponent;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation")
+	TObjectPtr<UMotionWarpingComponent> MotionWarpingComponent;
 	
 private:
 	bool bIsStrafeMode;

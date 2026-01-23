@@ -25,6 +25,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_State_Sprint, "State.Sprint");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Crouch, "State.Crouch");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Aiming, "State.Aiming");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Dead, "State.Dead");
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_Hit, "State.Hit");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_CannotFire, "State.Weapon.CannotFire");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_Crosshair, "State.Weapon.Crosshair");

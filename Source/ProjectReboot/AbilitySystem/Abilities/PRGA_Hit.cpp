@@ -1,6 +1,7 @@
 // PRGA_Hit.cpp
 #include "PRGA_Hit.h"
 
+#include "AbilitySystemComponent.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/Animation/PRAnimRegistryInterface.h"
@@ -26,6 +27,9 @@ void UPRGA_Hit::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const F
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
+	// 피격 상태 GE 적용
+	ApplyHitState(TriggerEventData);
+
 	if (UAnimMontage* HitMontage = GetHitMontage(TriggerEventData))
 	{
 		PlayHitMontage(HitMontage);
@@ -45,6 +49,43 @@ void UPRGA_Hit::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGamep
 		MontageTask->EndTask();
 		MontageTask = nullptr;
 	}
+
+	if (HitEffectHandle.IsValid())
+	{
+		if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+		{
+			ASC->RemoveActiveGameplayEffect(HitEffectHandle);
+		}
+		HitEffectHandle.Invalidate();
+	}
+}
+
+void UPRGA_Hit::ApplyHitState(const FGameplayEventData* TriggerEventData)
+{
+	if (!IsValid(HitStateEffectClass))
+	{
+		return;
+	}
+
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
+	if (!IsValid(ASC))
+	{
+		return;
+	}
+
+	FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(HitStateEffectClass, GetAbilityLevel());
+	if (!SpecHandle.IsValid())
+	{
+		return;
+	}
+
+	// 원본 Context 유지
+	if (TriggerEventData && TriggerEventData->ContextHandle.IsValid())
+	{
+		SpecHandle.Data->SetContext(TriggerEventData->ContextHandle);
+	}
+
+	HitEffectHandle = ApplyGameplayEffectSpecToOwner(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, SpecHandle);
 }
 
 void UPRGA_Hit::PlayHitMontage(UAnimMontage* MontageToPlay)

@@ -34,8 +34,7 @@ public:
 	// 유효한 타겟 존재 여부
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Output")
 	bool bHasValidTarget = false;
-
-	// 현재 타겟 액터
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Output")
 	TObjectPtr<AActor> TargetActor;
 

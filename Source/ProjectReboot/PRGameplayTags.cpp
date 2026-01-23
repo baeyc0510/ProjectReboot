@@ -34,11 +34,14 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_Crosshair_Rifle, "State.Weapon.Crosshair
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event, "Event");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Death, "Event.Death");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Hit, "Event.Hit");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Attack, "Event.Attack");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Room, "Event.Room");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Room_Clear, "Event.Room.Clear");
 
+
 /*~ Montage Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage, "Montage");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Attack, "Montage.Attack");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Death, "Montage.Death");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Death_Front, "Montage.Death.Front");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Death_Right,"Montage.Death.Right");
@@ -53,6 +56,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Hit_Left, "Montage.Hit.Left");
 
 /*~ Ability Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability, "Ability");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Attack, "Ability.Attack");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Die, "Ability.Die");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Active, "Ability.Active");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Active_Aim, "Ability.Active.Aim");

@@ -63,6 +63,7 @@ void UPRSTT_ActivateAbilityByTag::OnEnterState(FStateTreeExecutionContext& Conte
 	}
 	
 	const bool bActivated = ASC->TryActivateAbility(SpecHandleToActivate);
+	
 	if (!bActivated)
 	{
 		ClearAbilityEndDelegate();

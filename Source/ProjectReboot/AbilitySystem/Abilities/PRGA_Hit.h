@@ -2,11 +2,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayEffectTypes.h"
 #include "ProjectReboot/AbilitySystem/PRGameplayAbility.h"
 #include "PRGA_Hit.generated.h"
 
 enum class EPRHitDirection : uint8;
 class UAbilityTask_PlayMontageAndWait;
+class UGameplayEffect;
 
 /**
  * 피격 어빌리티
@@ -28,6 +30,9 @@ public:
 protected:
 	/*~ UPRGA_Hit Interfaces ~*/
 
+	// 피격 상태 GE 적용
+	void ApplyHitState(const FGameplayEventData* TriggerEventData);
+
 	// 피격 몽타주 재생
 	void PlayHitMontage(UAnimMontage* MontageToPlay);
 
@@ -48,6 +53,10 @@ protected:
 	void OnMontageCancelled();
 
 protected:
+	// 피격 상태 GE (Hit 이펙트 적용)
+	UPROPERTY(EditDefaultsOnly, Category = "Hit")
+	TSubclassOf<UGameplayEffect> HitStateEffectClass;
+
 	// 피격 몽타주 오버라이드
 	UPROPERTY(EditDefaultsOnly, Category = "Hit")
 	TObjectPtr<UAnimMontage> HitMontageOverride;
@@ -59,4 +68,7 @@ protected:
 private:
 	UPROPERTY()
 	UAbilityTask_PlayMontageAndWait* MontageTask;
+
+	// 피격 상태 GE 핸들
+	FActiveGameplayEffectHandle HitEffectHandle;
 };

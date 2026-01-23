@@ -27,10 +27,19 @@ public:
 
 	UPRAIConfig* GetAIConfig() const {return AIConfig;}
 	
+	UFUNCTION(BlueprintPure)
+	AActor* GetCombatTarget() const {return CombatTarget.Get();}
+	
+	UFUNCTION(BlueprintCallable)
+	void SetCombatTarget(AActor* Target) {CombatTarget = Target;}
+	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PR AI")
 	TObjectPtr<UPRStateTreeAIComponent> StateTreeComponent;
 	
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<UPRAIConfig> AIConfig;
+	
+	UPROPERTY()
+	TWeakObjectPtr<AActor> CombatTarget;
 };

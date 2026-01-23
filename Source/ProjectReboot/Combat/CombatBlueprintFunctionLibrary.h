@@ -5,8 +5,9 @@
 #include "CoreMinimal.h"
 #include "CombatTypes.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "Engine/EngineTypes.h"
 #include "CombatBlueprintFunctionLibrary.generated.h"
-
+class USkeletalMeshComponent;
 /**
  * 
  */
@@ -33,6 +34,21 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable)
 	static EPRHitDirection GetHitDirectionFromInstigator(const AActor* Instigator, const AActor* HitActor);
+
+	/*~ Trace ~*/
+
+	// SweepTrace cpp 유틸
+	static bool SphereSweepTraceByStartEnd(
+		const UObject* WorldContextObject,
+		const FVector& Start,
+		const FVector& End,
+		const FVector& Direction,
+		float Radius,
+		TEnumAsByte<ECollisionChannel> TraceChannel,
+		const FCollisionQueryParams& QueryParams,
+		TArray<FHitResult>& OutHits,
+		bool bDrawDebug = false,
+		float DebugDrawTime = 1.0f);
 	
 	/*~ Ragdoll ~*/
 

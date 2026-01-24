@@ -11,16 +11,12 @@
 #include "ProjectReboot/Equipment/PREquipActionData.h"
 
 
-// Sets default values for this component's properties
 UPREquipmentManagerComponent::UPREquipmentManagerComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
-
-	// ...
 	ActionTagsToManage.AddTag(TAG_Equipment);
 }
 
-// Called when the game starts
 void UPREquipmentManagerComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -37,67 +33,25 @@ void UPREquipmentManagerComponent::EndPlay(const EEndPlayReason::Type EndPlayRea
 	Super::EndPlay(EndPlayReason);
 }
 
-
-void UPREquipmentManagerComponent::Equip(UPREquipActionData* ActionData, bool bRefreshVisuals)
+void UPREquipmentManagerComponent::Equip(UPREquipActionData* EquipAction, bool bRefreshVisuals)
 {
-	if (!ActionData)
-	{
-		return;
-	}
-
-	const FGameplayTag SlotTag = ActionData->EquipmentSlot;
-
-	if (Slots.Contains(SlotTag))
+	if (!IsValid(EquipAction) || !EquipAction->EquipmentSlot.IsValid())
 	{
 		return;
 	}
 	
-	// 애니메이션 링크
-	if (USkeletalMeshComponent* SkeletalMeshComp = Cast<USkeletalMeshComponent>(GetAttachTarget()))
+	FGameplayTag SlotToEquip = EquipAction->EquipmentSlot;
+	if (HasEquipment(SlotToEquip))
 	{
-		TArray<TSubclassOf<UAnimInstance>>& AnimLayersToLink = ActionData->EquipmentVisualSettings.AnimLayersToLink;
-		for (auto& Link : AnimLayersToLink)
-		{
-			SkeletalMeshComp->LinkAnimClassLayers(Link);
-		}
+		Unequip(SlotToEquip, false);
 	}
+	
+	Equip_Internal(EquipAction,bRefreshVisuals);
+}
 
-	// 자식 Equipment
-	if (ActionData->bAttachToParentEquipment)
-	{
-		UEquipmentInstance* ParentInstance = GetEquipmentInstance(ActionData->ParentEquipmentSlot);
-		if (!ParentInstance)
-		{
-			UE_LOG(LogTemp,Warning,TEXT("ActionData %s 가 부모 Equipment를 필요로 하지만 아직 부모 EquipmentInstance가 없음."), *ActionData->GetName());
-			return;
-		}
-
-		ParentInstance->AttachPart(ActionData);
-		if (bRefreshVisuals)
-		{
-			ParentInstance->RefreshVisuals();	
-		}
-		
-		FEquipmentSlotEntry Entry;
-		Entry.Instance = ParentInstance;
-		Entry.ActionData = ActionData;
-		
-		Slots.Add(SlotTag, Entry);
-		OnEquipped.Broadcast(SlotTag, ParentInstance, ActionData);
-	}
-	// 부모 Equipment
-	else
-	{
-		UEquipmentInstance* Instance = CreateInstance(ActionData);
-		Instance->Initialize(GetAttachTarget(), ActionData);
-
-		FEquipmentSlotEntry Entry;
-		Entry.Instance = Instance;
-		Entry.ActionData = ActionData;
-		
-		Slots.Add(SlotTag, Entry);
-		OnEquipped.Broadcast(SlotTag, Instance, ActionData);
-	}
+void UPREquipmentManagerComponent::Unequip(FGameplayTag SlotTag, bool bRefreshVisuals)
+{
+	Unequip_Internal(SlotTag, bRefreshVisuals);
 }
 
 void UPREquipmentManagerComponent::UnequipByAction(UPREquipActionData* ActionData, bool bRefreshVisuals)
@@ -112,49 +66,7 @@ void UPREquipmentManagerComponent::UnequipByAction(UPREquipActionData* ActionDat
 		return;
 	}
 	
-	Unequip(ActionData->EquipmentSlot);
-}
-
-
-void UPREquipmentManagerComponent::Unequip(FGameplayTag SlotTag, bool bRefreshVisuals)
-{
-	FEquipmentSlotEntry* Entry = Slots.Find(SlotTag);
-	if (!Entry)
-	{
-		return;
-	}
-
-	UnequipChildren(SlotTag);
-
-	UEquipmentInstance* Instance = Entry->Instance;
-	UPREquipActionData* ActionData = Entry->ActionData;
-
-	// 애니메이션 언링크
-	if (USkeletalMeshComponent* SkeletalMeshComp = Cast<USkeletalMeshComponent>(GetAttachTarget()))
-	{
-		TArray<TSubclassOf<UAnimInstance>>& AnimLayersToLink = ActionData->EquipmentVisualSettings.AnimLayersToLink;
-		for (auto& Link : AnimLayersToLink)
-		{
-			SkeletalMeshComp->UnlinkAnimClassLayers(Link);
-		}
-	}
-	
-	if (IsParentEquipmentSlot(SlotTag))
-	{
-		Instance->Uninitialize();
-	}
-	else
-	{
-		Instance->DetachPart(ActionData);
-		if (bRefreshVisuals)
-		{
-			Instance->RefreshVisuals();	
-		}
-		Entry->Instance = nullptr;
-	}
-	
-	Slots.Remove(SlotTag);
-	OnUnequipped.Broadcast(SlotTag, Instance, ActionData);
+	Unequip_Internal(ActionData->EquipmentSlot, bRefreshVisuals);
 }
 
 void UPREquipmentManagerComponent::UnequipAll()
@@ -176,7 +88,7 @@ void UPREquipmentManagerComponent::UnequipAll()
 
 	for (const FGameplayTag& SlotTag : SlotTags)
 	{
-		Unequip(SlotTag);
+		Unequip_Internal(SlotTag);
 	}
 }
 
@@ -205,6 +117,19 @@ UPREquipActionData* UPREquipmentManagerComponent::GetActionData(FGameplayTag Slo
 {
 	const FEquipmentSlotEntry* Entry = Slots.Find(SlotTag);
 	return Entry ? Entry->ActionData : nullptr;
+}
+
+TArray<UPREquipActionData*> UPREquipmentManagerComponent::GetAllActionData() const
+{
+	TArray<UPREquipActionData*> Result;
+	Result.Reserve(Slots.Num());
+	
+	for (auto& KVP : Slots)
+	{
+		Result.Add(KVP.Value.ActionData);
+	}
+	
+	return Result;
 }
 
 
@@ -270,7 +195,7 @@ void UPREquipmentManagerComponent::UnequipChildren(FGameplayTag ParentSlotTag)
 	TArray<FGameplayTag> ChildSlots = FindChildSlots(ParentSlotTag);
 	for (const FGameplayTag& ChildSlot : ChildSlots)
 	{
-		Unequip(ChildSlot, false);
+		Unequip_Internal(ChildSlot, false);
 	}
 }
 
@@ -340,7 +265,7 @@ void UPREquipmentManagerComponent::ProcessExistingActions()
 	for (UPREquipActionData* EquipAction : SortedActions)
 	{
 		// RefreshVisuals는 한번에 처리
-		HandleActionAcquired_Internal(EquipAction, false);
+		Equip(EquipAction, false);
 	}
 	
 	RefreshAllVisuals();
@@ -386,7 +311,6 @@ URogueliteSubsystem* UPREquipmentManagerComponent::GetRogueliteSubsystem() const
 	return URogueliteSubsystem::Get(this);
 }
 
-
 void UPREquipmentManagerComponent::HandleActionAcquired(URogueliteActionData* Action, int32 OldStacks, int32 NewStacks)
 {
 	UPREquipActionData* EquipAction = Cast<UPREquipActionData>(Action);
@@ -394,7 +318,37 @@ void UPREquipmentManagerComponent::HandleActionAcquired(URogueliteActionData* Ac
 	{
 		return;
 	}
-	HandleActionAcquired_Internal(EquipAction,true);
+	
+	FGameplayTag SlotToEquip = EquipAction->EquipmentSlot;
+	
+	TArray<UPREquipActionData*> PartActions;
+	PartActions.Add(EquipAction);
+	
+	// 이미 슬롯이 사용중?
+	if (UPREquipActionData* EquippedAction = GetActionData(SlotToEquip))
+	{
+		// 부모라면 자식 부품들을 부착 목록에 추가
+		if (IsParentEquipmentSlot(SlotToEquip))
+		{
+			for (FGameplayTag& ChildSlot : FindChildSlots(SlotToEquip))
+			{
+				PartActions.Add(GetActionData(ChildSlot));
+			}
+		}
+		// Remove Action -> HandleActionRemoved 에서 장착 해제
+		URogueliteBlueprintLibrary::RemoveAction(this, EquippedAction);
+	}
+	
+	for (UPREquipActionData* PartAction : PartActions)
+	{
+		// 비주얼 처리는 한번에 하기 위해 bRefreshVisuals = false
+		Equip_Internal(PartAction, false);
+	}
+	
+	if (UEquipmentInstance* EquipmentInstance = GetEquipmentInstance(SlotToEquip))
+	{
+		EquipmentInstance->RefreshVisuals();
+	}
 }
 
 void UPREquipmentManagerComponent::HandleActionRemoved(URogueliteActionData* Action, int32 OldStacks, int32 NewStacks)
@@ -404,7 +358,7 @@ void UPREquipmentManagerComponent::HandleActionRemoved(URogueliteActionData* Act
 	{
 		return;
 	}
-	HandleActionRemoved_Internal(EquipAction,true);
+	UnequipByAction(EquipAction,true);
 }
 
 void UPREquipmentManagerComponent::HandleActionStackChanged(URogueliteActionData* Action, int32 OldStacks, int32 NewStacks)
@@ -422,43 +376,105 @@ void UPREquipmentManagerComponent::HandleRunEnded(bool bCompleted)
 {
 }
 
-void UPREquipmentManagerComponent::HandleActionAcquired_Internal(UPREquipActionData* EquipAction, bool bRefreshVisuals)
+void UPREquipmentManagerComponent::Equip_Internal(UPREquipActionData* ActionData, bool bRefreshVisuals)
 {
-	FGameplayTag SlotToEquip = EquipAction->EquipmentSlot;
-	
-	TArray<UPREquipActionData*> PartActions;
-	PartActions.Add(EquipAction);
-	
-	// 이미 슬롯이 사용중?
-	if (HasEquipment(SlotToEquip))
+	if (!ActionData)
 	{
-		// 부모라면 자식 부품들을 부착 목록에 추가
-		if (IsParentEquipmentSlot(SlotToEquip))
+		return;
+	}
+
+	const FGameplayTag SlotTag = ActionData->EquipmentSlot;
+
+	if (Slots.Contains(SlotTag))
+	{
+		return;
+	}
+	
+	// 애니메이션 링크
+	if (USkeletalMeshComponent* SkeletalMeshComp = Cast<USkeletalMeshComponent>(GetAttachTarget()))
+	{
+		TArray<TSubclassOf<UAnimInstance>>& AnimLayersToLink = ActionData->EquipmentVisualSettings.AnimLayersToLink;
+		for (auto& Link : AnimLayersToLink)
 		{
-			if (UEquipmentInstance* EquipmentInstance = GetEquipmentInstance(SlotToEquip))
-			{
-				PartActions.Append(EquipmentInstance->GetChildPartActions());
-			}
+			SkeletalMeshComp->LinkAnimClassLayers(Link);
 		}
-		// Remove Action -> HandleActionRemoved 에서 장착 해제
-		UPREquipActionData* EquippedAction = GetActionData(SlotToEquip);
-		URogueliteBlueprintLibrary::RemoveAction(this, EquippedAction);
 	}
-	
-	for (UPREquipActionData* PartAction : PartActions)
+
+	// 자식 Equipment
+	if (ActionData->bAttachToParentEquipment)
 	{
-		// 비주얼 처리는 한번에 하기 위해 bRefreshVisuals = false
-		Equip(PartAction, false);
+		UEquipmentInstance* ParentInstance = GetEquipmentInstance(ActionData->ParentEquipmentSlot);
+		if (!ParentInstance)
+		{
+			UE_LOG(LogTemp,Warning,TEXT("ActionData %s 가 부모 Equipment를 필요로 하지만 아직 부모 EquipmentInstance가 없음."), *ActionData->GetName());
+			return;
+		}
+
+		ParentInstance->AttachPart(ActionData);
+		if (bRefreshVisuals)
+		{
+			ParentInstance->RefreshVisuals();	
+		}
+		
+		FEquipmentSlotEntry Entry;
+		Entry.Instance = ParentInstance;
+		Entry.ActionData = ActionData;
+		
+		Slots.Add(SlotTag, Entry);
+		OnEquipped.Broadcast(SlotTag, ParentInstance, ActionData);
 	}
-	
-	if (UEquipmentInstance* EquipmentInstance = GetEquipmentInstance(SlotToEquip))
+	// 부모 Equipment
+	else
 	{
-		EquipmentInstance->RefreshVisuals();
+		UEquipmentInstance* Instance = CreateInstance(ActionData);
+		Instance->Initialize(GetAttachTarget(), ActionData);
+
+		FEquipmentSlotEntry Entry;
+		Entry.Instance = Instance;
+		Entry.ActionData = ActionData;
+		
+		Slots.Add(SlotTag, Entry);
+		OnEquipped.Broadcast(SlotTag, Instance, ActionData);
 	}
 }
 
-void UPREquipmentManagerComponent::HandleActionRemoved_Internal(UPREquipActionData* EquipAction, bool bRefreshVisuals)
+void UPREquipmentManagerComponent::Unequip_Internal(FGameplayTag SlotTag, bool bRefreshVisuals)
 {
-	FGameplayTag SlotToUnequip = EquipAction->EquipmentSlot;
-	Unequip(SlotToUnequip, bRefreshVisuals);
+	FEquipmentSlotEntry* Entry = Slots.Find(SlotTag);
+	if (!Entry)
+	{
+		return;
+	}
+
+	UnequipChildren(SlotTag);
+
+	UEquipmentInstance* Instance = Entry->Instance;
+	UPREquipActionData* ActionData = Entry->ActionData;
+
+	// 애니메이션 언링크
+	if (USkeletalMeshComponent* SkeletalMeshComp = Cast<USkeletalMeshComponent>(GetAttachTarget()))
+	{
+		TArray<TSubclassOf<UAnimInstance>>& AnimLayersToLink = ActionData->EquipmentVisualSettings.AnimLayersToLink;
+		for (auto& Link : AnimLayersToLink)
+		{
+			SkeletalMeshComp->UnlinkAnimClassLayers(Link);
+		}
+	}
+	
+	if (IsParentEquipmentSlot(SlotTag))
+	{
+		Instance->Uninitialize();
+	}
+	else
+	{
+		Instance->DetachPart(ActionData);
+		if (bRefreshVisuals)
+		{
+			Instance->RefreshVisuals();	
+		}
+		Entry->Instance = nullptr;
+	}
+	
+	Slots.Remove(SlotTag);
+	OnUnequipped.Broadcast(SlotTag, Instance, ActionData);
 }

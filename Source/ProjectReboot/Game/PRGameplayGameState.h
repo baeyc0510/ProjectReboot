@@ -28,14 +28,20 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Room")
 	void SendRoomEvent(const FGameplayTag& EventTag);
 
-	UFUNCTION(BlueprintPure, Category = "Combat")
-	int32 GetCurrentKillCount() const {return CurrentKillCount;}
+	// 이벤트 카운트 증가
+	UFUNCTION(BlueprintCallable, Category = "Room")
+	void AddEventCount(const FGameplayTag& EventTag, int32 Delta = 1);
+
+	// 이벤트 카운트 조회
+	UFUNCTION(BlueprintPure, Category = "Room")
+	int32 GetEventCount(const FGameplayTag& EventTag) const;
 
 public:
 	// 현재 플레이어가 있는 방
 	UPROPERTY(BlueprintReadOnly, Category = "Room")
 	APRRoomController* CurrentRoomController;
 	
-	UPROPERTY(BlueprintReadOnly, Category = "Combat")
-	int32 CurrentKillCount;
+	// 현재 이벤트 카운트 (태그 -> 누적 수치)
+	UPROPERTY(BlueprintReadOnly, Category = "Room")
+	TMap<FGameplayTag, int32> CurrentEventCounts;
 };

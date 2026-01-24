@@ -7,17 +7,38 @@
 #include "ProjectReboot/Room/PRMapManagerSubsystem.h"
 #include "ProjectReboot/Room/PRRoomController.h"
 
-void APRGameplayGameMode::OnEnemyKilled()
+void APRGameplayGameMode::OnGameplayEvent(const FGameplayTag& EventTag, int32 Delta)
 {
-	if (APRGameplayGameState* GS = GetGameState<APRGameplayGameState>())
+	APRGameplayGameState* GS = GetGameState<APRGameplayGameState>();
+	if (!GS)
 	{
-		GS->CurrentKillCount++;
+		return;
+	}
 
-		// 클리어 조건 판정: 현재 킬 수가 목표치에 도달했는가?
-		if (GS->CurrentKillCount >= CurrentRoomConfig.TargetKillCount)
+	GS->AddEventCount(EventTag, Delta);
+
+	// 클리어 조건 판정: 모든 목표 이벤트 수치 달성 여부
+	bool bAllGoalsMet = true;
+	if (CurrentRoomConfig.TargetEventCounts.Num() <= 0)
+	{
+		bAllGoalsMet = false;
+	}
+	else
+	{
+		for (const TPair<FGameplayTag, int32>& Goal : CurrentRoomConfig.TargetEventCounts)
 		{
-			OnRoomCleared();
-		}	
+			const int32 CurrentCount = GS->GetEventCount(Goal.Key);
+			if (CurrentCount < Goal.Value)
+			{
+				bAllGoalsMet = false;
+				break;
+			}
+		}
+	}
+
+	if (bAllGoalsMet)
+	{
+		OnRoomCleared();
 	}
 }
 

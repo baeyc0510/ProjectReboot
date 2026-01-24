@@ -4,6 +4,7 @@
 #include "PREnemyCharacter.h"
 
 #include "MotionWarpingComponent.h"
+#include "PREnemyData.h"
 #include "Components/WidgetComponent.h"
 #include "ProjectReboot/AbilitySystem/PRAbilitySystemComponent.h"
 #include "ProjectReboot/UI/Enemy/PREnemyStatusViewModel.h"
@@ -20,6 +21,24 @@ APREnemyCharacter::APREnemyCharacter()
 	StatusWidgetComponent->SetupAttachment(RootComponent);
 	
 	MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarpingComponent"));
+}
+
+FText APREnemyCharacter::GetEnemyDisplayName() const
+{
+	if (EnemyData)
+	{
+		return EnemyData->Name;
+	}
+	return FText::FromString(GetName());
+}
+
+UPRAIConfig* APREnemyCharacter::GetAIConfig() const
+{
+	if (EnemyData)
+	{
+		return EnemyData->AIConfig;
+	}
+	return nullptr;
 }
 
 void APREnemyCharacter::SetStrafeMode(bool bEnable)
@@ -42,7 +61,10 @@ void APREnemyCharacter::BeginPlay()
 	if (AbilitySystem)
 	{
 		AbilitySystem->InitAbilityActorInfo(this,this);
-		AbilitySystem->GiveAbilitySet(EnemyAbilitySet, AbilitySetHandles);
+		if (EnemyData && EnemyData->AbilitySet)
+		{
+			AbilitySystem->GiveAbilitySet(EnemyData->AbilitySet, AbilitySetHandles);	
+		}
 	}
 	
 	BindViewModels();

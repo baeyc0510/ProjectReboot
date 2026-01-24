@@ -8,8 +8,8 @@
 class UAbilitySystemComponent;
 struct FOnAttributeChangeData;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEnemyHealthChanged, float, Current, float, Max);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEnemyShieldChanged, float, Current, float, Max);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnemyDisplayNameChanged, FText, DisplayName);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEnemyAttributeChanged, float, Current, float, Max);
 
 /**
  * 적 체력/실드 상태 뷰모델
@@ -37,6 +37,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "EnemyHUD")
 	void UnbindFromASC();
 
+	// 이름 반환
+	UFUNCTION(BlueprintPure, Category = "EnemyHUD")
+	FText GetEnemyDisplayName() const {return EnemyDisplayName; }
+	
 	// 현재 체력 반환
 	UFUNCTION(BlueprintPure, Category = "EnemyHUD")
 	float GetCurrentHealth() const { return CurrentHealth; }
@@ -55,16 +59,21 @@ public:
 
 public:
 	UPROPERTY(BlueprintAssignable, Category = "EnemyHUD|Events")
-	FOnEnemyHealthChanged OnHealthChanged;
+	FOnEnemyDisplayNameChanged OnEnemyDisplayNameChanged;
+	
+	UPROPERTY(BlueprintAssignable, Category = "EnemyHUD|Events")
+	FOnEnemyAttributeChanged OnHealthChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "EnemyHUD|Events")
-	FOnEnemyShieldChanged OnShieldChanged;
+	FOnEnemyAttributeChanged OnShieldChanged;
 
 private:
 	// 값 갱신
+	void SetEnemyDisplayName(const FText& InDisplayName);
 	void SetHealth(float NewCurrent, float NewMax);
 	void SetShield(float NewCurrent, float NewMax);
 
+	
 	void UpdateAttributeBindings();
 	void ClearAttributeBindings();
 
@@ -78,6 +87,7 @@ private:
 	// ASC 캐시
 	TWeakObjectPtr<UAbilitySystemComponent> BoundASC;
 
+	FText EnemyDisplayName;
 	float CurrentHealth = 0.0f;
 	float MaxHealth = 0.0f;
 	float CurrentShield = 0.0f;

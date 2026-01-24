@@ -27,6 +27,10 @@ struct FWeaponVFXSettings
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "VFX")
 	TObjectPtr<UNiagaraSystem> DefaultImpactVFX;
 
+	// 피격 이펙트 방향 반전 여부 (-X 방향 에셋 보정)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "VFX")
+	bool bFlipImpactNormal = false;
+
 	// 발사 사운드
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sound")
 	TObjectPtr<USoundBase> FireSound;

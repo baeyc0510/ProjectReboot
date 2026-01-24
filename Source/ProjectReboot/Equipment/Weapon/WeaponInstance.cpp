@@ -108,16 +108,21 @@ void UWeaponInstance::PlayImpact(const FHitResult& HitResult)
 		return;
 	}
 
+	const FVector ImpactNormalVector = FVector(HitResult.ImpactNormal);
+	const FVector ImpactNormal = VFXSettings.bFlipImpactNormal
+		? -ImpactNormalVector
+		: ImpactNormalVector;
+
 	UNiagaraFunctionLibrary::SpawnSystemAtLocation(
 		GetWorld(),
 		VFXSettings.DefaultImpactVFX,
 		HitResult.ImpactPoint,
-		HitResult.ImpactNormal.Rotation()
+		ImpactNormal.Rotation()
 	);
 
 	if (IsValid(VFXSettings.ImpactSound))
 	{
-		UGameplayStatics::PlaySoundAtLocation(
+		UGameplayStatics::PlaySoundAtLocation(	
 			GetWorld(),
 			VFXSettings.ImpactSound,
 			HitResult.ImpactPoint

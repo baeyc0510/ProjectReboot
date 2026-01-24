@@ -1,117 +1,116 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PRSTE_Combat.h"
-
 #include "StateTreeExecutionContext.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "ProjectReboot/AI/PRAIController.h"
 #include "ProjectReboot/Character/PREnemyCharacter.h"
 #include "ProjectReboot/Character/PRPlayerCharacter.h"
 
-void UPRSTE_Combat::TreeStart(FStateTreeExecutionContext& Context)
+void FPRStateTreeEvaluator_Combat::TreeStart(FStateTreeExecutionContext& Context) const
 {
-	Super::TreeStart(Context);
+	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 
 	// Context에서 Controller와 Pawn 캐싱
-	CachedController = Cast<APRAIController>(Context.GetOwner());
+	InstanceData.CachedController = Cast<APRAIController>(Context.GetOwner());
 	
-	if (IsValid(CachedController.Get()))
+	if (IsValid(InstanceData.CachedController.Get()))
 	{
-		if (UPRAIConfig* AIConfig = CachedController->GetAIConfig())
+		if (UPRAIConfig* AIConfig = InstanceData.CachedController->GetAIConfig())
 		{
-			CombatConfig = AIConfig->CombatConfig;
+			InstanceData.CombatConfig = AIConfig->CombatConfig;
 		}
 		
-		CachedPawn = Cast<APREnemyCharacter>(CachedController->GetPawn());
-		CachedPerceptionComponent = CachedController->GetPerceptionComponent();
-
-		// Perception 이벤트 바인딩
-		if (IsValid(CachedPerceptionComponent.Get()))
-		{
-			CachedPerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &UPRSTE_Combat::OnPerceptionUpdated);
-		}
+		InstanceData.CachedPawn = Cast<APREnemyCharacter>(InstanceData.CachedController->GetPawn());
+		InstanceData.CachedPerceptionComponent = InstanceData.CachedController->GetPerceptionComponent();
 	}
 }
 
-void UPRSTE_Combat::TreeStop(FStateTreeExecutionContext& Context)
+void FPRStateTreeEvaluator_Combat::TreeStop(FStateTreeExecutionContext& Context) const
 {
-	// Perception 이벤트 해제
-	if (IsValid(CachedPerceptionComponent.Get()))
+	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
+
+	if (IsValid(InstanceData.CachedController.Get()))
 	{
-		CachedPerceptionComponent->OnTargetPerceptionUpdated.RemoveDynamic(this, &UPRSTE_Combat::OnPerceptionUpdated);
+		InstanceData.CachedController->SetCombatTarget(nullptr);
 	}
 
-	CachedController->SetCombatTarget(nullptr);
-	CachedController.Reset();
-	CachedPawn.Reset();
-	CachedPerceptionComponent.Reset();
-
-	Super::TreeStop(Context);
+	InstanceData.CachedController.Reset();
+	InstanceData.CachedPawn.Reset();
+	InstanceData.CachedPerceptionComponent.Reset();
 }
 
-void UPRSTE_Combat::Tick(FStateTreeExecutionContext& Context, const float DeltaTime)
+void FPRStateTreeEvaluator_Combat::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
-	Super::Tick(Context, DeltaTime);
+	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 
-	if (IsValid(CachedController.Get()))
+	// Perception에서 타겟 업데이트
+	UpdateTargetFromPerception(InstanceData);
+
+	if (IsValid(InstanceData.CachedController.Get()))
 	{
-		bHasValidTarget = IsValid(CachedController->GetCombatTarget());	
+		InstanceData.bHasValidTarget = IsValid(InstanceData.CachedController->GetCombatTarget());	
 	}
 	else
 	{
-		bHasValidTarget = false;
+		InstanceData.bHasValidTarget = false;
 	}
 
-	if (bHasValidTarget)
+	if (InstanceData.bHasValidTarget)
 	{
-		DistanceToTarget = CalculateDistanceToTarget();
+		InstanceData.DistanceToTarget = CalculateDistanceToTarget(InstanceData);
 	}
 	else
 	{
-		DistanceToTarget = MAX_FLT;
+		InstanceData.DistanceToTarget = MAX_FLT;
 	}
 }
 
-void UPRSTE_Combat::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
+float FPRStateTreeEvaluator_Combat::CalculateDistanceToTarget(const FInstanceDataType& Data) const
 {
-	if (!IsValid(CachedController.Get()))
+	if (!IsValid(Data.CachedPawn.Get()) || !IsValid(Data.CachedController.Get()))
+	{
+		return MAX_FLT;
+	}
+	
+	if (!IsValid(Data.TargetActor))
+	{
+		return MAX_FLT;
+	}
+
+	return FVector::Dist(Data.CachedPawn->GetActorLocation(), Data.TargetActor->GetActorLocation());
+}
+
+void FPRStateTreeEvaluator_Combat::UpdateTargetFromPerception(FInstanceDataType& Data) const
+{
+	if (!IsValid(Data.CachedController.Get()) || !IsValid(Data.CachedPerceptionComponent.Get()))
 	{
 		return;
 	}
-	
-	
-	if (Stimulus.WasSuccessfullySensed())
+
+	// Perception에서 플레이어 타겟 검색
+	TArray<AActor*> PerceivedActors;
+	Data.CachedPerceptionComponent->GetCurrentlyPerceivedActors(nullptr, PerceivedActors);
+
+	for (AActor* Actor : PerceivedActors)
 	{
-		// 타겟 획득
-		if (!IsValid(TargetActor) && Cast<APRPlayerCharacter>(Actor))
+		if (APRPlayerCharacter* Player = Cast<APRPlayerCharacter>(Actor))
 		{
-			CachedController->SetCombatTarget(Actor);
-			TargetActor = Actor;
-			bHasValidTarget = true;
+			if (!IsValid(Data.TargetActor))
+			{
+				Data.CachedController->SetCombatTarget(Player);
+				Data.TargetActor = Player;
+				Data.bHasValidTarget = true;
+				break;
+			}
 		}
 	}
-	else
-	{
-		// 타겟 상실
-		if (TargetActor == Actor)
-		{
-			CachedController->SetCombatTarget(nullptr);
-			bHasValidTarget = false;
-		}
-	}
-}
 
-float UPRSTE_Combat::CalculateDistanceToTarget() const
-{
-	if (!IsValid(CachedPawn.Get()) || !IsValid(CachedController.Get()))
+	// 타겟이 인식 범위를 벗어났는지 확인
+	if (IsValid(Data.TargetActor) && !PerceivedActors.Contains(Data.TargetActor))
 	{
-		return MAX_FLT;
+		Data.CachedController->SetCombatTarget(nullptr);
+		Data.TargetActor = nullptr;
+		Data.bHasValidTarget = false;
 	}
-	
-	if (!IsValid(TargetActor))
-	{
-		return MAX_FLT;
-	}
-
-	return FVector::Dist(CachedPawn->GetActorLocation(), TargetActor->GetActorLocation());
 }

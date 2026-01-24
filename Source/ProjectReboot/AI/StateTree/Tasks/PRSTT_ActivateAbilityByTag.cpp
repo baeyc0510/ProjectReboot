@@ -1,111 +1,114 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PRSTT_ActivateAbilityByTag.h"
-
 #include "AIController.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "StateTreeExecutionContext.h"
 
-void UPRSTT_ActivateAbilityByTag::OnEnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition)
+EStateTreeRunStatus FPRStateTreeTask_ActivateAbilityByTag::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
-	if (!AbilityTags.IsValid())
+	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
+
+	if (!InstanceData.AbilityTags.IsValid())
 	{
-		FinishTask(false);
-		return;
+		return EStateTreeRunStatus::Failed;
 	}
 
 	AAIController* Controller = Cast<AAIController>(Context.GetOwner());
 	if (!IsValid(Controller))
 	{
-		FinishTask(false);
-		return;
+		return EStateTreeRunStatus::Failed;
 	}
 
 	APawn* Pawn = Controller->GetPawn();
 	if (!IsValid(Pawn))
 	{
-		FinishTask(false);
-		return;
+		return EStateTreeRunStatus::Failed;
 	}
 
 	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Pawn);
 	if (!IsValid(ASC))
 	{
-		FinishTask(false);
-		return;
+		return EStateTreeRunStatus::Failed;
 	}
 
-	CachedASC = ASC;
-	SpecHandleToActivate = FGameplayAbilitySpecHandle(); // 핸들 리셋
+	InstanceData.CachedASC = ASC;
+	InstanceData.SpecHandleToActivate = FGameplayAbilitySpecHandle(); // 핸들 리셋
 	
 	// Tag 기반 Spec검색
 	TArray<FGameplayAbilitySpec*> MatchingGameplayAbilities;
-	ASC->GetActivatableGameplayAbilitySpecsByAllMatchingTags(AbilityTags,MatchingGameplayAbilities);
+	ASC->GetActivatableGameplayAbilitySpecsByAllMatchingTags(InstanceData.AbilityTags, MatchingGameplayAbilities);
 	
 	if (MatchingGameplayAbilities.IsEmpty())
 	{
-		UE_LOG(LogTemp,Warning,TEXT("PRSTT_ActivateAbility: %s에 해당하는 활성 가능 어빌리티가 없음"),*AbilityTags.ToString());
-		FinishTask(false);
-		return;
+		UE_LOG(LogTemp, Warning, TEXT("PRSTT_ActivateAbility: %s에 해당하는 활성 가능 어빌리티가 없음"), *InstanceData.AbilityTags.ToString());
+		return EStateTreeRunStatus::Failed;
 	}
 	
 	// 첫 번째 스펙 사용
 	if (FGameplayAbilitySpec* AbilitySpec = MatchingGameplayAbilities[0])
 	{
-		SpecHandleToActivate = AbilitySpec->Handle;
+		InstanceData.SpecHandleToActivate = AbilitySpec->Handle;
 	}
 	
 	// 어빌리티 종료 이벤트 바인딩
-	if (bWaitAbilityEnd)
+	if (InstanceData.bWaitAbilityEnd)
 	{
-		AbilityEndedHandle = ASC->OnAbilityEnded.AddUObject(this, &UPRSTT_ActivateAbilityByTag::HandleAbilityEnded);
+		InstanceData.AbilityEndedHandle = ASC->OnAbilityEnded.AddLambda(
+			[&InstanceData](const FAbilityEndedData& AbilityEndedData)
+			{
+				if (InstanceData.CachedASC.IsValid() && AbilityEndedData.AbilitySpecHandle == InstanceData.SpecHandleToActivate)
+				{
+					InstanceData.bTaskCompleted = true;
+					InstanceData.bTaskSucceeded = !AbilityEndedData.bWasCancelled;
+				}
+			});
 	}
 	
-	const bool bActivated = ASC->TryActivateAbility(SpecHandleToActivate);
+	const bool bActivated = ASC->TryActivateAbility(InstanceData.SpecHandleToActivate);
 	
 	if (!bActivated)
 	{
-		ClearAbilityEndDelegate();
-		FinishTask(false);
-		return;
+		ClearAbilityEndDelegate(InstanceData);
+		return EStateTreeRunStatus::Failed;
 	}
 
-	if (!bWaitAbilityEnd)
+	if (!InstanceData.bWaitAbilityEnd)
 	{
-		FinishTask(true);
+		return EStateTreeRunStatus::Succeeded;
 	}
+
+	return EStateTreeRunStatus::Running;
 }
 
-void UPRSTT_ActivateAbilityByTag::OnExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition)
+EStateTreeRunStatus FPRStateTreeTask_ActivateAbilityByTag::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
-	ClearAbilityEndDelegate();
-	SpecHandleToActivate = FGameplayAbilitySpecHandle(); // 핸들 리셋
+	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
+
+	if (InstanceData.bTaskCompleted)
+	{
+		ClearAbilityEndDelegate(InstanceData);
+		return InstanceData.bTaskSucceeded ? EStateTreeRunStatus::Succeeded : EStateTreeRunStatus::Failed;
+	}
+
+	return EStateTreeRunStatus::Running;
 }
 
-void UPRSTT_ActivateAbilityByTag::HandleAbilityEnded(const FAbilityEndedData& AbilityEndedData)
+void FPRStateTreeTask_ActivateAbilityByTag::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
-	if (!bWaitAbilityEnd)
-	{
-		return;
-	}
-
-	if (!CachedASC.IsValid() || AbilityEndedData.AbilitySpecHandle != SpecHandleToActivate)
-	{
-		return;
-	}
-
-	ClearAbilityEndDelegate();
-	FinishTask(!AbilityEndedData.bWasCancelled);
+	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
+	ClearAbilityEndDelegate(InstanceData);
+	InstanceData.SpecHandleToActivate = FGameplayAbilitySpecHandle(); // 핸들 리셋
 }
 
-void UPRSTT_ActivateAbilityByTag::ClearAbilityEndDelegate()
+void FPRStateTreeTask_ActivateAbilityByTag::ClearAbilityEndDelegate(FInstanceDataType& Data) const
 {
-	if (CachedASC.IsValid() && AbilityEndedHandle.IsValid())
+	if (Data.CachedASC.IsValid() && Data.AbilityEndedHandle.IsValid())
 	{
-		CachedASC->OnAbilityEnded.Remove(AbilityEndedHandle);
+		Data.CachedASC->OnAbilityEnded.Remove(Data.AbilityEndedHandle);
 	}
 
-	AbilityEndedHandle.Reset();
-	CachedASC.Reset();
+	Data.AbilityEndedHandle.Reset();
+	Data.CachedASC.Reset();
 }

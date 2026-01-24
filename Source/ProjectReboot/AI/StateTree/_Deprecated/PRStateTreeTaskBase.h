@@ -6,9 +6,11 @@
 #include "Blueprint/StateTreeTaskBlueprintBase.h"
 #include "PRStateTreeTaskBase.generated.h"
 
-/**
- * 
- */
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ * Deprecated,
+ * USTRUCT 기반 Task로 이동됨. 성능 비교용으로 사용후 제거 예정
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+
 UCLASS(NotBlueprintable, Abstract)
 class PROJECTREBOOT_API UPRStateTreeTaskBase : public UStateTreeTaskBlueprintBase
 {

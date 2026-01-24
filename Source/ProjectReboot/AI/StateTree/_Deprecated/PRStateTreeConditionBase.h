@@ -6,9 +6,11 @@
 #include "Blueprint/StateTreeConditionBlueprintBase.h"
 #include "PRStateTreeConditionBase.generated.h"
 
-/**
- * 
- */
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ * Deprecated,
+ * USTRUCT 기반 Condition으로 이동됨. 성능 비교용으로 사용후 제거 예정
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+
 UCLASS()
 class PROJECTREBOOT_API UPRStateTreeConditionBase : public UStateTreeConditionBlueprintBase
 {

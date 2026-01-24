@@ -31,6 +31,9 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_CannotFire, "State.Weapon.CannotFire");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_Crosshair, "State.Weapon.Crosshair");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_Crosshair_Rifle, "State.Weapon.Crosshair.Rifle");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_UI, "State.UI");
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_UI_HideCrosshair,"State.UI.HideCrosshair");
+
 /*~ Event Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event, "Event");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Death, "Event.Death");

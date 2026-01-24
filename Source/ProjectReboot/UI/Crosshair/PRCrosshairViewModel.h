@@ -149,6 +149,8 @@ private:
     void UpdateADSAlpha(float DeltaTime);
 
     // ASC 이벤트 핸들러
+    void OnTagChanged(const FGameplayTag Tag, int32 NewCount);
+    void HandleHideTagChanged(const FGameplayTag Tag, int32 NewCount);
     void HandleCrosshairTagChanged(const FGameplayTag Tag, int32 NewCount);
     void HandleADSTagChanged(const FGameplayTag Tag, int32 NewCount);
     void HandleCannotFireTagChanged(const FGameplayTag Tag, int32 NewCount);
@@ -160,10 +162,8 @@ private:
     // ASC Cache
     TWeakObjectPtr<UAbilitySystemComponent> BoundASC;
     
-    // Attribute 델리게이트 핸들
-    FDelegateHandle CrosshairTagHandle;
-    FDelegateHandle AimingTagHandle;
-    FDelegateHandle CannotFireTagHandle;
+    // ASC 델리게이트 핸들
+    FDelegateHandle StateTagHandle;
     
     /*~ Configs ~*/
     UPROPERTY()

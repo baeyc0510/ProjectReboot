@@ -1,7 +1,6 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PRActionDecisionPanel.h"
-
 #include "PRActionListItemWidget.h"
 #include "RogueliteBlueprintLibrary.h"
 #include "Components/Button.h"
@@ -9,8 +8,6 @@
 #include "ProjectReboot/Equipment/PREquipmentBlueprintLibrary.h"
 #include "ProjectReboot/Equipment/PREquipActionData.h"
 #include "ProjectReboot/UI/PRUIBlueprintLibrary.h"
-#include "ProjectReboot/UI/PRUIManagerSubsystem.h"
-#include "ProjectReboot/UI/Preview/PRActorPreviewPanel.h"
 
 void UPRActionDecisionPanel::NativeConstruct()
 {
@@ -27,33 +24,20 @@ void UPRActionDecisionPanel::SetSourceActor(AActor* InActor, TSubclassOf<AActor>
 {
 	SourceActor = InActor;
 	
-	if (ActorPreviewPanel)
-	{
-		ActorPreviewPanel->SetPreviewActorByClass(PreviewActorClass);
-	}
+	// if (ActorPreviewPanel)
+	// {
+	// 	ActorPreviewPanel->SetPreviewActorByClass(PreviewActorClass);
+	// }
 	
 	RefreshWidget();
 }
 
 void UPRActionDecisionPanel::RefreshWidget()
 {
-	if (!ActorPreviewPanel)
-	{
-		return;
-	}
-
 	if (!IsValid(SourceActor))
 	{
 		return;
 	}
-
-	AActor* PreviewActor = ActorPreviewPanel->GetPreviewActor();
-	if (!PreviewActor || PreviewActor == SourceActor)
-	{
-		return;
-	}
-
-	UPREquipmentBlueprintLibrary::SyncEquipmentManager(SourceActor, PreviewActor);
 }
 
 void UPRActionDecisionPanel::SetDecisionList(const TArray<URogueliteActionData*>& ActionList)
@@ -191,21 +175,8 @@ void UPRActionDecisionPanel::DeselectItem(UPRActionListItemWidget* Item)
 
 void UPRActionDecisionPanel::HandleEquipAction(UPREquipActionData* EquipAction, bool bEquip)
 {
-	if (!EquipAction || !ActorPreviewPanel)
-	{
-		return;
-	}
-
-	AActor* PreviewActor = ActorPreviewPanel->GetPreviewActor();
-	if (!PreviewActor)
-	{
-		return;
-	}
-
 	if (bEquip)
 	{
-		// 새 장비 장착
-		UPREquipmentBlueprintLibrary::OverrideEquipAction(PreviewActor, EquipAction);
 	}
 	else
 	{

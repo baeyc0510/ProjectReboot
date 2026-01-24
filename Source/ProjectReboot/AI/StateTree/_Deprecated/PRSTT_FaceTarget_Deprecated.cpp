@@ -1,0 +1,39 @@
+﻿// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "PRSTT_FaceTarget_Deprecated.h"
+
+#include "AIController.h"
+#include "StateTreeExecutionContext.h"
+#include "Kismet/KismetMathLibrary.h"
+
+
+void UPRSTT_FaceTarget::NativeReceivedTick(FStateTreeExecutionContext& Context, const float DeltaTime)
+{
+	Super::NativeReceivedTick(Context, DeltaTime);
+	
+	AAIController* Controller = Cast<AAIController>(Context.GetOwner());
+	if (!IsValid(Controller) || !IsValid(TargetActor))
+	{
+		return;
+	}
+
+	APawn* Pawn = Controller->GetPawn();
+	if (!IsValid(Pawn))
+	{
+		return;
+	}
+
+	// 타겟 방향 계산
+	const FVector PawnLocation = Pawn->GetActorLocation();
+	const FVector TargetLocation = TargetActor->GetActorLocation();
+	const FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(PawnLocation, TargetLocation);
+    
+	const FRotator CurrentRotation = Pawn->GetActorRotation();
+	const FRotator TargetRotation = FRotator(CurrentRotation.Pitch, LookAtRotation.Yaw, CurrentRotation.Roll); // Yaw만 회전
+	const FRotator NewRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, DeltaTime, RotationRate / 360.f * 10.f);
+    
+	Pawn->SetActorRotation(NewRotation);
+	
+	// 태스크가 매 Tick 계속 실행되어야 하므로 Finish 없음
+}

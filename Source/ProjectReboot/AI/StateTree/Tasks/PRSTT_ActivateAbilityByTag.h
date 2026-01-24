@@ -3,50 +3,68 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayAbilitySpecHandle.h"
+#include "StateTreeTaskBase.h"
 #include "GameplayTagContainer.h"
-#include "ProjectReboot/AI/StateTree/PRStateTreeTaskBase.h"
+#include "GameplayAbilitySpecHandle.h"
 #include "PRSTT_ActivateAbilityByTag.generated.h"
 
-struct FGameplayAbilitySpecHandle;
 class UAbilitySystemComponent;
 struct FAbilityEndedData;
 
 /**
  * AbilityTag로 어빌리티를 실행하는 Task
  */
-UCLASS(DisplayName = "Activate Ability By Tag")
-class PROJECTREBOOT_API UPRSTT_ActivateAbilityByTag : public UPRStateTreeTaskBase
+
+// Instance Data: 상태 저장용
+USTRUCT()
+struct FPRStateTreeTask_ActivateAbilityByTagInstanceData
 {
 	GENERATED_BODY()
 
-public:
 	// 실행할 어빌리티 태그
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Parameter")
 	FGameplayTagContainer AbilityTags;
 
 	// 어빌리티 종료까지 대기할지 여부
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Parameter")
 	bool bWaitAbilityEnd = false;
 
-protected:
-	/*~ UPRStateTreeTaskBase Interface ~*/
-	virtual void OnEnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
-	virtual void OnExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
-
-private:
-	// 어빌리티 종료 콜백
-	void HandleAbilityEnded(const FAbilityEndedData& AbilityEndedData);
-	// 델리게이트 정리
-	void ClearAbilityEndDelegate();
-
-private:
-	// ASC 캐시
+	// ASC 캐시 (상태)
+	UPROPERTY()
 	TWeakObjectPtr<UAbilitySystemComponent> CachedASC;
 
-	// 발동 대상 AbilitySpecHandle
+	// 발동 대상 AbilitySpecHandle (상태)
 	FGameplayAbilitySpecHandle SpecHandleToActivate;
-	
-	// 어빌리티 종료 델리게이트 핸들
+
+	// 어빌리티 종료 델리게이트 핸들 (상태)
 	FDelegateHandle AbilityEndedHandle;
+
+	// 태스크 완료 여부 (상태)
+	bool bTaskCompleted = false;
+
+	// 태스크 성공 여부 (상태)
+	bool bTaskSucceeded = false;
+};
+
+// Task 구조체
+USTRUCT(meta = (DisplayName = "PR Activate Ability By Tag"))
+struct PROJECTREBOOT_API FPRStateTreeTask_ActivateAbilityByTag : public FStateTreeTaskCommonBase
+{
+	GENERATED_BODY()
+
+	using FInstanceDataType = FPRStateTreeTask_ActivateAbilityByTagInstanceData;
+
+	/*~ FStateTreeTaskBase Interface ~*/
+	virtual const UStruct* GetInstanceDataType() const override
+	{
+		return FInstanceDataType::StaticStruct();
+	}
+
+	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
+	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const override;
+	virtual void ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
+
+private:
+	// 델리게이트 정리
+	void ClearAbilityEndDelegate(FInstanceDataType& Data) const;
 };

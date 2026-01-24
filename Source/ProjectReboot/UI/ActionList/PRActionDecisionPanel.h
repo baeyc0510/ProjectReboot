@@ -22,6 +22,8 @@ class PROJECTREBOOT_API UPRActionDecisionPanel : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	virtual void NativeConstruct() override;
+	
 	// 소스 액터 설정 (장비 동기화 대상)
 	UFUNCTION(BlueprintCallable, Category = "ActionDecision")
 	void SetSourceActor(AActor* InActor, TSubclassOf<AActor> PreviewActorClass);
@@ -47,9 +49,6 @@ public:
 	URogueliteActionData* GetSelectedActionData() const;
 
 protected:
-	virtual void NativeConstruct() override;
-
-protected:
 	// 아이템 클릭 핸들러
 	UFUNCTION()
 	void HandleItemClicked(UPRActionListItemWidget* ClickedItem);
@@ -71,9 +70,6 @@ protected:
 	void UpdateConfirmButtonState();
 
 public:
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	TObjectPtr<UPRActorPreviewPanel> ActorPreviewPanel;
-
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UPanelWidget> DecisionListBox;
 

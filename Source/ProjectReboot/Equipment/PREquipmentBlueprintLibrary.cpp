@@ -3,8 +3,19 @@
 
 #include "PREquipmentBlueprintLibrary.h"
 #include "EquipmentInstance.h"
+#include "PREquipmentInterface.h"
 #include "PREquipmentManagerComponent.h"
 #include "ProjectReboot/Equipment/PREquipActionData.h"
+
+
+UPREquipmentManagerComponent* UPREquipmentBlueprintLibrary::GetEquipmentManager(AActor* Owner)
+{
+	if (IPREquipmentInterface* EI = Cast<IPREquipmentInterface>(Owner))
+	{
+		return EI->GetEquipmentManager();
+	}
+	return nullptr;
+}
 
 void UPREquipmentBlueprintLibrary::SyncEquipmentManager(AActor* From, AActor* To)
 {
@@ -13,8 +24,8 @@ void UPREquipmentBlueprintLibrary::SyncEquipmentManager(AActor* From, AActor* To
 		return;
 	}
 	
-	UPREquipmentManagerComponent* FromComp = From->GetComponentByClass<UPREquipmentManagerComponent>();
-	UPREquipmentManagerComponent* ToComp = To->GetComponentByClass<UPREquipmentManagerComponent>();
+	UPREquipmentManagerComponent* FromComp = GetEquipmentManager(From);
+	UPREquipmentManagerComponent* ToComp = GetEquipmentManager(To);
 	
 	if (!FromComp || !ToComp)
 	{
@@ -59,7 +70,7 @@ bool UPREquipmentBlueprintLibrary::TryEquipAction(AActor* Target, UPREquipAction
 		return false;
 	}
 	
-	UPREquipmentManagerComponent* EquipmentManager = Target->GetComponentByClass<UPREquipmentManagerComponent>();
+	UPREquipmentManagerComponent* EquipmentManager =GetEquipmentManager(Target);
 	if (!EquipmentManager)
 	{
 		return false;
@@ -82,21 +93,26 @@ void UPREquipmentBlueprintLibrary::OverrideEquipAction(AActor* Target, UPREquipA
 		return;
 	}
 	
-	UPREquipmentManagerComponent* EquipmentManager = Target->GetComponentByClass<UPREquipmentManagerComponent>();
+	UPREquipmentManagerComponent* EquipmentManager = GetEquipmentManager(Target);
 	if (!EquipmentManager)
 	{
 		return;
 	}
 	
+	FGameplayTag SlotToEquip = ActionData->EquipmentSlot;
 	TArray<UPREquipActionData*> PartActions;
 	PartActions.Add(ActionData);
-	if (EquipmentManager->HasEquipment(ActionData->EquipmentSlot))
+	
+	if (EquipmentManager->HasEquipment(SlotToEquip))
 	{
-		if (UEquipmentInstance* EquipmentInstance = EquipmentManager->GetEquipmentInstance(ActionData->EquipmentSlot))
+		if (EquipmentManager->IsParentEquipmentSlot(SlotToEquip))
 		{
-			PartActions.Append(EquipmentInstance->GetChildPartActions());
+			if (UEquipmentInstance* EquipmentInstance = EquipmentManager->GetEquipmentInstance(ActionData->EquipmentSlot))
+			{
+				PartActions.Append(EquipmentInstance->GetChildPartActions());
+			}	
 		}
-		EquipmentManager->Unequip(ActionData->EquipmentSlot);
+		EquipmentManager->Unequip(SlotToEquip);
 	}
 	
 	for (UPREquipActionData* PartAction : PartActions)
@@ -112,7 +128,7 @@ void UPREquipmentBlueprintLibrary::UnequipAction(AActor* Target, UPREquipActionD
 		return;
 	}
 	
-	UPREquipmentManagerComponent* EquipmentManager = Target->GetComponentByClass<UPREquipmentManagerComponent>();
+	UPREquipmentManagerComponent* EquipmentManager = GetEquipmentManager(Target);
 	if (!EquipmentManager)
 	{
 		return;
@@ -128,7 +144,7 @@ void UPREquipmentBlueprintLibrary::UnequipSlot(AActor* Target, FGameplayTag& Slo
 		return;
 	}
 	
-	UPREquipmentManagerComponent* EquipmentManager = Target->GetComponentByClass<UPREquipmentManagerComponent>();
+	UPREquipmentManagerComponent* EquipmentManager = GetEquipmentManager(Target);
 	if (!EquipmentManager)
 	{
 		return;
@@ -136,3 +152,4 @@ void UPREquipmentBlueprintLibrary::UnequipSlot(AActor* Target, FGameplayTag& Slo
 	
 	EquipmentManager->Unequip(SlotTag);
 }
+

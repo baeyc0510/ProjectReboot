@@ -6,6 +6,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "PREquipmentBlueprintLibrary.generated.h"
 
+class UPREquipmentManagerComponent;
 struct FGameplayTag;
 class UPREquipActionData;
 /**
@@ -17,6 +18,10 @@ class PROJECTREBOOT_API UPREquipmentBlueprintLibrary : public UBlueprintFunction
 	GENERATED_BODY()
 	
 public:
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	static UPREquipmentManagerComponent* GetEquipmentManager(AActor* Owner);
+	
+	
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	static void SyncEquipmentManager(AActor* From, AActor* To);
 	
@@ -31,5 +36,6 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	static void UnequipSlot(AActor* Target, FGameplayTag& SlotTag);
+	
 	
 };

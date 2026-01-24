@@ -48,24 +48,10 @@ void UPRCrosshairViewModel::BindToASC(UAbilitySystemComponent* InASC)
     BoundASC = InASC;
 
     // 크로스헤어 태그
-    CrosshairTagHandle = InASC->RegisterGameplayTagEvent(
-        TAG_State_Weapon_Crosshair,
-        EGameplayTagEventType::NewOrRemoved
-    ).AddUObject(this, &UPRCrosshairViewModel::HandleCrosshairTagChanged);
+	StateTagHandle = InASC->RegisterGenericGameplayTagEvent().AddUObject(this, &UPRCrosshairViewModel::OnTagChanged);
 	
-	// Aiming 태그
-    AimingTagHandle = InASC->RegisterGameplayTagEvent(
-        TAG_State_Aiming,
-        EGameplayTagEventType::NewOrRemoved
-    ).AddUObject(this, &UPRCrosshairViewModel::HandleADSTagChanged);
-
-    // 발사 불가 태그
-    CannotFireTagHandle = InASC->RegisterGameplayTagEvent(
-        TAG_State_Weapon_CannotFire,
-        EGameplayTagEventType::NewOrRemoved
-    ).AddUObject(this, &UPRCrosshairViewModel::HandleCannotFireTagChanged);
-
     // 현재 값으로 초기화
+	HandleHideTagChanged(TAG_State_UI_HideCrosshair, InASC->HasMatchingGameplayTag(TAG_State_UI_HideCrosshair) ? 1 : 0);
     HandleCrosshairTagChanged(TAG_State_Weapon_Crosshair, InASC->HasMatchingGameplayTag(TAG_State_Weapon_Crosshair) ? 1 : 0);
     HandleADSTagChanged(TAG_State_Aiming, InASC->HasMatchingGameplayTag(TAG_State_Aiming) ? 1 : 0);
     HandleCannotFireTagChanged(TAG_State_Weapon_CannotFire, InASC->HasMatchingGameplayTag(TAG_State_Weapon_CannotFire) ? 1 : 0);
@@ -80,22 +66,10 @@ void UPRCrosshairViewModel::UnbindFromASC()
 {
 	if (BoundASC.IsValid())
 	{
-		if (CrosshairTagHandle.IsValid())
+		if (StateTagHandle.IsValid())
 		{
-			BoundASC->RegisterGameplayTagEvent(TAG_State_Weapon_Crosshair, EGameplayTagEventType::NewOrRemoved).Remove(CrosshairTagHandle);
-			CrosshairTagHandle.Reset();
-		}
-
-		if (AimingTagHandle.IsValid())
-		{
-			BoundASC->RegisterGameplayTagEvent(TAG_State_Aiming, EGameplayTagEventType::NewOrRemoved).Remove(AimingTagHandle);
-			AimingTagHandle.Reset();
-		}
-
-		if (CannotFireTagHandle.IsValid())
-		{
-			BoundASC->RegisterGameplayTagEvent(TAG_State_Weapon_CannotFire, EGameplayTagEventType::NewOrRemoved).Remove(CannotFireTagHandle);
-			CannotFireTagHandle.Reset();
+			BoundASC->RegisterGenericGameplayTagEvent().Remove(StateTagHandle);
+			StateTagHandle.Reset();
 		}
 	}
 
@@ -216,6 +190,43 @@ void UPRCrosshairViewModel::UpdateADSAlpha(float DeltaTime)
 	{
 		ADSAlpha = FMath::FInterpTo(ADSAlpha, TargetADSAlpha, DeltaTime, ADSTransitionSpeed);
 		OnADSAlphaChanged.Broadcast(ADSAlpha);
+	}
+}
+
+void UPRCrosshairViewModel::OnTagChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	if (Tag.MatchesTag(TAG_State_UI_HideCrosshair))
+	{
+		HandleHideTagChanged(Tag, NewCount);
+	}
+	if (Tag.MatchesTag(TAG_State_Dead))
+	{
+		// Dead 상태이면 Hide -> -NewCount로 전달
+		HandleHideTagChanged(Tag, -NewCount);
+	}
+	if (Tag.MatchesTag(TAG_State_Aiming))
+	{
+		HandleADSTagChanged(Tag, NewCount);
+	}
+	if (Tag.MatchesTag(TAG_State_Weapon_Crosshair))
+	{
+		HandleCrosshairTagChanged(Tag, NewCount);
+	}
+	if (Tag.MatchesTag(TAG_State_Weapon_CannotFire))
+	{
+		HandleCannotFireTagChanged(Tag, NewCount);
+	}
+}
+
+void UPRCrosshairViewModel::HandleHideTagChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	if (NewCount > 0)
+	{
+		SetVisible(false);
+	}
+	else
+	{
+		SetVisible(true);
 	}
 }
 

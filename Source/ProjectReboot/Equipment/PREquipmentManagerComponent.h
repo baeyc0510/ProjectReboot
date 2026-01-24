@@ -46,13 +46,13 @@ public:
     /*~ UPREquipmentManagerComponent Interface ~*/
     /*~ Equipment Operations ~*/
     UFUNCTION(BlueprintCallable, Category = "Equipment")
-    void Equip(UPREquipActionData* ActionData, bool bRefreshVisuals = true);
-
-    UFUNCTION(BlueprintCallable, Category = "Equipment")
-    void UnequipByAction(UPREquipActionData* ActionData, bool bRefreshVisuals = true);
+    void Equip(UPREquipActionData* EquipAction, bool bRefreshVisuals = true);
     
     UFUNCTION(BlueprintCallable, Category = "Equipment")
     void Unequip(FGameplayTag SlotTag, bool bRefreshVisuals = true);
+
+    UFUNCTION(BlueprintCallable, Category = "Equipment")
+    void UnequipByAction(UPREquipActionData* ActionData, bool bRefreshVisuals = true);
 
     UFUNCTION(BlueprintCallable, Category = "Equipment")
     void UnequipAll();
@@ -66,6 +66,9 @@ public:
     
     UFUNCTION(BlueprintCallable, Category = "Equipment")
     UPREquipActionData* GetActionData(FGameplayTag SlotTag) const;
+    
+    UFUNCTION(BlueprintCallable, Category = "Equipment")
+    TArray<UPREquipActionData*> GetAllActionData() const;
     
     UFUNCTION(BlueprintCallable, Category = "Equipment")
     bool HasEquipment(FGameplayTag SlotTag) const;
@@ -107,8 +110,9 @@ private:
     void HandleRunEnded(bool bCompleted);
     
     // Internals
-    void HandleActionAcquired_Internal(UPREquipActionData* EquipAction, bool bRefreshVisuals = true);
-    void HandleActionRemoved_Internal(UPREquipActionData* EquipAction, bool bRefreshVisuals = true);
+    void Equip_Internal(UPREquipActionData* ActionData, bool bRefreshVisuals = true);
+    void Unequip_Internal(FGameplayTag SlotTag, bool bRefreshVisuals = true);
+    
     UEquipmentInstance* CreateInstance(UPREquipActionData* ActionData);
     USceneComponent* GetAttachTarget() const;
     void UnequipChildren(FGameplayTag ParentSlotTag);

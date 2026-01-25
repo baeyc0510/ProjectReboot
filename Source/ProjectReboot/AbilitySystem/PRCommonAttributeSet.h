@@ -37,6 +37,8 @@ protected:
 	void HandleDeath(const FGameplayEffectModCallbackData& Data);
 	
 private:
+	void ReportDamageEventIfNeeded(const FGameplayEffectModCallbackData& Data);
+
 	void UpdateCharacterWalkSpeed();
 
 public:

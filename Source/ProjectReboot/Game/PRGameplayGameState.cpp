@@ -11,7 +11,7 @@
 void APRGameplayGameState::NotifyRoomEnter(APRRoomController* NewRoom)
 {
 	CurrentRoomController = NewRoom;
-	CurrentKillCount = 0; // 킬 카운트 초기화
+	CurrentEventCounts.Empty();
 }
 
 void APRGameplayGameState::SendRoomEvent(const FGameplayTag& EventTag)
@@ -22,4 +22,25 @@ void APRGameplayGameState::SendRoomEvent(const FGameplayTag& EventTag)
 		STEvent.Tag = EventTag;
 		CurrentRoomController->GetStateTreeComponent()->SendStateTreeEvent(STEvent);
 	}
+}
+
+void APRGameplayGameState::AddEventCount(const FGameplayTag& EventTag, int32 Delta)
+{
+	if (!EventTag.IsValid())
+	{
+		return;
+	}
+
+	int32& Count = CurrentEventCounts.FindOrAdd(EventTag);
+	Count = FMath::Max(0, Count + Delta);
+}
+
+int32 APRGameplayGameState::GetEventCount(const FGameplayTag& EventTag) const
+{
+	if (const int32* Count = CurrentEventCounts.Find(EventTag))
+	{
+		return *Count;
+	}
+
+	return 0;
 }

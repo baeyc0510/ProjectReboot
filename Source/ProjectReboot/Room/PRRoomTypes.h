@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "GameplayTagContainer.h"
 #include "PRRoomTypes.generated.h"
 
 struct FPRRoomConfig;
@@ -15,9 +16,9 @@ struct FPRRoomConfig
 {
 	GENERATED_BODY()
 	
-	// TODO: 추후 Wave 기반으로 변경
+	// 클리어 조건 이벤트 목표치 (태그 -> 목표 수치)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 TargetKillCount = 1;
+	TMap<FGameplayTag, int32> TargetEventCounts;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UStateTree> StateTree;

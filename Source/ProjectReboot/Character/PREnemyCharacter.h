@@ -8,6 +8,7 @@
 #include "PREnemyCharacter.generated.h"
 
 
+class UPREnemyData;
 class UMotionWarpingComponent;
 class UWidgetComponent;
 class UPRAbilitySet;
@@ -22,10 +23,16 @@ class PROJECTREBOOT_API APREnemyCharacter : public APRCharacterBase
 public:
 	// Sets default values for this character's properties
 	APREnemyCharacter();
-
+	
 	UFUNCTION(BlueprintPure)
-	UPRAIConfig* GetAIConfig() const { return AIConfig; }
-
+	UPREnemyData* GetEnemyData() const {return EnemyData;}
+	
+	UFUNCTION(BlueprintPure)
+	FText GetEnemyDisplayName() const;
+	
+	UFUNCTION(BlueprintPure)
+	UPRAIConfig* GetAIConfig() const;
+	
 	UFUNCTION(BlueprintCallable)
 	void SetStrafeMode(bool bEnable);
 	
@@ -47,12 +54,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "PR Animation")
 	TArray<TSubclassOf<UAnimInstance>> EnemyAnimLayers;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, BlueprintGetter=GetAIConfig,  Category = "PR Enemy")
-	TObjectPtr<UPRAIConfig> AIConfig;
-	
-	/** AbilityConfig */
+	/** EnemyConfig */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "PR Enemy")
-	TObjectPtr<UPRAbilitySet> EnemyAbilitySet;
+	TObjectPtr<UPREnemyData> EnemyData;
 	
 	/*~ Components ~*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widget")

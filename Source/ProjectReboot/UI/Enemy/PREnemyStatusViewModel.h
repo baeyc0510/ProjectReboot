@@ -10,6 +10,7 @@ struct FOnAttributeChangeData;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnemyDisplayNameChanged, const FText&, DisplayName);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEnemyAttributeChanged, float, Current, float, Max);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDestructStatus);
 
 /**
  * 적 체력/실드 상태 뷰모델
@@ -37,6 +38,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "EnemyHUD")
 	void UnbindFromASC();
 
+	UFUNCTION(BlueprintCallable, Category = "EnemyHUD")
+	void DestructStatus();
+	
 	// 이름 반환
 	UFUNCTION(BlueprintPure, Category = "EnemyHUD")
 	FText GetEnemyDisplayName() const {return EnemyDisplayName; }
@@ -66,13 +70,15 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "EnemyHUD|Events")
 	FOnEnemyAttributeChanged OnShieldChanged;
+	
+	UPROPERTY(BlueprintAssignable, Category = "EnemyHUD|Events")
+	FOnDestructStatus OnDestructStatus;
 
 private:
 	// 값 갱신
 	void SetEnemyDisplayName(const FText& InDisplayName);
 	void SetHealth(float NewCurrent, float NewMax);
 	void SetShield(float NewCurrent, float NewMax);
-
 	
 	void UpdateAttributeBindings();
 	void ClearAttributeBindings();

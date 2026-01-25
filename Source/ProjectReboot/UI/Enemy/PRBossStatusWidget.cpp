@@ -29,6 +29,7 @@ void UPRBossStatusWidget::BindViewModel(UPREnemyStatusViewModel* TargetViewModel
 	ViewModel->OnEnemyDisplayNameChanged.AddDynamic(this, &UPRBossStatusWidget::HandleEnemyDisplayNameChanged);
 	ViewModel->OnHealthChanged.AddDynamic(this, &UPRBossStatusWidget::HandleHealthChanged);
 	ViewModel->OnShieldChanged.AddDynamic(this, &UPRBossStatusWidget::HandleShieldChanged);
+	ViewModel->OnDestructStatus.AddDynamic(this, &UPRBossStatusWidget::HandleDestructStatus);
 
 	ApplyInitialState();
 }
@@ -43,6 +44,7 @@ void UPRBossStatusWidget::UnbindViewModel()
 	ViewModel->OnEnemyDisplayNameChanged.RemoveDynamic(this, &UPRBossStatusWidget::HandleEnemyDisplayNameChanged);
 	ViewModel->OnHealthChanged.RemoveDynamic(this, &UPRBossStatusWidget::HandleHealthChanged);
 	ViewModel->OnShieldChanged.RemoveDynamic(this, &UPRBossStatusWidget::HandleShieldChanged);
+	ViewModel->OnDestructStatus.RemoveDynamic(this, &UPRBossStatusWidget::HandleDestructStatus);
 
 	ViewModel = nullptr;
 }
@@ -83,5 +85,14 @@ void UPRBossStatusWidget::HandleShieldChanged(float Current, float Max)
 		const float Percent = (Max > KINDA_SMALL_NUMBER) ? (Current / Max) : 0.0f;
 		ShieldBar->SetPercent(Percent);
 		ShieldBar->SetVisibility(Max > KINDA_SMALL_NUMBER ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
+	}
+}
+
+void UPRBossStatusWidget::HandleDestructStatus()
+{
+	if (IsInViewport())
+	{
+		RemoveFromParent();
+		Destruct();
 	}
 }

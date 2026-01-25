@@ -95,7 +95,7 @@ protected:
 
 	// 트레이스 진행 방향 기준
 	UPROPERTY(EditDefaultsOnly, Category = "Melee|Trace")
-	EPRMeleeTraceDirection TraceDirectionType = EPRMeleeTraceDirection::SocketForward;
+	EPRMeleeTraceDirection TraceDirectionType = EPRMeleeTraceDirection::ActorForward;
 
 	// 트레이스 반경
 	UPROPERTY(EditDefaultsOnly, Category = "Melee|Trace")

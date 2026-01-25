@@ -42,6 +42,8 @@ protected:
 	UFUNCTION()
 	void HandleShieldChanged(float Current, float Max);
 
+	UFUNCTION()
+	void HandleDestructStatus();
 protected:
 	// 보스 이름
 	UPROPERTY(meta = (BindWidget))

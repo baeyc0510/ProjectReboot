@@ -46,6 +46,12 @@ void UPREnemyStatusViewModel::UnbindFromASC()
 	BoundASC.Reset();
 }
 
+void UPREnemyStatusViewModel::DestructStatus()
+{
+	OnDestructStatus.Broadcast();
+	Deinitialize();
+}
+
 void UPREnemyStatusViewModel::SetEnemyDisplayName(const FText& InDisplayName)
 {
 	EnemyDisplayName = InDisplayName;

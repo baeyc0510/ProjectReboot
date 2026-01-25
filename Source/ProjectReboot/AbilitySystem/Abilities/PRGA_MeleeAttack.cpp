@@ -109,6 +109,12 @@ void UPRGA_MeleeAttack::OnMontageCancelled()
 
 void UPRGA_MeleeAttack::PerformAttackTrace()
 {
+	AActor* AvatarActor = GetAvatarActorFromActorInfo();
+	if (!IsValid(AvatarActor))
+	{
+		return;
+	}
+	
 	USkeletalMeshComponent* MeshComp = GetMeshComponent();
 	if (!IsValid(MeshComp))
 	{
@@ -117,27 +123,35 @@ void UPRGA_MeleeAttack::PerformAttackTrace()
 
 	TArray<FHitResult> HitResults;
 	
+	// Trace 설정
 	FCollisionQueryParams QueryParams;
 	QueryParams.bTraceComplex = true;
 	QueryParams.bReturnPhysicalMaterial = true;
-	if (AActor* AvatarActor = GetAvatarActorFromActorInfo())
-	{
-		QueryParams.AddIgnoredActor(AvatarActor);
-	}
+	QueryParams.AddIgnoredActor(AvatarActor);
 
-	if (TraceStartSocketName.IsNone() || !MeshComp->DoesSocketExist(TraceStartSocketName))
+	if (!TraceStartSocketName.IsNone() && !MeshComp->DoesSocketExist(TraceStartSocketName))
 	{
+		UE_LOG(LogTemp,Warning,TEXT("%s: %s doesn't have socket %s"),*GetName(), *AvatarActor->GetName(),*TraceStartSocketName.ToString());
 		return;
 	}
 
-	const FTransform StartSocketTransform = MeshComp->GetSocketTransform(TraceStartSocketName, RTS_World);
-	const FVector TraceStart = StartSocketTransform.TransformPosition(TraceStartSocketOffset);
-	const FVector TraceDirection = (TraceDirectionType == EPRMeleeTraceDirection::ActorForward)
-		? GetAvatarActorFromActorInfo()->GetActorForwardVector()
-		: StartSocketTransform.GetRotation().GetForwardVector();
+	FVector TraceStart;
+	FVector TraceDirection;
+	if (!TraceStartSocketName.IsNone())
+	{
+		const FTransform StartSocketTransform = MeshComp->GetSocketTransform(TraceStartSocketName, RTS_World);
+		TraceStart = StartSocketTransform.TransformPosition(TraceStartSocketOffset);
+		TraceDirection = (TraceDirectionType == EPRMeleeTraceDirection::ActorForward) ? AvatarActor->GetActorForwardVector() : StartSocketTransform.GetRotation().GetForwardVector();
+	}
+	else
+	{
+		TraceStart = AvatarActor->GetActorLocation();
+		TraceDirection = AvatarActor->GetActorForwardVector();
+	}
+	
 	const FVector TraceEnd = TraceStart + TraceDirection * TraceDistance;
 	
-	
+	// Trace 시작
 	const bool bHit = UCombatBlueprintFunctionLibrary::SphereSweepTraceByStartEnd(
 		MeshComp,
 		TraceStart,

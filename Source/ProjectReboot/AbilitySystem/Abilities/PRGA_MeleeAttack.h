@@ -3,6 +3,7 @@
 
 #include "CoreMinimal.h"
 #include "ProjectReboot/AbilitySystem/PRGameplayAbility.h"
+#include "ProjectReboot/Combat/PRTraceTypes.h"
 #include "PRGA_MeleeAttack.generated.h"
 
 class UAbilityTask_PlayMontageAndWait;
@@ -97,28 +98,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Melee|Trace")
 	EPRMeleeTraceDirection TraceDirectionType = EPRMeleeTraceDirection::ActorForward;
 
-	// 트레이스 반경
+	// 트레이스 설정
 	UPROPERTY(EditDefaultsOnly, Category = "Melee|Trace")
-	float TraceRadius = 25.0f;
-
-	// 트레이스 채널
-	UPROPERTY(EditDefaultsOnly, Category = "Melee|Trace")
-	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Pawn;
-
-	// 트레이스 타겟 클래스 (설정된 경우 해당 클래스의 액터만 Trace)
-	UPROPERTY(EditDefaultsOnly, Category = "Melee|Trace")
-	TSubclassOf<AActor> TraceTargetClass = nullptr;
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Melee|Trace")
-	int32 MaxTraceCount = 1;
-	
-	// 디버그 트레이스 표시 여부
-	UPROPERTY(EditDefaultsOnly, Category = "Melee|Trace")
-	bool bDrawDebugTrace = false;
-
-	// 디버그 표시 시간
-	UPROPERTY(EditDefaultsOnly, Category = "Melee|Trace")
-	float DebugDrawTime = 1.0f;
+	FPRTraceSettings TraceSettings;
 
 	// 데미지 GE 클래스
 	UPROPERTY(EditDefaultsOnly, Category = "Melee|Damage")

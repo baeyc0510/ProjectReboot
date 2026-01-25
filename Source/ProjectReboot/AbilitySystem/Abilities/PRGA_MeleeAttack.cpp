@@ -8,13 +8,19 @@
 #include "Abilities/GameplayAbilityTargetTypes.h"
 #include "Engine/EngineTypes.h"
 #include "GameFramework/Character.h"
-#include "Kismet/KismetSystemLibrary.h"
 #include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/Combat/CombatBlueprintFunctionLibrary.h"
 
 UPRGA_MeleeAttack::UPRGA_MeleeAttack()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
+	// 기본 트레이스 설정
+	TraceSettings.TraceShape = EPRTraceShape::Sphere;
+	TraceSettings.TraceRadius = 25.0f;
+	TraceSettings.TraceChannel = ECC_Pawn;
+	TraceSettings.MaxHitCount = 1;
+	TraceSettings.bDrawDebugTrace = false;
+	TraceSettings.DebugDrawTime = 1.0f;
 }
 
 void UPRGA_MeleeAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
@@ -28,6 +34,7 @@ void UPRGA_MeleeAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		return;
 	}
 
+	// 히트 캐시 초기화
 	HitActors.Reset();
 
 	if (!IsValid(AttackMontage))
@@ -36,6 +43,7 @@ void UPRGA_MeleeAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		return;
 	}
 
+	// 공격 몽타주 재생
 	PlayAttackMontage();
 
 	WaitEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
@@ -46,6 +54,7 @@ void UPRGA_MeleeAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		true
 	);
 
+	// 공격 이벤트 수신
 	WaitEventTask->EventReceived.AddDynamic(this, &ThisClass::OnAttackEventReceived);
 	WaitEventTask->ReadyForActivation();
 }
@@ -129,6 +138,7 @@ void UPRGA_MeleeAttack::PerformAttackTrace()
 	QueryParams.bReturnPhysicalMaterial = true;
 	QueryParams.AddIgnoredActor(AvatarActor);
 
+	// 소켓 유효성 체크
 	if (!TraceStartSocketName.IsNone() && !MeshComp->DoesSocketExist(TraceStartSocketName))
 	{
 		UE_LOG(LogTemp,Warning,TEXT("%s: %s doesn't have socket %s"),*GetName(), *AvatarActor->GetName(),*TraceStartSocketName.ToString());
@@ -149,20 +159,31 @@ void UPRGA_MeleeAttack::PerformAttackTrace()
 		TraceDirection = AvatarActor->GetActorForwardVector();
 	}
 	
+	// 트레이스 구간 계산
 	const FVector TraceEnd = TraceStart + TraceDirection * TraceDistance;
+	FRotator BoxRotation = FRotator::ZeroRotator;
+	if (TraceSettings.TraceShape == EPRTraceShape::Box)
+	{
+		if (TraceSettings.bUseActorRotationForBox)
+		{
+			BoxRotation = AvatarActor->GetActorRotation() + TraceSettings.BoxRotationOffset;
+		}
+		else
+		{
+			BoxRotation = TraceSettings.BoxRotationOffset;
+		}
+	}
 	
-	// Trace 시작
-	const bool bHit = UCombatBlueprintFunctionLibrary::SphereSweepTraceByStartEnd(
+	// 설정 기반 트레이스 수행
+	const bool bHit = UCombatBlueprintFunctionLibrary::TraceBySettings(
 		MeshComp,
 		TraceStart,
 		TraceEnd,
 		TraceDirection,
-		TraceRadius,
-		TraceChannel,
+		TraceSettings,
 		QueryParams,
 		HitResults,
-		bDrawDebugTrace,
-		DebugDrawTime
+		BoxRotation
 	);
 
 	if (!bHit)
@@ -170,6 +191,7 @@ void UPRGA_MeleeAttack::PerformAttackTrace()
 		return;
 	}
 
+	// 결과 필터링 및 데미지 적용
 	for (const FHitResult& HitResult : HitResults)
 	{
 		AActor* HitActor = HitResult.GetActor();
@@ -183,15 +205,17 @@ void UPRGA_MeleeAttack::PerformAttackTrace()
 			continue;
 		}
 		
-		if (TraceTargetClass && !HitActor->IsA(TraceTargetClass))
+		if (TraceSettings.TraceTargetClass && !HitActor->IsA(TraceSettings.TraceTargetClass))
 		{
 			continue;
 		}
 
+		// 중복 처리 방지 등록
 		HitActors.Add(HitActor);
 		ApplyMeleeDamage(HitResult);
 		
-		if (HitActors.Num() == MaxTraceCount)
+		// 최대 타격 수 제한
+		if (TraceSettings.MaxHitCount > 0 && HitActors.Num() >= TraceSettings.MaxHitCount)
 		{
 			break;
 		}
@@ -217,6 +241,7 @@ void UPRGA_MeleeAttack::ApplyMeleeDamage(const FHitResult& HitResult)
 		return;
 	}
 
+	// 타겟에 데미지 GE 적용
 	FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(DamageEffectClass, GetAbilityLevel());
 	if (SpecHandle.IsValid())
 	{

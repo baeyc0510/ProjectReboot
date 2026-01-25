@@ -1,35 +1,25 @@
-// PRGA_MeleeAttack.h
+// PRGA_AOEAttack.h
 #pragma once
 
 #include "CoreMinimal.h"
 #include "ProjectReboot/AbilitySystem/PRGameplayAbility.h"
 #include "ProjectReboot/Combat/PRTraceTypes.h"
-#include "PRGA_MeleeAttack.generated.h"
+#include "PRGA_AOEAttack.generated.h"
 
+class UGameplayEffect;
 class UAbilityTask_PlayMontageAndWait;
 class UAbilityTask_WaitGameplayEvent;
-class USkeletalMeshComponent;
-class UGameplayEffect;
-
-UENUM(BlueprintType)
-enum class EPRMeleeTraceDirection : uint8
-{
-	// 소켓 전방 기준
-	SocketForward,
-	// 액터 전방 기준
-	ActorForward,
-};
 
 /**
- * 근접 공격 어빌리티 (트레이스 방식)
+ * 범위 공격 어빌리티 (AOE)
  */
 UCLASS()
-class PROJECTREBOOT_API UPRGA_MeleeAttack : public UPRGameplayAbility
+class PROJECTREBOOT_API UPRGA_AOEAttack : public UPRGameplayAbility
 {
 	GENERATED_BODY()
 
 public:
-	UPRGA_MeleeAttack();
+	UPRGA_AOEAttack();
 
 	/*~ UGameplayAbility Interfaces ~*/
 
@@ -41,9 +31,9 @@ public:
 		const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
 protected:
-	/*~ UPRGA_MeleeAttack Interfaces ~*/
+	/*~ UPRGA_AOEAttack Interfaces ~*/
 
-	// 근접 공격 몽타주 재생
+	// AOE 공격 몽타주 재생
 	void PlayAttackMontage();
 
 	// 공격 이벤트 수신
@@ -54,66 +44,77 @@ protected:
 	UFUNCTION()
 	void OnMontageCompleted();
 
+	// 몽타주 블렌드아웃 콜백
 	UFUNCTION()
 	void OnMontageBlendOut();
 
+	// 몽타주 취소 콜백
 	UFUNCTION()
 	void OnMontageCancelled();
 
-	// 트레이스 수행
-	void PerformAttackTrace();
+	// AOE 트레이스 수행
+	void PerformAOETrace(const FGameplayEventData* TriggerEventData);
 
-	// 데미지 적용
-	void ApplyMeleeDamage(const FHitResult& HitResult);
+	// AOE 중심 위치 계산
+	FVector ResolveTargetLocation(const FGameplayEventData* TriggerEventData) const;
 
 	// 메시 컴포넌트 조회
 	USkeletalMeshComponent* GetMeshComponent() const;
 
+	// 데미지 적용
+	void ApplyAOEDamage(const FHitResult& HitResult);
+
 protected:
 	// 공격 몽타주
-	UPROPERTY(EditDefaultsOnly, Category = "Melee|Montage")
+	UPROPERTY(EditDefaultsOnly, Category = "AOE|Montage")
 	TObjectPtr<UAnimMontage> AttackMontage;
 
 	// 몽타주 재생 속도
-	UPROPERTY(EditDefaultsOnly, Category = "Melee|Montage")
+	UPROPERTY(EditDefaultsOnly, Category = "AOE|Montage")
 	float MontagePlayRate = 1.0f;
 
 	// 공격 이벤트 다중 수신 허용 여부
-	UPROPERTY(EditDefaultsOnly, Category = "Melee|Trace")
+	UPROPERTY(EditDefaultsOnly, Category = "AOE|Trace")
 	bool bAllowMultipleEvents = false;
 
-	// 트레이스 시작 소켓 이름
-	UPROPERTY(EditDefaultsOnly, Category = "Melee|Trace")
-	FName TraceStartSocketName;
+	// 이벤트 타겟 위치 사용 여부
+	UPROPERTY(EditDefaultsOnly, Category = "AOE|Trace")
+	bool bUseEventTargetLocation = true;
 
-	// 트레이스 시작 오프셋 (소켓 로컬)
-	UPROPERTY(EditDefaultsOnly, Category = "Melee|Trace")
-	FVector TraceStartSocketOffset = FVector::ZeroVector;
+	// 소켓 위치 사용 여부
+	UPROPERTY(EditDefaultsOnly, Category = "AOE|Trace")
+	bool bUseTraceCenterSocket = false;
 
-	// 트레이스 거리
-	UPROPERTY(EditDefaultsOnly, Category = "Melee|Trace")
-	float TraceDistance = 150.0f;
+	// 트레이스 중심 소켓 이름
+	UPROPERTY(EditDefaultsOnly, Category = "AOE|Trace")
+	FName TraceCenterSocketName;
 
-	// 트레이스 진행 방향 기준
-	UPROPERTY(EditDefaultsOnly, Category = "Melee|Trace")
-	EPRMeleeTraceDirection TraceDirectionType = EPRMeleeTraceDirection::ActorForward;
+	// 트레이스 중심 소켓 오프셋 (소켓 로컬)
+	UPROPERTY(EditDefaultsOnly, Category = "AOE|Trace")
+	FVector TraceCenterSocketOffset = FVector::ZeroVector;
+
+	// 타겟 위치 오프셋
+	UPROPERTY(EditDefaultsOnly, Category = "AOE|Trace")
+	FVector TargetLocationOffset = FVector::ZeroVector;
 
 	// 트레이스 설정
-	UPROPERTY(EditDefaultsOnly, Category = "Melee|Trace")
+	UPROPERTY(EditDefaultsOnly, Category = "AOE|Trace")
 	FPRTraceSettings TraceSettings;
 
 	// 데미지 GE 클래스
-	UPROPERTY(EditDefaultsOnly, Category = "Melee|Damage")
+	UPROPERTY(EditDefaultsOnly, Category = "AOE|Damage")
 	TSubclassOf<UGameplayEffect> DamageEffectClass;
 
 	// 기본 데미지
-	UPROPERTY(EditDefaultsOnly, Category = "Melee|Damage")
+	UPROPERTY(EditDefaultsOnly, Category = "AOE|Damage")
 	float BaseDamage = 10.0f;
 
 private:
+	// 몽타주 태스크
 	UPROPERTY()
 	UAbilityTask_PlayMontageAndWait* MontageTask;
 
+	// 이벤트 대기 태스크
 	UPROPERTY()
 	UAbilityTask_WaitGameplayEvent* WaitEventTask;
 

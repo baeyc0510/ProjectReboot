@@ -42,6 +42,10 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Attack, "Event.Attack");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Room, "Event.Room");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Room_Clear, "Event.Room.Clear");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Kill,"Event.Kill");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Kill_Common,"Event.Kill.Common");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Kill_Elite,"Event.Kill.Elite");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Kill_Boss,"Event.Kill.Boss");
 
 /*~ Montage Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage, "Montage");

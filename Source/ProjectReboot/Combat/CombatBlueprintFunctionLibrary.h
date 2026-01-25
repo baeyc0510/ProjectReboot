@@ -6,6 +6,7 @@
 #include "CombatTypes.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Engine/EngineTypes.h"
+#include "ProjectReboot/Combat/PRTraceTypes.h"
 #include "CombatBlueprintFunctionLibrary.generated.h"
 class USkeletalMeshComponent;
 /**
@@ -49,6 +50,34 @@ public:
 		TArray<FHitResult>& OutHits,
 		bool bDrawDebug = false,
 		float DebugDrawTime = 1.0f);
+
+	// 박스 스윕 트레이스 유틸
+	static bool BoxSweepTraceByStartEnd(
+		const UObject* WorldContextObject,
+		const FVector& Start,
+		const FVector& End,
+		const FVector& Direction,
+		const FVector& HalfExtent,
+		const FRotator& BoxRotation,
+		TEnumAsByte<ECollisionChannel> TraceChannel,
+		const FCollisionQueryParams& QueryParams,
+		TArray<FHitResult>& OutHits,
+		bool bDrawDebug = false,
+		float DebugDrawTime = 1.0f);
+
+	// 원기둥 내부 여부 확인 (Z축 기준)
+	static bool IsInsideCylinder(const FVector& TestPoint, const FVector& CylinderCenter, float Radius, float HalfHeight);
+
+	// 설정 기반 트레이스 유틸
+	static bool TraceBySettings(
+		const UObject* WorldContextObject,
+		const FVector& Start,
+		const FVector& End,
+		const FVector& Direction,
+		const FPRTraceSettings& TraceSettings,
+		const FCollisionQueryParams& QueryParams,
+		TArray<FHitResult>& OutHits,
+		const FRotator& BoxRotation);
 	
 	/*~ Ragdoll ~*/
 

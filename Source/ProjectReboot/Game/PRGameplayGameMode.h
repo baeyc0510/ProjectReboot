@@ -17,9 +17,9 @@ class PROJECTREBOOT_API APRGameplayGameMode : public AGameModeBase
 	GENERATED_BODY()
 	
 public:
-	// 적이 사망했을 때 호출 (킬 카운트 증가 및 클리어 판정)
+	// 이벤트 카운트 증가 및 클리어 판정
 	UFUNCTION(BlueprintCallable, Category = "PR|Rules")
-	void OnEnemyKilled();
+	void OnGameplayEvent(const FGameplayTag& EventTag, int32 Delta = 1);
 
 	// 다음 방으로의 전환을 시작 (포탈 상호작용 등에서 호출)
 	UFUNCTION(BlueprintCallable, Category = "PR|Flow")

@@ -97,6 +97,131 @@ bool UCombatBlueprintFunctionLibrary::SphereSweepTraceByStartEnd(
 	return bHit;
 }
 
+bool UCombatBlueprintFunctionLibrary::BoxSweepTraceByStartEnd(
+	const UObject* WorldContextObject,
+	const FVector& Start,
+	const FVector& End,
+	const FVector& Direction,
+	const FVector& HalfExtent,
+	const FRotator& BoxRotation,
+	TEnumAsByte<ECollisionChannel> TraceChannel,
+	const FCollisionQueryParams& QueryParams,
+	TArray<FHitResult>& OutHits,
+	bool bDrawDebug,
+	float DebugDrawTime)
+{
+	OutHits.Reset();
+
+	UWorld* World = GEngine ? GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::ReturnNull) : nullptr;
+	if (!IsValid(World))
+	{
+		return false;
+	}
+
+	const bool bHit = World->SweepMultiByChannel(
+		OutHits,
+		Start,
+		End,
+		BoxRotation.Quaternion(),
+		TraceChannel,
+		FCollisionShape::MakeBox(HalfExtent.ComponentMax(FVector::ZeroVector)),
+		QueryParams
+	);
+
+	if (bDrawDebug)
+	{
+		const FColor DebugColor = bHit ? FColor::Red : FColor::Green;
+		DrawDebugLine(World, Start, End, DebugColor, false, DebugDrawTime, 0, 1.0f);
+		DrawDebugBox(World, Start, HalfExtent, BoxRotation.Quaternion(), DebugColor, false, DebugDrawTime);
+		DrawDebugBox(World, End, HalfExtent, BoxRotation.Quaternion(), DebugColor, false, DebugDrawTime);
+		DrawDebugDirectionalArrow(World, Start, Start + Direction.GetSafeNormal() * 50.0f, 20.0f, DebugColor, false, DebugDrawTime);
+	}
+
+	return bHit;
+}
+
+bool UCombatBlueprintFunctionLibrary::IsInsideCylinder(const FVector& TestPoint, const FVector& CylinderCenter, float Radius, float HalfHeight)
+{
+	const FVector Delta = TestPoint - CylinderCenter;
+	if (FMath::Abs(Delta.Z) > HalfHeight)
+	{
+		return false;
+	}
+
+	const float Distance2DSquared = Delta.X * Delta.X + Delta.Y * Delta.Y;
+	return Distance2DSquared <= FMath::Square(Radius);
+}
+
+bool UCombatBlueprintFunctionLibrary::TraceBySettings(
+	const UObject* WorldContextObject,
+	const FVector& Start,
+	const FVector& End,
+	const FVector& Direction,
+	const FPRTraceSettings& TraceSettings,
+	const FCollisionQueryParams& QueryParams,
+	TArray<FHitResult>& OutHits,
+	const FRotator& BoxRotation)
+{
+	OutHits.Reset();
+
+	bool bHit = false;
+	if (TraceSettings.TraceShape == EPRTraceShape::Sphere)
+	{
+		bHit = SphereSweepTraceByStartEnd(
+			WorldContextObject,
+			Start,
+			End,
+			Direction,
+			TraceSettings.TraceRadius,
+			TraceSettings.TraceChannel,
+			QueryParams,
+			OutHits,
+			TraceSettings.bDrawDebugTrace,
+			TraceSettings.DebugDrawTime
+		);
+	}
+	else if (TraceSettings.TraceShape == EPRTraceShape::Box)
+	{
+		bHit = BoxSweepTraceByStartEnd(
+			WorldContextObject,
+			Start,
+			End,
+			Direction,
+			TraceSettings.TraceBoxHalfExtent,
+			BoxRotation,
+			TraceSettings.TraceChannel,
+			QueryParams,
+			OutHits,
+			TraceSettings.bDrawDebugTrace,
+			TraceSettings.DebugDrawTime
+		);
+	}
+
+	if (!bHit)
+	{
+		return false;
+	}
+
+	if (TraceSettings.TraceShape == EPRTraceShape::Sphere && TraceSettings.bUseCylinderFilter)
+	{
+		const FVector CylinderCenter = (Start + End) * 0.5f;
+		TArray<FHitResult> FilteredHits;
+		FilteredHits.Reserve(OutHits.Num());
+
+		for (const FHitResult& HitResult : OutHits)
+		{
+			if (IsInsideCylinder(HitResult.Location, CylinderCenter, TraceSettings.TraceRadius, TraceSettings.CylinderHalfHeight))
+			{
+				FilteredHits.Add(HitResult);
+			}
+		}
+
+		OutHits = MoveTemp(FilteredHits);
+	}
+
+	return OutHits.Num() > 0;
+}
+
 /*~ Ragdoll ~*/
 
 void UCombatBlueprintFunctionLibrary::EnableRagdoll(ACharacter* Character, const FName& RagdollCollisionProfile)

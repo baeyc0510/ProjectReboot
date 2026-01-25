@@ -4,17 +4,20 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "ProjectReboot/AbilitySystem/PRCommonAttributeSet.h"
+#include "ProjectReboot/Character/PREnemyCharacter.h"
 
 void UPREnemyStatusViewModel::InitializeForActor(AActor* InTargetActor, ULocalPlayer* InLocalPlayer)
 {
 	Super::InitializeForActor(InTargetActor, InLocalPlayer);
 
-	if (AActor* Target = GetTargetActor())
+	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(InTargetActor))
 	{
-		if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target))
-		{
-			BindToASC(ASC);
-		}
+		BindToASC(ASC);
+	}
+	
+	if (APREnemyCharacter* EnemyCharacter = Cast<APREnemyCharacter>(InTargetActor))
+	{
+		SetEnemyDisplayName(EnemyCharacter->GetEnemyDisplayName());
 	}
 }
 
@@ -41,6 +44,17 @@ void UPREnemyStatusViewModel::UnbindFromASC()
 {
 	ClearAttributeBindings();
 	BoundASC.Reset();
+}
+
+void UPREnemyStatusViewModel::DestructStatus()
+{
+	OnDestructStatus.Broadcast();
+}
+
+void UPREnemyStatusViewModel::SetEnemyDisplayName(const FText& InDisplayName)
+{
+	EnemyDisplayName = InDisplayName;
+	OnEnemyDisplayNameChanged.Broadcast(EnemyDisplayName);
 }
 
 void UPREnemyStatusViewModel::SetHealth(float NewCurrent, float NewMax)

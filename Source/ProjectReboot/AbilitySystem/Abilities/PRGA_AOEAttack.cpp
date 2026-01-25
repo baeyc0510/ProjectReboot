@@ -1,29 +1,22 @@
-// PRGA_MeleeAttack.cpp
-#include "PRGA_MeleeAttack.h"
+// PRGA_AOEAttack.cpp
+#include "PRGA_AOEAttack.h"
 
-#include "AbilitySystemComponent.h"
+#include "Abilities/GameplayAbilityTargetTypes.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
+#include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
-#include "Abilities/GameplayAbilityTargetTypes.h"
 #include "Engine/EngineTypes.h"
 #include "GameFramework/Character.h"
-#include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/Combat/CombatBlueprintFunctionLibrary.h"
+#include "ProjectReboot/PRGameplayTags.h"
 
-UPRGA_MeleeAttack::UPRGA_MeleeAttack()
+UPRGA_AOEAttack::UPRGA_AOEAttack()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
-	// 기본 트레이스 설정
-	TraceSettings.TraceShape = EPRTraceShape::Sphere;
-	TraceSettings.TraceRadius = 25.0f;
-	TraceSettings.TraceChannel = ECC_Pawn;
-	TraceSettings.MaxHitCount = 1;
-	TraceSettings.bDrawDebugTrace = false;
-	TraceSettings.DebugDrawTime = 1.0f;
 }
 
-void UPRGA_MeleeAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+void UPRGA_AOEAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
@@ -34,9 +27,9 @@ void UPRGA_MeleeAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		return;
 	}
 
-	// 히트 캐시 초기화
 	HitActors.Reset();
 
+	// 몽타주가 없으면 즉시 종료
 	if (!IsValid(AttackMontage))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
@@ -46,6 +39,7 @@ void UPRGA_MeleeAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	// 공격 몽타주 재생
 	PlayAttackMontage();
 
+	// 공격 이벤트 대기
 	WaitEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
 		this,
 		TAG_Event_Attack,
@@ -54,12 +48,11 @@ void UPRGA_MeleeAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		true
 	);
 
-	// 공격 이벤트 수신
 	WaitEventTask->EventReceived.AddDynamic(this, &ThisClass::OnAttackEventReceived);
 	WaitEventTask->ReadyForActivation();
 }
 
-void UPRGA_MeleeAttack::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+void UPRGA_AOEAttack::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
@@ -77,7 +70,7 @@ void UPRGA_MeleeAttack::EndAbility(const FGameplayAbilitySpecHandle Handle, cons
 	}
 }
 
-void UPRGA_MeleeAttack::PlayAttackMontage()
+void UPRGA_AOEAttack::PlayAttackMontage()
 {
 	MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 		this,
@@ -96,71 +89,48 @@ void UPRGA_MeleeAttack::PlayAttackMontage()
 	MontageTask->ReadyForActivation();
 }
 
-void UPRGA_MeleeAttack::OnAttackEventReceived(FGameplayEventData Payload)
+void UPRGA_AOEAttack::OnAttackEventReceived(FGameplayEventData Payload)
 {
-	PerformAttackTrace();
+	// 중심 위치 기준으로 범위 트레이스
+	PerformAOETrace(&Payload);
 }
 
-void UPRGA_MeleeAttack::OnMontageCompleted()
-{
-	K2_EndAbility();
-}
-
-void UPRGA_MeleeAttack::OnMontageBlendOut()
+void UPRGA_AOEAttack::OnMontageCompleted()
 {
 	K2_EndAbility();
 }
 
-void UPRGA_MeleeAttack::OnMontageCancelled()
+void UPRGA_AOEAttack::OnMontageBlendOut()
 {
 	K2_EndAbility();
 }
 
-void UPRGA_MeleeAttack::PerformAttackTrace()
+void UPRGA_AOEAttack::OnMontageCancelled()
+{
+	K2_EndAbility();
+}
+
+void UPRGA_AOEAttack::PerformAOETrace(const FGameplayEventData* TriggerEventData)
 {
 	AActor* AvatarActor = GetAvatarActorFromActorInfo();
 	if (!IsValid(AvatarActor))
 	{
 		return;
 	}
-	
-	USkeletalMeshComponent* MeshComp = GetMeshComponent();
-	if (!IsValid(MeshComp))
-	{
-		return;
-	}
+
+	// 트레이스 중심 위치 계산
+	const FVector TraceCenter = ResolveTargetLocation(TriggerEventData);
+	const FVector TraceStart = TraceCenter;
+	const FVector TraceEnd = TraceCenter;
+	const FVector TraceDirection = AvatarActor->GetActorForwardVector();
 
 	TArray<FHitResult> HitResults;
-	
-	// Trace 설정
 	FCollisionQueryParams QueryParams;
 	QueryParams.bTraceComplex = true;
 	QueryParams.bReturnPhysicalMaterial = true;
 	QueryParams.AddIgnoredActor(AvatarActor);
 
-	// 소켓 유효성 체크
-	if (!TraceStartSocketName.IsNone() && !MeshComp->DoesSocketExist(TraceStartSocketName))
-	{
-		UE_LOG(LogTemp,Warning,TEXT("%s: %s doesn't have socket %s"),*GetName(), *AvatarActor->GetName(),*TraceStartSocketName.ToString());
-		return;
-	}
-
-	FVector TraceStart;
-	FVector TraceDirection;
-	if (!TraceStartSocketName.IsNone())
-	{
-		const FTransform StartSocketTransform = MeshComp->GetSocketTransform(TraceStartSocketName, RTS_World);
-		TraceStart = StartSocketTransform.TransformPosition(TraceStartSocketOffset);
-		TraceDirection = (TraceDirectionType == EPRMeleeTraceDirection::ActorForward) ? AvatarActor->GetActorForwardVector() : StartSocketTransform.GetRotation().GetForwardVector();
-	}
-	else
-	{
-		TraceStart = AvatarActor->GetActorLocation();
-		TraceDirection = AvatarActor->GetActorForwardVector();
-	}
-	
-	// 트레이스 구간 계산
-	const FVector TraceEnd = TraceStart + TraceDirection * TraceDistance;
+	// 박스 회전 설정
 	FRotator BoxRotation = FRotator::ZeroRotator;
 	if (TraceSettings.TraceShape == EPRTraceShape::Box)
 	{
@@ -173,10 +143,10 @@ void UPRGA_MeleeAttack::PerformAttackTrace()
 			BoxRotation = TraceSettings.BoxRotationOffset;
 		}
 	}
-	
+
 	// 설정 기반 트레이스 수행
 	const bool bHit = UCombatBlueprintFunctionLibrary::TraceBySettings(
-		MeshComp,
+		AvatarActor,
 		TraceStart,
 		TraceEnd,
 		TraceDirection,
@@ -204,7 +174,7 @@ void UPRGA_MeleeAttack::PerformAttackTrace()
 		{
 			continue;
 		}
-		
+
 		if (TraceSettings.TraceTargetClass && !HitActor->IsA(TraceSettings.TraceTargetClass))
 		{
 			continue;
@@ -212,8 +182,8 @@ void UPRGA_MeleeAttack::PerformAttackTrace()
 
 		// 중복 처리 방지 등록
 		HitActors.Add(HitActor);
-		ApplyMeleeDamage(HitResult);
-		
+		ApplyAOEDamage(HitResult);
+
 		// 최대 타격 수 제한
 		if (TraceSettings.MaxHitCount > 0 && HitActors.Num() >= TraceSettings.MaxHitCount)
 		{
@@ -222,7 +192,70 @@ void UPRGA_MeleeAttack::PerformAttackTrace()
 	}
 }
 
-void UPRGA_MeleeAttack::ApplyMeleeDamage(const FHitResult& HitResult)
+FVector UPRGA_AOEAttack::ResolveTargetLocation(const FGameplayEventData* TriggerEventData) const
+{
+	// 소켓 위치를 우선 사용
+	if (bUseTraceCenterSocket && !TraceCenterSocketName.IsNone())
+	{
+		if (USkeletalMeshComponent* MeshComp = GetMeshComponent())
+		{
+			if (MeshComp->DoesSocketExist(TraceCenterSocketName))
+			{
+				const FTransform SocketTransform = MeshComp->GetSocketTransform(TraceCenterSocketName, RTS_World);
+				return SocketTransform.TransformPosition(TraceCenterSocketOffset);
+			}
+			UE_LOG(LogTemp, Warning, TEXT("%s: %s doesn't have socket %s"), *GetName(), *MeshComp->GetName(), *TraceCenterSocketName.ToString());
+		}
+	}
+
+	// 이벤트 타겟 데이터를 우선 사용
+	if (bUseEventTargetLocation && TriggerEventData)
+	{
+		if (TriggerEventData->TargetData.Num() > 0)
+		{
+			if (const FGameplayAbilityTargetData* TargetData = TriggerEventData->TargetData.Get(0))
+			{
+				if (TargetData->HasHitResult())
+				{
+					return TargetData->GetHitResult()->Location + TargetLocationOffset;
+				}
+
+				return TargetData->GetEndPoint() + TargetLocationOffset;
+			}
+		}
+
+		if (IsValid(TriggerEventData->Target))
+		{
+			return TriggerEventData->Target->GetActorLocation() + TargetLocationOffset;
+		}
+	}
+
+	// 폴백: 자신 위치
+	if (AActor* AvatarActor = GetAvatarActorFromActorInfo())
+	{
+		return AvatarActor->GetActorLocation() + TargetLocationOffset;
+	}
+
+	return TargetLocationOffset;
+}
+
+USkeletalMeshComponent* UPRGA_AOEAttack::GetMeshComponent() const
+{
+	AActor* AvatarActor = GetAvatarActorFromActorInfo();
+	if (!IsValid(AvatarActor))
+	{
+		return nullptr;
+	}
+
+	if (ACharacter* Character = Cast<ACharacter>(AvatarActor))
+	{
+		return Character->GetMesh();
+	}
+
+	return AvatarActor->FindComponentByClass<USkeletalMeshComponent>();
+}
+
+void UPRGA_AOEAttack::ApplyAOEDamage(const FHitResult& HitResult)
 {
 	if (!IsValid(DamageEffectClass))
 	{
@@ -253,20 +286,4 @@ void UPRGA_MeleeAttack::ApplyMeleeDamage(const FHitResult& HitResult)
 
 		ApplyGameplayEffectSpecToTarget(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, SpecHandle, TargetDataHandle);
 	}
-}
-
-USkeletalMeshComponent* UPRGA_MeleeAttack::GetMeshComponent() const
-{
-	AActor* AvatarActor = GetAvatarActorFromActorInfo();
-	if (!IsValid(AvatarActor))
-	{
-		return nullptr;
-	}
-
-	if (ACharacter* Character = Cast<ACharacter>(AvatarActor))
-	{
-		return Character->GetMesh();
-	}
-
-	return AvatarActor->FindComponentByClass<USkeletalMeshComponent>();
 }

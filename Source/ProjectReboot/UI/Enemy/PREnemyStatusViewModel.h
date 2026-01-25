@@ -8,7 +8,7 @@
 class UAbilitySystemComponent;
 struct FOnAttributeChangeData;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnemyDisplayNameChanged, FText, DisplayName);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnemyDisplayNameChanged, const FText&, DisplayName);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEnemyAttributeChanged, float, Current, float, Max);
 
 /**

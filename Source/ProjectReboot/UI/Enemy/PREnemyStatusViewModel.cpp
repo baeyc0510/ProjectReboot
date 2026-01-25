@@ -48,8 +48,8 @@ void UPREnemyStatusViewModel::UnbindFromASC()
 
 void UPREnemyStatusViewModel::SetEnemyDisplayName(const FText& InDisplayName)
 {
-	DisplayName = InDisplayName;
-	OnEnemyDisplayNameChanged.Broadcast(DisplayName);
+	EnemyDisplayName = InDisplayName;
+	OnEnemyDisplayNameChanged.Broadcast(EnemyDisplayName);
 }
 
 void UPREnemyStatusViewModel::SetHealth(float NewCurrent, float NewMax)

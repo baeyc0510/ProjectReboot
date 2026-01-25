@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "ProjectReboot/Character/PRCharacterBase.h"
 #include "ProjectReboot/Combat/PRCombatInterface.h"
+#include "Perception/AISense_Damage.h"
 #include "ProjectReboot/PRGameplayTags.h"
 
 void UPRCommonAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
@@ -81,6 +82,8 @@ void UPRCommonAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 {
 	Super::PostGameplayEffectExecute(Data);
 
+	ReportDamageEventIfNeeded(Data);
+
 	// Health 변경 처리
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
@@ -149,6 +152,66 @@ void UPRCommonAttributeSet::HandleDeath(const FGameplayEffectModCallbackData& Da
 		const FGameplayEffectContextHandle& EffectContext = Data.EffectSpec.GetEffectContext();
 		CombatInterface->Die(EffectContext);
 	}
+}
+
+void UPRCommonAttributeSet::ReportDamageEventIfNeeded(const FGameplayEffectModCallbackData& Data)
+{
+	AActor* OwnerActor = GetOwningActor();
+	if (!IsValid(OwnerActor) || !OwnerActor->HasAuthority())
+	{
+		return;
+	}
+
+	const bool bIsHealthOrShield = Data.EvaluatedData.Attribute == GetHealthAttribute() || Data.EvaluatedData.Attribute == GetShieldAttribute();
+	const float SetByCallerDamage = Data.EffectSpec.GetSetByCallerMagnitude(TAG_SetByCaller_Combat_Damage, false);
+	const float EvaluatedMagnitude = Data.EvaluatedData.Magnitude;
+
+	float DamageAmount = 0.0f;
+	if (SetByCallerDamage > 0.0f)
+	{
+		DamageAmount = SetByCallerDamage;
+	}
+	else if (bIsHealthOrShield && EvaluatedMagnitude < 0.0f)
+	{
+		DamageAmount = FMath::Abs(EvaluatedMagnitude);
+	}
+
+	if (DamageAmount <= 0.0f)
+	{
+		return;
+	}
+
+	const FGameplayEffectContextHandle& EffectContext = Data.EffectSpec.GetEffectContext();
+	AActor* InstigatorActor = EffectContext.GetInstigator();
+	if (!IsValid(InstigatorActor))
+	{
+		InstigatorActor = EffectContext.GetEffectCauser();
+	}
+	
+	if (InstigatorActor == OwnerActor)
+	{
+		return;
+	}
+
+	FVector EventLocation = OwnerActor->GetActorLocation();
+	if (IsValid(InstigatorActor))
+	{
+		EventLocation = InstigatorActor->GetActorLocation();
+	}
+
+	FVector HitLocation = OwnerActor->GetActorLocation();
+	if (const FHitResult* HitResult = EffectContext.GetHitResult())
+	{
+		HitLocation = HitResult->Location;
+	}
+
+	UWorld* World = OwnerActor->GetWorld();
+	if (!IsValid(World))
+	{
+		return;
+	}
+
+	UAISense_Damage::ReportDamageEvent(World, OwnerActor, InstigatorActor, DamageAmount, EventLocation, HitLocation);
 }
 
 void UPRCommonAttributeSet::UpdateCharacterWalkSpeed()

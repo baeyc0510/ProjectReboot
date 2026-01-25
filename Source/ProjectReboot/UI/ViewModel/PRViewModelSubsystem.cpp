@@ -12,7 +12,7 @@ void UPRViewModelSubsystem::Deinitialize()
 	// Global ViewModel 정리
 	for (auto& Pair : GlobalViewModelMap)
 	{
-		if (Pair.Value)
+		if (IsValid(Pair.Value))
 		{
 			Pair.Value->Deinitialize();
 		}
@@ -22,7 +22,7 @@ void UPRViewModelSubsystem::Deinitialize()
 	// Actor-Bound ViewModel 정리
 	for (auto& Pair : ActorViewModelMap)
 	{
-		if (Pair.Value)
+		if (IsValid(Pair.Value))
 		{
 			Pair.Value->Deinitialize();
 		}

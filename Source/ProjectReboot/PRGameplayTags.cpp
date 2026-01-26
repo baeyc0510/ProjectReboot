@@ -6,6 +6,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Crouch, "Input.Crouch");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Aim, "Input.Aim");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Fire, "Input.Fire");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Reload, "Input.Reload");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Dash, "Input.Dash");
 
 /*~ Equipment Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment, "Equipment");
@@ -33,6 +34,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_State_Dead, "State.Dead");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Hit, "State.Hit");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Invincible, "State.Invincible");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Dodging, "State.Dodging");
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_BlockMovementInput, "State.BlockMovementInput");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_CannotFire, "State.Weapon.CannotFire");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_Crosshair, "State.Weapon.Crosshair");
@@ -49,6 +51,10 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Attack, "Event.Attack");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Damage, "Event.Damage");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Room, "Event.Room");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Room_Clear, "Event.Room.Clear");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Dash, "Event.Dash");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_JustDodge, "Event.JustDodge");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_HitGhost, "Event.HitGhost");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Kill,"Event.Kill");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Kill_Common,"Event.Kill.Common");
@@ -75,11 +81,21 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Reload_Bullet, "Montage.Reload.Bullet");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Reload_Beam, "Montage.Reload.Beam");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Reload_Missile, "Montage.Reload.Missile");
 
+/*~ Montage Tags - Dash ~*/
+UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Dash, "Montage.Dash");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Dash_Front, "Montage.Dash.Front");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Dash_Right, "Montage.Dash.Right");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Dash_Back, "Montage.Dash.Back");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Dash_Left, "Montage.Dash.Left");
+
 /*~ Ability Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability, "Ability");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Attack, "Ability.Attack");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Die, "Ability.Die");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Reload, "Ability.Reload");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Dash, "Ability.Dash");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_JustDodge, "Ability.JustDodge");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_SlowMotion, "Ability.SlowMotion");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Active, "Ability.Active");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Active_Aim, "Ability.Active.Aim");
 

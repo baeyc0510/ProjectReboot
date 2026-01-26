@@ -10,10 +10,12 @@
 #include "GameFramework/Character.h"
 #include "ProjectReboot/Combat/CombatBlueprintFunctionLibrary.h"
 #include "ProjectReboot/PRGameplayTags.h"
+#include "ProjectReboot/ProjectReboot.h"
 
 UPRGA_AOEAttack::UPRGA_AOEAttack()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
+	TraceSettings.TraceChannel = PRCollision::AttackTrace;
 }
 
 void UPRGA_AOEAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,

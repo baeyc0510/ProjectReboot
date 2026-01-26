@@ -18,6 +18,7 @@ APRCharacterBase::APRCharacterBase()
 {
 	AbilitySystem = CreateDefaultSubobject<UPRAbilitySystemComponent>(TEXT("AbilitySystem"));
 	CommonAttributeSet = CreateDefaultSubobject<UPRCommonAttributeSet>(TEXT("CommonAttributeSet"));
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("CombatCharacter"));
 }
 
 UAbilitySystemComponent* APRCharacterBase::GetAbilitySystemComponent() const

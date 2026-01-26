@@ -26,6 +26,26 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	virtual void OnFired();
 
+	// 재장전 가능 여부
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	virtual bool CanReload() const;
+
+	// 재장전 중 여부
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	virtual bool IsReloading() const;
+
+	// 재장전 시작
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	virtual void StartReload();
+
+	// 재장전 완료
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	virtual void FinishReload();
+
+	// 재장전 취소
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	virtual void CancelReload();
+
 	// 총구 위치/방향 반환 (기본: 현재 슬롯 설정의 첫 번째 소켓)
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	virtual FTransform GetMuzzleTransform() const;

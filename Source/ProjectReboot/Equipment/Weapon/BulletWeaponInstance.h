@@ -18,18 +18,15 @@ public:
 	/*~ UWeaponInstance Interface ~*/
 	virtual bool CanFire() const override;
 	virtual void OnFired() override;
+	virtual bool CanReload() const override;
+	virtual bool IsReloading() const override;
+	virtual void StartReload() override;
+	virtual void FinishReload() override;
+	virtual void CancelReload() override;
 
 	// 재장전 중 여부
 	UFUNCTION(BlueprintCallable, Category = "Weapon|Bullet")
-	bool IsReloading() const { return bIsReloading; }
-
-	// 재장전 시작
-	UFUNCTION(BlueprintCallable, Category = "Weapon|Bullet")
-	void StartReload();
-
-	// 재장전 완료
-	UFUNCTION(BlueprintCallable, Category = "Weapon|Bullet")
-	void FinishReload();
+	bool IsReloadingInternal() const { return bIsReloading; }
 
 	// 현재 탄약 조회 (AttributeSet에서)
 	UFUNCTION(BlueprintCallable, Category = "Weapon|Bullet")

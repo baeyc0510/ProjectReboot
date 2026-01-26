@@ -29,11 +29,10 @@ void UPRHUDViewModel::BindToASC(UAbilitySystemComponent* InASC)
 	BoundASC = InASC;
 
 	// 무기 타입 태그 변경 등록
-	WeaponTypeTagHandle = InASC->RegisterGameplayTagEvent(
+	WeaponTypeDelegateHandle = InASC->RegisterGameplayTagEvent(
 		TAG_Equipment_Weapon_Type,
 		EGameplayTagEventType::NewOrRemoved
 	).AddUObject(this, &UPRHUDViewModel::HandleWeaponTagChanged);
-	
 
 	// 어트리뷰트 바인딩
 	UpdateAttributesBindings();
@@ -62,10 +61,10 @@ void UPRHUDViewModel::UnbindFromASC()
 	// 태그 이벤트 바인딩 제거
 	if (BoundASC.IsValid())
 	{
-		if (WeaponTypeTagHandle.IsValid())
+		if (WeaponTypeDelegateHandle.IsValid())
 		{
-			BoundASC->UnregisterGameplayTagEvent(WeaponTypeTagHandle,TAG_Equipment_Weapon_Type,EGameplayTagEventType::NewOrRemoved);
-			WeaponTypeTagHandle.Reset();
+			BoundASC->UnregisterGameplayTagEvent(WeaponTypeDelegateHandle,TAG_Equipment_Weapon_Type,EGameplayTagEventType::NewOrRemoved);
+			WeaponTypeDelegateHandle.Reset();
 		}
 	}
 
@@ -82,6 +81,16 @@ void UPRHUDViewModel::SetAmmo(int32 NewCurrent, int32 NewMax)
 		CurrentAmmo = NewCurrent;
 		MaxAmmo = NewMax;
 		OnAmmoChanged.Broadcast(CurrentAmmo, MaxAmmo);
+	}
+}
+
+void UPRHUDViewModel::SetReserveAmmo(int32 NewCurrent, int32 NewMax)
+{
+	if (CurrentReserveAmmo != NewCurrent || MaxReserveAmmo != NewMax)
+	{
+		CurrentReserveAmmo = NewCurrent;
+		MaxReserveAmmo = NewMax;
+		OnReserveAmmoChanged.Broadcast(CurrentReserveAmmo, MaxReserveAmmo);
 	}
 }
 
@@ -118,32 +127,33 @@ void UPRHUDViewModel::ClearAttributeBindings()
 {
 	if (BoundASC.IsValid())
 	{
-		auto UnbindSafe = [&](const FGameplayAttribute& Attribute, FDelegateHandle& Handle)
+		for (auto& Binding : AttributeBindings)
 		{
-			if (Handle.IsValid() && BoundASC.IsValid())
+			if (!BoundASC.IsValid() || !Binding.IsValid())
 			{
-				BoundASC->GetGameplayAttributeValueChangeDelegate(Attribute).Remove(Handle);
-				Handle.Reset();
+				continue;
 			}
-		};
-
-		// 모든 가능한 어트리뷰트 바인딩 해제
-		UnbindSafe(UPRWeaponAttributeSet::GetAmmoAttribute(), AmmoChangeHandle);
-		UnbindSafe(UPRWeaponAttributeSet::GetMaxAmmoAttribute(), MaxAmmoChangeHandle);
-		
-		UnbindSafe(UPRCommonAttributeSet::GetHealthAttribute(), HealthChangeHandle);
-		UnbindSafe(UPRCommonAttributeSet::GetMaxHealthAttribute(), MaxHealthChangeHandle);
-
-		UnbindSafe(UPRCommonAttributeSet::GetShieldAttribute(), ShieldChangeHandle);
-		UnbindSafe(UPRCommonAttributeSet::GetMaxShieldAttribute(), MaxShieldChangeHandle);
+			BoundASC->GetGameplayAttributeValueChangeDelegate(Binding.Attribute).Remove(Binding.DelegateHandle);
+			Binding.DelegateHandle.Reset();
+		}
 	}
 	
-	AmmoChangeHandle.Reset();
-	MaxAmmoChangeHandle.Reset();
-	HealthChangeHandle.Reset();
-	MaxHealthChangeHandle.Reset();
-	ShieldChangeHandle.Reset();
-	MaxShieldChangeHandle.Reset();
+	AttributeBindings.Reset();
+}
+
+void UPRHUDViewModel::BindAttributeDelegate(const FGameplayAttribute& Attribute, void (UPRHUDViewModel::*Handler)(const FOnAttributeChangeData&))
+{
+	if (!BoundASC.IsValid())
+	{
+		return;
+	}
+
+	const FDelegateHandle DelegateHandle = BoundASC->GetGameplayAttributeValueChangeDelegate(Attribute).AddUObject(this, Handler);
+
+	FHUDAttributeBinding NewBinding;
+	NewBinding.Attribute = Attribute;
+	NewBinding.DelegateHandle = DelegateHandle;
+	AttributeBindings.Add(NewBinding);
 }
 
 void UPRHUDViewModel::UpdateAttributesBindings()
@@ -156,13 +166,8 @@ void UPRHUDViewModel::UpdateAttributesBindings()
 	}
 	
 	// 체력 어트리뷰트 바인딩
-	HealthChangeHandle = BoundASC->GetGameplayAttributeValueChangeDelegate(
-		UPRCommonAttributeSet::GetHealthAttribute()
-	).AddUObject(this, &UPRHUDViewModel::HandleHealthChanged);
-
-	MaxHealthChangeHandle = BoundASC->GetGameplayAttributeValueChangeDelegate(
-		UPRCommonAttributeSet::GetMaxHealthAttribute()
-	).AddUObject(this, &UPRHUDViewModel::HandleMaxHealthChanged);
+	BindAttributeDelegate(UPRCommonAttributeSet::GetHealthAttribute(), &UPRHUDViewModel::HandleHealthChanged);
+	BindAttributeDelegate(UPRCommonAttributeSet::GetMaxHealthAttribute(), &UPRHUDViewModel::HandleMaxHealthChanged);
 
 	// 초기 체력 값 설정
 	bool bFoundHealth = false;
@@ -172,13 +177,8 @@ void UPRHUDViewModel::UpdateAttributesBindings()
 	SetHealth(ValHealth, ValMaxHealth);
 
 	// 실드 어트리뷰트 바인딩
-	ShieldChangeHandle = BoundASC->GetGameplayAttributeValueChangeDelegate(
-		UPRCommonAttributeSet::GetShieldAttribute()
-	).AddUObject(this, &UPRHUDViewModel::HandleShieldChanged);
-
-	MaxShieldChangeHandle = BoundASC->GetGameplayAttributeValueChangeDelegate(
-		UPRCommonAttributeSet::GetMaxShieldAttribute()
-	).AddUObject(this, &UPRHUDViewModel::HandleMaxShieldChanged);
+	BindAttributeDelegate(UPRCommonAttributeSet::GetShieldAttribute(), &UPRHUDViewModel::HandleShieldChanged);
+	BindAttributeDelegate(UPRCommonAttributeSet::GetMaxShieldAttribute(), &UPRHUDViewModel::HandleMaxShieldChanged);
 
 	// 초기 실드 값 설정
 	bool bFoundShield = false;
@@ -188,13 +188,10 @@ void UPRHUDViewModel::UpdateAttributesBindings()
 	SetShield(ValShield, ValMaxShield);
 	
 	// Ammo 어트리뷰트 바인딩
-	AmmoChangeHandle = BoundASC->GetGameplayAttributeValueChangeDelegate(
-		UPRWeaponAttributeSet::GetAmmoAttribute()
-	).AddUObject(this, &UPRHUDViewModel::HandleAmmoChanged);
-
-	MaxAmmoChangeHandle = BoundASC->GetGameplayAttributeValueChangeDelegate(
-		UPRWeaponAttributeSet::GetMaxAmmoAttribute()
-	).AddUObject(this, &UPRHUDViewModel::HandleMaxAmmoChanged);
+	BindAttributeDelegate(UPRWeaponAttributeSet::GetAmmoAttribute(), &UPRHUDViewModel::HandleAmmoChanged);
+	BindAttributeDelegate(UPRWeaponAttributeSet::GetMaxAmmoAttribute(), &UPRHUDViewModel::HandleMaxAmmoChanged);
+	BindAttributeDelegate(UPRWeaponAttributeSet::GetReserveAmmoAttribute(), &UPRHUDViewModel::HandleReserveAmmoChanged);
+	BindAttributeDelegate(UPRWeaponAttributeSet::GetMaxReserveAmmoAttribute(), &UPRHUDViewModel::HandleMaxReserveAmmoChanged);
 
 	// 초기 업데이트
 	bool bFoundCurrent = false;
@@ -202,6 +199,12 @@ void UPRHUDViewModel::UpdateAttributesBindings()
 	float ValCurrent = BoundASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetAmmoAttribute(), bFoundCurrent);
 	float ValMax = BoundASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetMaxAmmoAttribute(), bFoundMax);
 	SetAmmo(FMath::TruncToInt(ValCurrent), FMath::TruncToInt(ValMax));
+
+	bool bFoundReserve = false;
+	bool bFoundMaxReserve = false;
+	float ValReserve = BoundASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetReserveAmmoAttribute(), bFoundReserve);
+	float ValMaxReserve = BoundASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetMaxReserveAmmoAttribute(), bFoundMaxReserve);
+	SetReserveAmmo(FMath::TruncToInt(ValReserve), FMath::TruncToInt(ValMaxReserve));
 }
 
 void UPRHUDViewModel::HandleWeaponTagChanged(const FGameplayTag Tag, int32 NewCount)
@@ -231,6 +234,16 @@ void UPRHUDViewModel::HandleAmmoChanged(const FOnAttributeChangeData& Data)
 void UPRHUDViewModel::HandleMaxAmmoChanged(const FOnAttributeChangeData& Data)
 {
 	SetAmmo(CurrentAmmo, FMath::TruncToInt(Data.NewValue));
+}
+
+void UPRHUDViewModel::HandleReserveAmmoChanged(const FOnAttributeChangeData& Data)
+{
+	SetReserveAmmo(FMath::TruncToInt(Data.NewValue), MaxReserveAmmo);
+}
+
+void UPRHUDViewModel::HandleMaxReserveAmmoChanged(const FOnAttributeChangeData& Data)
+{
+	SetReserveAmmo(CurrentReserveAmmo, FMath::TruncToInt(Data.NewValue));
 }
 
 void UPRHUDViewModel::HandleHealthChanged(const FOnAttributeChangeData& Data)

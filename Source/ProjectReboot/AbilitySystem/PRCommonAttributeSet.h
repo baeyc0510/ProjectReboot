@@ -29,15 +29,21 @@ public:
 
 protected:
 	/*~ UPRCommonAttributeSet Interfaces ~*/
-	
+
+	// IncomingDamage 처리 (무적 체크, Shield/Health 분배, 이벤트 발송)
+	void HandleIncomingDamage(const FGameplayEffectModCallbackData& Data);
+
 	// Health 변경 처리 (사망 체크 포함)
 	void HandleHealthChanged(const FGameplayEffectModCallbackData& Data);
 
 	// 사망 처리 (CombatInterface::Die 호출)
 	void HandleDeath(const FGameplayEffectModCallbackData& Data);
-	
+
+	// 데미지 이벤트 발송
+	void SendDamageEvent(const FGameplayEffectModCallbackData& Data, float DamageAmount, bool bDodgeable);
+
 private:
-	void ReportDamageEventIfNeeded(const FGameplayEffectModCallbackData& Data);
+	void ReportDamageEventIfNeeded(const FGameplayEffectModCallbackData& Data, float DamageAmount);
 
 	void UpdateCharacterWalkSpeed();
 
@@ -77,4 +83,10 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Combat")
 	FGameplayAttributeData HitImmunity;
 	ATTRIBUTE_ACCESSORS(UPRCommonAttributeSet, HitImmunity)
+
+	/*~ Meta Attributes ~*/
+	// 수신 데미지 (메타 - 실제 Health/Shield 차감 전 처리용)
+	UPROPERTY(BlueprintReadOnly, Category = "Combat|Meta")
+	FGameplayAttributeData IncomingDamage;
+	ATTRIBUTE_ACCESSORS(UPRCommonAttributeSet, IncomingDamage)
 };

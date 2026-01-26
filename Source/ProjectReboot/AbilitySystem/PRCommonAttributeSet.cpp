@@ -82,10 +82,13 @@ void UPRCommonAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 {
 	Super::PostGameplayEffectExecute(Data);
 
-	ReportDamageEventIfNeeded(Data);
-
+	// IncomingDamage 처리 (메타 어트리뷰트)
+	if (Data.EvaluatedData.Attribute == GetIncomingDamageAttribute())
+	{
+		HandleIncomingDamage(Data);
+	}
 	// Health 변경 처리
-	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
+	else if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
 		HandleHealthChanged(Data);
 	}
@@ -119,9 +122,90 @@ void UPRCommonAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 	}
 }
 
+void UPRCommonAttributeSet::HandleIncomingDamage(const FGameplayEffectModCallbackData& Data)
+{
+	const float IncomingDamageValue = GetIncomingDamage();
+	SetIncomingDamage(0.0f); // 메타 어트리뷰트 초기화
+
+	if (IncomingDamageValue <= 0.0f)
+	{
+		return;
+	}
+
+	// GE 태그에서 Dodgeable 여부 확인
+	FGameplayTagContainer AssetTags;
+	Data.EffectSpec.GetAllAssetTags(AssetTags);
+	const bool bDodgeable = AssetTags.HasTag(TAG_Damage_Dodgeable);
+
+	// 상태 체크
+	UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent();
+	const bool bIsDodging = ASC && ASC->HasMatchingGameplayTag(TAG_State_Dodging);
+	const bool bIsInvincible = ASC && ASC->HasMatchingGameplayTag(TAG_State_Invincible);
+
+	// 회피 중 + Dodgeable 데미지 -> 이벤트 전송
+	if (bIsDodging && bDodgeable)
+	{
+		SendDamageEvent(Data, IncomingDamageValue, true);
+		return;
+	}
+
+	// 무적 상태 -> 데미지 무시 (이벤트 없음)
+	if (bIsInvincible)
+	{
+		return;
+	}
+
+	// 일반 상태: Shield, Health 순서로 데미지 적용
+	float RemainingDamage = IncomingDamageValue;
+
+	const float CurrentShield = GetShield();
+	if (CurrentShield > 0.0f)
+	{
+		const float ShieldDamage = FMath::Min(CurrentShield, RemainingDamage);
+		SetShield(FMath::Max(0.0f, CurrentShield - ShieldDamage));
+		RemainingDamage -= ShieldDamage;
+	}
+
+	if (RemainingDamage > 0.0f)
+	{
+		const float NewHealth = FMath::Max(0.0f, GetHealth() - RemainingDamage);
+		SetHealth(NewHealth);
+
+		// Stagger 증가 및 Hit 이벤트 체크
+		const float NewStagger = FMath::Min(GetStagger() + RemainingDamage, GetHitImmunity());
+		SetStagger(NewStagger);
+
+		if (NewStagger >= GetHitImmunity() && GetHitImmunity() > 0.0f)
+		{
+			if (ASC)
+			{
+				FGameplayEventData HitEventData;
+				HitEventData.EventTag = TAG_Event_Hit;
+				HitEventData.Instigator = Data.EffectSpec.GetEffectContext().GetInstigator();
+				HitEventData.Target = GetOwningActor();
+				HitEventData.ContextHandle = Data.EffectSpec.GetEffectContext();
+				ASC->HandleGameplayEvent(TAG_Event_Hit, &HitEventData);
+			}
+			SetStagger(0.0f);
+		}
+
+		// 사망 체크
+		if (NewHealth <= 0.0f)
+		{
+			HandleDeath(Data);
+		}
+	}
+
+	// 데미지 이벤트 발송
+	SendDamageEvent(Data, IncomingDamageValue, bDodgeable);
+
+	// AI 감지용 이벤트
+	ReportDamageEventIfNeeded(Data, IncomingDamageValue);
+}
+
 void UPRCommonAttributeSet::HandleHealthChanged(const FGameplayEffectModCallbackData& Data)
 {
-	// Health 클램핑
+	// Health 클램핑 (힐링 GE 등 직접 Health 수정 시)
 	const float ClampedHealth = FMath::Clamp(GetHealth(), 0.0f, GetMaxHealth());
 	SetHealth(ClampedHealth);
 
@@ -148,32 +232,42 @@ void UPRCommonAttributeSet::HandleDeath(const FGameplayEffectModCallbackData& Da
 		{
 			return;
 		}
-		
+
 		const FGameplayEffectContextHandle& EffectContext = Data.EffectSpec.GetEffectContext();
 		CombatInterface->Die(EffectContext);
 	}
 }
 
-void UPRCommonAttributeSet::ReportDamageEventIfNeeded(const FGameplayEffectModCallbackData& Data)
+void UPRCommonAttributeSet::SendDamageEvent(const FGameplayEffectModCallbackData& Data, float DamageAmount, bool bDodgeable)
+{
+	UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent();
+	if (!ASC)
+	{
+		return;
+	}
+
+	FGameplayEventData EventData;
+	EventData.EventTag = TAG_Event_Damage;
+	EventData.EventMagnitude = DamageAmount;
+	EventData.Instigator = Data.EffectSpec.GetEffectContext().GetInstigator();
+	EventData.Target = GetOwningActor();
+	EventData.ContextHandle = Data.EffectSpec.GetEffectContext();
+
+	// Dodgeable 태그를 InstigatorTags에 포함
+	if (bDodgeable)
+	{
+		EventData.InstigatorTags.AddTag(TAG_Damage_Dodgeable);
+	}
+
+	ASC->HandleGameplayEvent(TAG_Event_Damage, &EventData);
+}
+
+void UPRCommonAttributeSet::ReportDamageEventIfNeeded(const FGameplayEffectModCallbackData& Data, float DamageAmount)
 {
 	AActor* OwnerActor = GetOwningActor();
 	if (!IsValid(OwnerActor) || !OwnerActor->HasAuthority())
 	{
 		return;
-	}
-
-	const bool bIsHealthOrShield = Data.EvaluatedData.Attribute == GetHealthAttribute() || Data.EvaluatedData.Attribute == GetShieldAttribute();
-	const float SetByCallerDamage = Data.EffectSpec.GetSetByCallerMagnitude(TAG_SetByCaller_Combat_Damage, false);
-	const float EvaluatedMagnitude = Data.EvaluatedData.Magnitude;
-
-	float DamageAmount = 0.0f;
-	if (SetByCallerDamage > 0.0f)
-	{
-		DamageAmount = SetByCallerDamage;
-	}
-	else if (bIsHealthOrShield && EvaluatedMagnitude < 0.0f)
-	{
-		DamageAmount = FMath::Abs(EvaluatedMagnitude);
 	}
 
 	if (DamageAmount <= 0.0f)
@@ -187,7 +281,7 @@ void UPRCommonAttributeSet::ReportDamageEventIfNeeded(const FGameplayEffectModCa
 	{
 		InstigatorActor = EffectContext.GetEffectCauser();
 	}
-	
+
 	if (InstigatorActor == OwnerActor)
 	{
 		return;

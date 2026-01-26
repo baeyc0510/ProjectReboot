@@ -67,50 +67,11 @@ void UPRDamageExecCalc::Execute_Implementation(const FGameplayEffectCustomExecut
 		return;
 	}
 
-	// 실드 -> 체력 순서로 적용
-	float RemainingDamage = FinalDamage;
-
-	const UAbilitySystemComponent* TargetASC = ExecutionParams.GetTargetAbilitySystemComponent();
-	if (TargetASC)
-	{
-		const float CurrentShield = TargetASC->GetNumericAttribute(UPRCommonAttributeSet::GetShieldAttribute());
-		if (CurrentShield > 0.0f)
-		{
-			const float ShieldDamageMultiplier = GetShieldDamageMultiplier(DamageTypeTag);
-			const float EffectiveShieldDamage = FinalDamage * ShieldDamageMultiplier;
-
-			if (EffectiveShieldDamage > 0.0f)
-			{
-				const float AppliedShieldDamage = FMath::Min(CurrentShield, EffectiveShieldDamage);
-				OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
-					UPRCommonAttributeSet::GetShieldAttribute(),
-					EGameplayModOp::Additive,
-					-AppliedShieldDamage));
-
-				RemainingDamage = FinalDamage - (AppliedShieldDamage / ShieldDamageMultiplier);
-			}
-		}
-	}
-
-	// 남은 데미지를 체력에 적용
-	if (RemainingDamage > 0.0f)
-	{
-		OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
-			UPRCommonAttributeSet::GetHealthAttribute(),
-			EGameplayModOp::Additive,
-			-RemainingDamage));
-	}
-
-	// 경직 수치 증가 적용 (RemainingDamage기준)
-	const float HitImmunityMultiplier = GetHitImmunityDamageMultiplier(DamageTypeTag);
-	const float StaggerAmount = RemainingDamage * HitImmunityMultiplier;
-	if (StaggerAmount > 0.0f)
-	{
-		OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
-			UPRCommonAttributeSet::GetStaggerAttribute(),
-			EGameplayModOp::Additive,
-			StaggerAmount));
-	}
+	// IncomingDamage 메타 어트리뷰트에 출력 (실제 적용은 AttributeSet에서 처리)
+	OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
+		UPRCommonAttributeSet::GetIncomingDamageAttribute(),
+		EGameplayModOp::Additive,
+		FinalDamage));
 }
 
 bool UPRDamageExecCalc::GetWeaponTypeTag(const FGameplayTagContainer& InTags, FGameplayTag& OutWeaponTypeTag) const

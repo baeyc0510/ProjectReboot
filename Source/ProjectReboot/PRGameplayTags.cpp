@@ -20,6 +20,10 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_DamageType_Kinetic, "DamageType.Kinetic");
 UE_DEFINE_GAMEPLAY_TAG(TAG_DamageType_Plasma, "DamageType.Plasma");
 UE_DEFINE_GAMEPLAY_TAG(TAG_DamageType_Explosion, "DamageType.Explosion");
 
+/*~ Damage Property Tags ~*/
+UE_DEFINE_GAMEPLAY_TAG(TAG_Damage, "Damage");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Damage_Dodgeable, "Damage.Dodgeable");
+
 /*~ Character States ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_State, "State");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Sprint, "State.Sprint");
@@ -27,6 +31,8 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_State_Crouch, "State.Crouch");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Aiming, "State.Aiming");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Dead, "State.Dead");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Hit, "State.Hit");
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_Invincible, "State.Invincible");
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_Dodging, "State.Dodging");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_CannotFire, "State.Weapon.CannotFire");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_Crosshair, "State.Weapon.Crosshair");
@@ -40,6 +46,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Event, "Event");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Death, "Event.Death");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Hit, "Event.Hit");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Attack, "Event.Attack");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Damage, "Event.Damage");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Room, "Event.Room");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Room_Clear, "Event.Room.Clear");
 

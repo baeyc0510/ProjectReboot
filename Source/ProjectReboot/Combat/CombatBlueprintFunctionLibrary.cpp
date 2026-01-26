@@ -8,6 +8,57 @@
 #include "Engine/Engine.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "ProjectReboot/Combat/PRCombatInterface.h"
+
+namespace
+{
+	void FilterHitResultsByTargetClasses(TArray<FHitResult>& HitResults, const TArray<TSubclassOf<AActor>>& TargetClasses)
+	{
+		if (TargetClasses.Num() <= 0)
+		{
+			return;
+		}
+
+		TArray<FHitResult> FilteredHits;
+		FilteredHits.Reserve(HitResults.Num());
+
+		for (const FHitResult& HitResult : HitResults)
+		{
+			AActor* HitActor = HitResult.GetActor();
+			if (!IsValid(HitActor))
+			{
+				continue;
+			}
+
+			bool bMatchedTargetClass = false;
+			for (const TSubclassOf<AActor>& TargetClass : TargetClasses)
+			{
+				if (IsValid(TargetClass) && HitActor->IsA(TargetClass))
+				{
+					bMatchedTargetClass = true;
+					break;
+				}
+			}
+
+			if (bMatchedTargetClass)
+			{
+				FilteredHits.Add(HitResult);
+			}
+		}
+
+		HitResults = MoveTemp(FilteredHits);
+	}
+
+	void TrimHitResultsByMaxCount(TArray<FHitResult>& HitResults, int32 MaxHitCount)
+	{
+		if (MaxHitCount <= 0 || HitResults.Num() <= MaxHitCount)
+		{
+			return;
+		}
+
+		HitResults.SetNum(MaxHitCount);
+	}
+}
 
 EPRHitDirection UCombatBlueprintFunctionLibrary::GetHitDirectionFromHitResult(const FHitResult& HitResult, const AActor* HitActor)
 {
@@ -65,7 +116,11 @@ bool UCombatBlueprintFunctionLibrary::SphereSweepTraceByStartEnd(
 	const FCollisionQueryParams& QueryParams,
 	TArray<FHitResult>& OutHits,
 	bool bDrawDebug,
-	float DebugDrawTime)
+	float DebugDrawTime,
+	const TArray<TSubclassOf<AActor>>& TargetClasses,
+	bool bUseCylinderFilter,
+	float CylinderHalfHeight,
+	int32 MaxHitCount)
 {
 	OutHits.Reset();
 
@@ -94,7 +149,39 @@ bool UCombatBlueprintFunctionLibrary::SphereSweepTraceByStartEnd(
 		DrawDebugDirectionalArrow(World, Start, Start + Direction.GetSafeNormal() * 50.0f, 20.0f, DebugColor, false, DebugDrawTime);
 	}
 
-	return bHit;
+	if (!bHit)
+	{
+		return false;
+	}
+
+	if (bUseCylinderFilter)
+	{
+		const FVector CylinderCenter = (Start + End) * 0.5f;
+		TArray<FHitResult> FilteredHits;
+		FilteredHits.Reserve(OutHits.Num());
+
+		for (const FHitResult& HitResult : OutHits)
+		{
+			if (IsInsideCylinder(HitResult.Location, CylinderCenter, Radius, CylinderHalfHeight))
+			{
+				FilteredHits.Add(HitResult);
+			}
+		}
+
+		OutHits = MoveTemp(FilteredHits);
+	}
+
+	FilterHitResultsByTargetClasses(OutHits, TargetClasses);
+	TrimHitResultsByMaxCount(OutHits, MaxHitCount);
+
+	if (OutHits.Num() <= 0)
+	{
+		return false;
+	}
+
+	NotifyCombatInterfaceHit(OutHits);
+
+	return true;
 }
 
 bool UCombatBlueprintFunctionLibrary::BoxSweepTraceByStartEnd(
@@ -108,7 +195,9 @@ bool UCombatBlueprintFunctionLibrary::BoxSweepTraceByStartEnd(
 	const FCollisionQueryParams& QueryParams,
 	TArray<FHitResult>& OutHits,
 	bool bDrawDebug,
-	float DebugDrawTime)
+	float DebugDrawTime,
+	const TArray<TSubclassOf<AActor>>& TargetClasses,
+	int32 MaxHitCount)
 {
 	OutHits.Reset();
 
@@ -137,7 +226,22 @@ bool UCombatBlueprintFunctionLibrary::BoxSweepTraceByStartEnd(
 		DrawDebugDirectionalArrow(World, Start, Start + Direction.GetSafeNormal() * 50.0f, 20.0f, DebugColor, false, DebugDrawTime);
 	}
 
-	return bHit;
+	if (!bHit)
+	{
+		return false;
+	}
+
+	FilterHitResultsByTargetClasses(OutHits, TargetClasses);
+	TrimHitResultsByMaxCount(OutHits, MaxHitCount);
+
+	if (OutHits.Num() <= 0)
+	{
+		return false;
+	}
+
+	NotifyCombatInterfaceHit(OutHits);
+
+	return true;
 }
 
 bool UCombatBlueprintFunctionLibrary::IsInsideCylinder(const FVector& TestPoint, const FVector& CylinderCenter, float Radius, float HalfHeight)
@@ -177,7 +281,11 @@ bool UCombatBlueprintFunctionLibrary::TraceBySettings(
 			QueryParams,
 			OutHits,
 			TraceSettings.bDrawDebugTrace,
-			TraceSettings.DebugDrawTime
+			TraceSettings.DebugDrawTime,
+			TraceSettings.TraceTargetClasses,
+			TraceSettings.bUseCylinderFilter,
+			TraceSettings.CylinderHalfHeight,
+			TraceSettings.MaxHitCount
 		);
 	}
 	else if (TraceSettings.TraceShape == EPRTraceShape::Box)
@@ -193,33 +301,38 @@ bool UCombatBlueprintFunctionLibrary::TraceBySettings(
 			QueryParams,
 			OutHits,
 			TraceSettings.bDrawDebugTrace,
-			TraceSettings.DebugDrawTime
+			TraceSettings.DebugDrawTime,
+			TraceSettings.TraceTargetClasses,
+			TraceSettings.MaxHitCount
 		);
 	}
 
-	if (!bHit)
-	{
-		return false;
-	}
+	return bHit;
+}
 
-	if (TraceSettings.TraceShape == EPRTraceShape::Sphere && TraceSettings.bUseCylinderFilter)
+void UCombatBlueprintFunctionLibrary::NotifyCombatInterfaceHit(const TArray<FHitResult>& HitResults)
+{
+	TSet<AActor*> ProcessedActors;
+	for (const FHitResult& HitResult : HitResults)
 	{
-		const FVector CylinderCenter = (Start + End) * 0.5f;
-		TArray<FHitResult> FilteredHits;
-		FilteredHits.Reserve(OutHits.Num());
-
-		for (const FHitResult& HitResult : OutHits)
+		AActor* HitActor = HitResult.GetActor();
+		if (!IsValid(HitActor))
 		{
-			if (IsInsideCylinder(HitResult.Location, CylinderCenter, TraceSettings.TraceRadius, TraceSettings.CylinderHalfHeight))
-			{
-				FilteredHits.Add(HitResult);
-			}
+			continue;
 		}
 
-		OutHits = MoveTemp(FilteredHits);
-	}
+		if (ProcessedActors.Contains(HitActor))
+		{
+			continue;
+		}
 
-	return OutHits.Num() > 0;
+		ProcessedActors.Add(HitActor);
+
+		if (IPRCombatInterface* CombatInterface = Cast<IPRCombatInterface>(HitActor))
+		{
+			CombatInterface->OnHit(HitResult);
+		}
+	}
 }
 
 /*~ Ragdoll ~*/

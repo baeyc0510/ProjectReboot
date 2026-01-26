@@ -7,6 +7,7 @@
 #include "PRCombatInterface.generated.h"
 
 struct FGameplayEffectContextHandle;
+struct FHitResult;
 
 UINTERFACE(MinimalAPI, BlueprintType, meta = (CannotImplementInterfaceInBlueprint))
 class UPRCombatInterface : public UInterface
@@ -33,4 +34,8 @@ public:
 
 	// 사망 완료 후 (Ragdoll, 입력 등 처리)
 	virtual void FinishDie() = 0;
+
+	/*~ Hit ~*/
+	// 피격 이벤트 처리
+	virtual void OnHit(const FHitResult& HitResult) = 0;
 };

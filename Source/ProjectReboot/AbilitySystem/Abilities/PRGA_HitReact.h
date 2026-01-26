@@ -4,7 +4,7 @@
 #include "CoreMinimal.h"
 #include "GameplayEffectTypes.h"
 #include "ProjectReboot/AbilitySystem/PRGameplayAbility.h"
-#include "PRGA_Hit.generated.h"
+#include "PRGA_HitReact.generated.h"
 
 enum class EPRHitDirection : uint8;
 class UAbilityTask_PlayMontageAndWait;
@@ -14,12 +14,12 @@ class UGameplayEffect;
  * 피격 어빌리티
  */
 UCLASS()
-class PROJECTREBOOT_API UPRGA_Hit : public UPRGameplayAbility
+class PROJECTREBOOT_API UPRGA_HitReact : public UPRGameplayAbility
 {
 	GENERATED_BODY()
 
 public:
-	UPRGA_Hit();
+	UPRGA_HitReact();
 
 	/*~ UGameplayAbility Interfaces ~*/
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,

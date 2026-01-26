@@ -115,6 +115,15 @@ bool APRPlayerCharacter::IsAiming() const
 	return false;
 }
 
+bool APRPlayerCharacter::IsMovementInputBlocked() const
+{
+	if (AbilitySystem)
+	{
+		return AbilitySystem->HasMatchingGameplayTag(TAG_State_BlockMovementInput);
+	}
+	return false;
+}
+
 void APRPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -210,10 +219,11 @@ void APRPlayerCharacter::OnTaggedInputReleased(FGameplayTag InputTag)
 
 void APRPlayerCharacter::Move(const FInputActionValue& Value)
 {
-	if (IsDead())
+	if (IsDead() || IsMovementInputBlocked())
 	{
 		return;
 	}
+	
 	// input is a Vector2D
 	FVector2D MovementVector = Value.Get<FVector2D>();
 

@@ -49,7 +49,11 @@ public:
 		const FCollisionQueryParams& QueryParams,
 		TArray<FHitResult>& OutHits,
 		bool bDrawDebug = false,
-		float DebugDrawTime = 1.0f);
+		float DebugDrawTime = 1.0f,
+		const TArray<TSubclassOf<AActor>>& TargetClasses = {},
+		bool bUseCylinderFilter = false,
+		float CylinderHalfHeight = 0.0f,
+		int32 MaxHitCount = 0);
 
 	// 박스 스윕 트레이스 유틸
 	static bool BoxSweepTraceByStartEnd(
@@ -63,7 +67,9 @@ public:
 		const FCollisionQueryParams& QueryParams,
 		TArray<FHitResult>& OutHits,
 		bool bDrawDebug = false,
-		float DebugDrawTime = 1.0f);
+		float DebugDrawTime = 1.0f,
+		const TArray<TSubclassOf<AActor>>& TargetClasses = {},
+		int32 MaxHitCount = 0);
 
 	// 원기둥 내부 여부 확인 (Z축 기준)
 	static bool IsInsideCylinder(const FVector& TestPoint, const FVector& CylinderCenter, float Radius, float HalfHeight);
@@ -78,6 +84,10 @@ public:
 		const FCollisionQueryParams& QueryParams,
 		TArray<FHitResult>& OutHits,
 		const FRotator& BoxRotation);
+
+	// 히트 결과를 CombatInterface에 전달
+	UFUNCTION(BlueprintCallable, Category = "Combat|Trace")
+	static void NotifyCombatInterfaceHit(const TArray<FHitResult>& HitResults);
 	
 	/*~ Ragdoll ~*/
 

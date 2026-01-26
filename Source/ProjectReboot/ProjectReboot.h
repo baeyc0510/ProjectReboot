@@ -4,3 +4,8 @@
 
 #include "CoreMinimal.h"
 
+namespace PRCollision
+{
+	constexpr ECollisionChannel AttackTrace = ECC_GameTraceChannel1;
+}
+

@@ -109,11 +109,11 @@ void UPRCommonAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 			if (UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent())
 			{
 				FGameplayEventData EventData;
-				EventData.EventTag = TAG_Event_Hit;
+				EventData.EventTag = TAG_Event_HitReact;
 				EventData.Instigator = Data.EffectSpec.GetEffectContext().GetInstigator();
 				EventData.Target = GetOwningActor();
 				EventData.ContextHandle = Data.EffectSpec.GetEffectContext();
-				ASC->HandleGameplayEvent(TAG_Event_Hit, &EventData);
+				ASC->HandleGameplayEvent(TAG_Event_HitReact, &EventData);
 			}
 
 			// 경직 수치 초기화
@@ -180,11 +180,11 @@ void UPRCommonAttributeSet::HandleIncomingDamage(const FGameplayEffectModCallbac
 			if (ASC)
 			{
 				FGameplayEventData HitEventData;
-				HitEventData.EventTag = TAG_Event_Hit;
+				HitEventData.EventTag = TAG_Event_HitReact;
 				HitEventData.Instigator = Data.EffectSpec.GetEffectContext().GetInstigator();
 				HitEventData.Target = GetOwningActor();
 				HitEventData.ContextHandle = Data.EffectSpec.GetEffectContext();
-				ASC->HandleGameplayEvent(TAG_Event_Hit, &HitEventData);
+				ASC->HandleGameplayEvent(TAG_Event_HitReact, &HitEventData);
 			}
 			SetStagger(0.0f);
 		}

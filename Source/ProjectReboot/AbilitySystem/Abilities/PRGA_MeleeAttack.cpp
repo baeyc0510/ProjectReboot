@@ -9,6 +9,7 @@
 #include "Engine/EngineTypes.h"
 #include "GameFramework/Character.h"
 #include "ProjectReboot/PRGameplayTags.h"
+#include "ProjectReboot/ProjectReboot.h"
 #include "ProjectReboot/Combat/CombatBlueprintFunctionLibrary.h"
 
 UPRGA_MeleeAttack::UPRGA_MeleeAttack()
@@ -17,7 +18,7 @@ UPRGA_MeleeAttack::UPRGA_MeleeAttack()
 	// 기본 트레이스 설정
 	TraceSettings.TraceShape = EPRTraceShape::Sphere;
 	TraceSettings.TraceRadius = 25.0f;
-	TraceSettings.TraceChannel = ECC_Pawn;
+	TraceSettings.TraceChannel = PRCollision::AttackTrace;
 	TraceSettings.MaxHitCount = 1;
 	TraceSettings.bDrawDebugTrace = false;
 	TraceSettings.DebugDrawTime = 1.0f;
@@ -205,20 +206,10 @@ void UPRGA_MeleeAttack::PerformAttackTrace()
 			continue;
 		}
 		
-		if (TraceSettings.TraceTargetClass && !HitActor->IsA(TraceSettings.TraceTargetClass))
-		{
-			continue;
-		}
-
 		// 중복 처리 방지 등록
 		HitActors.Add(HitActor);
 		ApplyMeleeDamage(HitResult);
 		
-		// 최대 타격 수 제한
-		if (TraceSettings.MaxHitCount > 0 && HitActors.Num() >= TraceSettings.MaxHitCount)
-		{
-			break;
-		}
 	}
 }
 

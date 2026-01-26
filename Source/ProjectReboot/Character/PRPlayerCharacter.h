@@ -44,6 +44,7 @@ public:
 	bool IsCrouching() const;
 	bool IsSprinting() const;
 	bool IsAiming() const;
+	bool IsMovementInputBlocked() const;
 	
 protected:
 	/*~ AActor Interfaces ~*/

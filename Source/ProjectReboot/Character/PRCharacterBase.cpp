@@ -18,6 +18,7 @@ APRCharacterBase::APRCharacterBase()
 {
 	AbilitySystem = CreateDefaultSubobject<UPRAbilitySystemComponent>(TEXT("AbilitySystem"));
 	CommonAttributeSet = CreateDefaultSubobject<UPRCommonAttributeSet>(TEXT("CommonAttributeSet"));
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("CombatCharacter"));
 }
 
 UAbilitySystemComponent* APRCharacterBase::GetAbilitySystemComponent() const
@@ -80,6 +81,21 @@ void APRCharacterBase::Die(const FGameplayEffectContextHandle& EffectContext)
 
 void APRCharacterBase::FinishDie()
 {
+}
+
+void APRCharacterBase::OnHit(const FHitResult& HitResult)
+{
+	if (!AbilitySystem)
+	{
+		return;
+	}
+
+	FGameplayEventData EventData;
+	EventData.EventTag = TAG_Event_Hit;
+	EventData.Target = this;
+	EventData.ContextHandle.AddHitResult(HitResult, true);
+
+	AbilitySystem->HandleGameplayEvent(TAG_Event_Hit, &EventData);
 }
 
 UAnimMontage* APRCharacterBase::FindMontageByGameplayTag(const FGameplayTag& MontageTag) const

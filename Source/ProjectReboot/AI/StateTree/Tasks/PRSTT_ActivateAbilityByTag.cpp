@@ -55,13 +55,21 @@ EStateTreeRunStatus FPRStateTreeTask_ActivateAbilityByTag::EnterState(FStateTree
 	// 어빌리티 종료 이벤트 바인딩
 	if (InstanceData.bWaitAbilityEnd)
 	{
+		const FStateTreeWeakExecutionContext WeakContext = Context.MakeWeakExecutionContext();
 		InstanceData.AbilityEndedHandle = ASC->OnAbilityEnded.AddLambda(
-			[&InstanceData](const FAbilityEndedData& AbilityEndedData)
+			[WeakContext](const FAbilityEndedData& AbilityEndedData)
 			{
-				if (InstanceData.CachedASC.IsValid() && AbilityEndedData.AbilitySpecHandle == InstanceData.SpecHandleToActivate)
+				const FStateTreeStrongExecutionContext StrongContext = WeakContext.MakeStrongExecutionContext();
+				FInstanceDataType* StrongData = StrongContext.GetInstanceDataPtr<FInstanceDataType>();
+				if (!StrongData || !StrongData->CachedASC.IsValid())
 				{
-					InstanceData.bTaskCompleted = true;
-					InstanceData.bTaskSucceeded = !AbilityEndedData.bWasCancelled;
+					return;
+				}
+
+				if (AbilityEndedData.AbilitySpecHandle == StrongData->SpecHandleToActivate)
+				{
+					StrongData->bTaskCompleted = true;
+					StrongData->bTaskSucceeded = !AbilityEndedData.bWasCancelled;
 				}
 			});
 	}

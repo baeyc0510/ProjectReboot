@@ -5,6 +5,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Input, "Input");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Crouch, "Input.Crouch");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Aim, "Input.Aim");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Fire, "Input.Fire");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Reload, "Input.Reload");
 
 /*~ Equipment Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment, "Equipment");
@@ -62,10 +63,16 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Hit_Right, "Montage.Hit.Right");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Hit_Back, "Montage.Hit.Back");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Hit_Left, "Montage.Hit.Left");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Reload, "Montage.Reload");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Reload_Bullet, "Montage.Reload.Bullet");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Reload_Beam, "Montage.Reload.Beam");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Reload_Missile, "Montage.Reload.Missile");
+
 /*~ Ability Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability, "Ability");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Attack, "Ability.Attack");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Die, "Ability.Die");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Reload, "Ability.Reload");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Active, "Ability.Active");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Active_Aim, "Ability.Active.Aim");
 

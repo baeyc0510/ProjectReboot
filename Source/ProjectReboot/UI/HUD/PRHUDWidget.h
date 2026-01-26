@@ -30,6 +30,10 @@ protected:
 	UFUNCTION()
 	void HandleAmmoChanged(int32 Current, int32 Max);
 
+	// 예비 탄약 변경 처리
+	UFUNCTION()
+	void HandleReserveAmmoChanged(int32 Current, int32 Max);
+
 	UFUNCTION()
 	void HandleWeaponTypeChanged(const FGameplayTag& NewTag);
 
@@ -43,6 +47,14 @@ protected:
 	// 탄약 텍스트
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> AmmoText;
+
+	// 예비 탄약 텍스트
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> ReserveAmmoText;
+
+	// 예비 탄약 최대값 텍스트 (옵션)
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UTextBlock> MaxReserveAmmoText;
 
 	// 무기 아이콘 이미지
 	UPROPERTY(meta = (BindWidget))

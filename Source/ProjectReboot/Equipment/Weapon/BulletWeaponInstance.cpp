@@ -24,6 +24,36 @@ void UBulletWeaponInstance::OnFired()
 	ConsumeAmmo(1);
 }
 
+bool UBulletWeaponInstance::CanReload() const
+{
+	if (bIsReloading)
+	{
+		return false;
+	}
+
+	UAbilitySystemComponent* ASC = GetOwnerASC();
+	if (!IsValid(ASC))
+	{
+		return false;
+	}
+
+	const float CurrentAmmo = ASC->GetNumericAttribute(UPRWeaponAttributeSet::GetAmmoAttribute());
+	const float MaxAmmo = ASC->GetNumericAttribute(UPRWeaponAttributeSet::GetMaxAmmoAttribute());
+	const float ReserveAmmo = ASC->GetNumericAttribute(UPRWeaponAttributeSet::GetReserveAmmoAttribute());
+
+	if (ReserveAmmo <= 0.0f)
+	{
+		return false;
+	}
+
+	return CurrentAmmo < MaxAmmo;
+}
+
+bool UBulletWeaponInstance::IsReloading() const
+{
+	return bIsReloading;
+}
+
 void UBulletWeaponInstance::StartReload()
 {
 	if (bIsReloading)
@@ -74,6 +104,16 @@ void UBulletWeaponInstance::FinishReload()
 		// 예비 탄약 감소
 		ASC->SetNumericAttributeBase(UPRWeaponAttributeSet::GetReserveAmmoAttribute(), ReserveAmmo - AmmoToTransfer);
 	}
+}
+
+void UBulletWeaponInstance::CancelReload()
+{
+	if (!bIsReloading)
+	{
+		return;
+	}
+
+	bIsReloading = false;
 }
 
 int32 UBulletWeaponInstance::GetCurrentAmmo() const

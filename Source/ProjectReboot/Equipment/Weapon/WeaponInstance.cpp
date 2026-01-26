@@ -22,6 +22,28 @@ void UWeaponInstance::OnFired()
 	}
 }
 
+bool UWeaponInstance::CanReload() const
+{
+	return false;
+}
+
+bool UWeaponInstance::IsReloading() const
+{
+	return false;
+}
+
+void UWeaponInstance::StartReload()
+{
+}
+
+void UWeaponInstance::FinishReload()
+{
+}
+
+void UWeaponInstance::CancelReload()
+{
+}
+
 FTransform UWeaponInstance::GetMuzzleTransform() const
 {
 	// 사용할 소켓 이름 결정

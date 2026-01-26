@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AttributeSet.h"
 #include "ProjectReboot/UI/ViewModel/PRViewModelBase.h"
 #include "GameplayTagContainer.h"
 #include "PRHUDViewModel.generated.h"
@@ -8,9 +9,8 @@
 class UAbilitySystemComponent;
 struct FOnAttributeChangeData;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHUDAmmoChanged, int32, Current, int32, Max);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHUDHealthChanged, float, Current, float, Max);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHUDShieldChanged, float, Current, float, Max);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHUDAttributeChanged_Int, int32, Current, int32, Max);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHUDAttributeChanged_Float, float, Current, float, Max);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHUDWeaponTypeChanged, const FGameplayTag&, WeaponTypeTag);
 
 /**
@@ -38,6 +38,12 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "HUD")
 	int32 GetMaxAmmo() const { return MaxAmmo; }
+	
+	UFUNCTION(BlueprintPure, Category = "HUD")
+	int32 GetCurrentReserveAmmo() const { return CurrentReserveAmmo; }
+
+	UFUNCTION(BlueprintPure, Category = "HUD")
+	int32 GetMaxReserveAmmo() const { return MaxReserveAmmo; }
 
 	UFUNCTION(BlueprintPure, Category = "HUD")
 	float GetCurrentHealth() const { return CurrentHealth; }
@@ -55,31 +61,41 @@ public:
 	FGameplayTag GetWeaponTypeTag() const { return WeaponTypeTag; }
 
 	UPROPERTY(BlueprintAssignable, Category = "HUD|Events")
-	FOnHUDAmmoChanged OnAmmoChanged;
+	FOnHUDAttributeChanged_Int OnAmmoChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "HUD|Events")
-	FOnHUDHealthChanged OnHealthChanged;
+	FOnHUDAttributeChanged_Int OnReserveAmmoChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "HUD|Events")
-	FOnHUDShieldChanged OnShieldChanged;
+	FOnHUDAttributeChanged_Float OnHealthChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "HUD|Events")
+	FOnHUDAttributeChanged_Float OnShieldChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "HUD|Events")
 	FOnHUDWeaponTypeChanged OnWeaponTypeChanged;
 
 private:
 	void SetAmmo(int32 NewCurrent, int32 NewMax);
+	void SetReserveAmmo(int32 NewCurrent, int32 NewMax);
 	void SetHealth(float NewCurrent, float NewMax);
 	void SetShield(float NewCurrent, float NewMax);
 	void SetWeaponType(const FGameplayTag& NewType);
 
 	void UpdateAttributesBindings();
 	void ClearAttributeBindings();
+	
+	// 어트리뷰트 델리게이트 바인딩 헬퍼
+	void BindAttributeDelegate(const FGameplayAttribute& Attribute, void (UPRHUDViewModel::*Handler)(const FOnAttributeChangeData&));
 
 	// ASC 이벤트 핸들러
 	void HandleWeaponTagChanged(const FGameplayTag Tag, int32 NewCount);
 	
 	void HandleAmmoChanged(const FOnAttributeChangeData& Data);
 	void HandleMaxAmmoChanged(const FOnAttributeChangeData& Data);
+	
+	void HandleReserveAmmoChanged(const FOnAttributeChangeData& Data);
+	void HandleMaxReserveAmmoChanged(const FOnAttributeChangeData& Data);
 
 	void HandleHealthChanged(const FOnAttributeChangeData& Data);
 	void HandleMaxHealthChanged(const FOnAttributeChangeData& Data);
@@ -88,25 +104,30 @@ private:
 	void HandleMaxShieldChanged(const FOnAttributeChangeData& Data);
 
 private:
+	struct FHUDAttributeBinding
+	{
+		FGameplayAttribute Attribute;
+		FDelegateHandle DelegateHandle;
+		
+		bool IsValid() const { return Attribute.IsValid() && DelegateHandle.IsValid(); }
+	};
+	
 	UPROPERTY()
 	TWeakObjectPtr<UAbilitySystemComponent> BoundASC;
 
 	FGameplayTag WeaponTypeTag;
 	int32 CurrentAmmo = 0;
 	int32 MaxAmmo = 0;
+	int32 CurrentReserveAmmo = 0;
+	int32 MaxReserveAmmo = 0;
 	float CurrentHealth = 0.0f;
 	float MaxHealth = 0.0f;
 	float CurrentShield = 0.0f;
 	float MaxShield = 0.0f;
 
 	// 어트리뷰트 델리게이트 핸들
-	FDelegateHandle AmmoChangeHandle;
-	FDelegateHandle MaxAmmoChangeHandle;
-	FDelegateHandle HealthChangeHandle;
-	FDelegateHandle MaxHealthChangeHandle;
-	FDelegateHandle ShieldChangeHandle;
-	FDelegateHandle MaxShieldChangeHandle;
+	TArray<FHUDAttributeBinding> AttributeBindings;
 	
 	// 태그 델리게이트 핸들
-	FDelegateHandle WeaponTypeTagHandle;
+	FDelegateHandle WeaponTypeDelegateHandle;
 };

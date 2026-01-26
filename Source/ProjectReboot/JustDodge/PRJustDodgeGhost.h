@@ -4,29 +4,31 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "JustDodgeGhost.generated.h"
+#include "ProjectReboot/Combat/PRCombatInterface.h"
+#include "PRJustDodgeGhost.generated.h"
 
 class UCapsuleComponent;
 class UAbilitySystemComponent;
 
 
 UCLASS()
-class PROJECTREBOOT_API AJustDodgeGhost : public AActor
+class PROJECTREBOOT_API APRJustDodgeGhost : public AActor, public IPRCombatInterface
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this actor's properties
-	AJustDodgeGhost();
+	APRJustDodgeGhost();
 	
 	virtual void BeginPlay() override;
 	void SetOwnerASC(UAbilitySystemComponent* InASC);
 	void InitCapsuleSize(UCapsuleComponent* InOriginalCapsule);
 
-private:
-	UFUNCTION()
-	void HandleOnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	/*~ IPRCombatInterface ~*/
+	virtual bool IsDead() const override;
+	virtual void Die(const FGameplayEffectContextHandle& EffectContext) override;
+	virtual void FinishDie() override;
+	virtual void OnHit(const FHitResult& HitResult) override;
 	
 private:
 	UPROPERTY()

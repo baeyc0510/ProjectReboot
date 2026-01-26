@@ -62,9 +62,9 @@ struct FPRTraceSettings
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Trace")
 	float DebugDrawTime = 1.0f;
 
-	// 트레이스 타겟 클래스 (설정된 경우 해당 클래스만 처리)
+	// 트레이스 타겟 클래스 배열 (설정된 경우 해당 클래스만 처리)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Trace")
-	TSubclassOf<AActor> TraceTargetClass = nullptr;
+	TArray<TSubclassOf<AActor>> TraceTargetClasses;
 
 	// 최대 히트 수 (0이면 제한 없음)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Trace")

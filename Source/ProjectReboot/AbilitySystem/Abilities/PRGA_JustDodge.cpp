@@ -6,7 +6,7 @@
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEffectRemoved.h"
 #include "GameFramework/Character.h"
 #include "ProjectReboot/PRGameplayTags.h"
-#include "ProjectReboot/JustDodge/JustDodgeGhost.h"
+#include "ProjectReboot/JustDodge/PRJustDodgeGhost.h"
 
 UPRGA_JustDodge::UPRGA_JustDodge()
 {
@@ -178,7 +178,7 @@ void UPRGA_JustDodge::SpawnJustDodgeGhost()
 	SpawnParams.Instigator = Character;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
 
-	JustDodgeGhost = GetWorld()->SpawnActor<AJustDodgeGhost>(
+	JustDodgeGhost = GetWorld()->SpawnActor<APRJustDodgeGhost>(
 		JustDodgeGhostClass,
 		Character->GetActorTransform(),
 		SpawnParams

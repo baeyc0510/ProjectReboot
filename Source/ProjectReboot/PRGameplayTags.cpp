@@ -46,7 +46,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_State_UI_HideCrosshair,"State.UI.HideCrosshair");
 /*~ Event Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event, "Event");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Death, "Event.Death");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Hit, "Event.Hit");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_HitReact, "Event.HitReact");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Attack, "Event.Attack");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Damage, "Event.Damage");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Room, "Event.Room");
@@ -54,6 +54,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Room_Clear, "Event.Room.Clear");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Dash, "Event.Dash");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_JustDodge, "Event.JustDodge");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Hit, "Event.Hit");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_HitGhost, "Event.HitGhost");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Kill,"Event.Kill");

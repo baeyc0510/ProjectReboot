@@ -4,13 +4,13 @@
 #include "CoreMinimal.h"
 #include "GameplayEffectTypes.h"
 #include "ProjectReboot/AbilitySystem/PRGameplayAbility.h"
-#include "ProjectReboot/JustDodge/JustDodgeGhost.h"
+#include "ProjectReboot/JustDodge/PRJustDodgeGhost.h"
 #include "PRGA_JustDodge.generated.h"
 
 class UAbilityTask_WaitGameplayEvent;
 class UAbilityTask_WaitGameplayEffectRemoved;
 class UGameplayEffect;
-class AJustDodgeGhost;
+class APRJustDodgeGhost;
 
 /**
  * 저스트 회피 어빌리티
@@ -77,7 +77,7 @@ protected:
 
 	// 저스트 회피 잔상 액터 클래스
 	UPROPERTY(EditDefaultsOnly, Category = "JustDodge")
-	TSubclassOf<AJustDodgeGhost> JustDodgeGhostClass = AJustDodgeGhost::StaticClass();
+	TSubclassOf<APRJustDodgeGhost> JustDodgeGhostClass = APRJustDodgeGhost::StaticClass();
 
 private:
 	UPROPERTY()
@@ -94,7 +94,7 @@ private:
 
 	// 저스트 회피 잔상 액터
 	UPROPERTY()
-	TObjectPtr<AJustDodgeGhost> JustDodgeGhost;
+	TObjectPtr<APRJustDodgeGhost> JustDodgeGhost;
 
 	// 저스트 회피 성공 여부
 	bool bJustDodgeSucceeded = false;

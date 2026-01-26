@@ -1,5 +1,5 @@
 // PRGA_Hit.cpp
-#include "PRGA_Hit.h"
+#include "PRGA_HitReact.h"
 
 #include "AbilitySystemComponent.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
@@ -8,7 +8,7 @@
 #include "ProjectReboot/Combat/CombatBlueprintFunctionLibrary.h"
 #include "ProjectReboot/Combat/CombatTypes.h"
 
-UPRGA_Hit::UPRGA_Hit()
+UPRGA_HitReact::UPRGA_HitReact()
 {
 	// 사망 중에는 피격 재생 방지
 	ActivationBlockedTags.AddTag(TAG_State_Dead);
@@ -17,12 +17,12 @@ UPRGA_Hit::UPRGA_Hit()
 	FAbilityTriggerData TriggerData;
 	{
 		TriggerData.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
-		TriggerData.TriggerTag = TAG_Event_Hit;
+		TriggerData.TriggerTag = TAG_Event_HitReact;
 	}
 	AbilityTriggers.Add(TriggerData);
 }
 
-void UPRGA_Hit::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+void UPRGA_HitReact::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
@@ -39,7 +39,7 @@ void UPRGA_Hit::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const F
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }
 
-void UPRGA_Hit::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+void UPRGA_HitReact::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
@@ -60,7 +60,7 @@ void UPRGA_Hit::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGamep
 	}
 }
 
-void UPRGA_Hit::ApplyHitState(const FGameplayEventData* TriggerEventData)
+void UPRGA_HitReact::ApplyHitState(const FGameplayEventData* TriggerEventData)
 {
 	if (!IsValid(HitStateEffectClass))
 	{
@@ -88,7 +88,7 @@ void UPRGA_Hit::ApplyHitState(const FGameplayEventData* TriggerEventData)
 	HitEffectHandle = ApplyGameplayEffectSpecToOwner(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, SpecHandle);
 }
 
-void UPRGA_Hit::PlayHitMontage(UAnimMontage* MontageToPlay)
+void UPRGA_HitReact::PlayHitMontage(UAnimMontage* MontageToPlay)
 {
 	if (!IsValid(MontageToPlay))
 	{
@@ -112,7 +112,7 @@ void UPRGA_Hit::PlayHitMontage(UAnimMontage* MontageToPlay)
 	MontageTask->ReadyForActivation();
 }
 
-UAnimMontage* UPRGA_Hit::GetHitMontage(const FGameplayEventData* TriggerEventData) const
+UAnimMontage* UPRGA_HitReact::GetHitMontage(const FGameplayEventData* TriggerEventData) const
 {
 	AActor* AvatarActor = GetAvatarActorFromActorInfo();
 	if (!IsValid(AvatarActor))
@@ -163,7 +163,7 @@ UAnimMontage* UPRGA_Hit::GetHitMontage(const FGameplayEventData* TriggerEventDat
 	return ARI->FindMontageByGameplayTag(TAG_Montage_Hit);
 }
 
-FGameplayTag UPRGA_Hit::GetHitMontageTagByDirection(EPRHitDirection HitDirection) const
+FGameplayTag UPRGA_HitReact::GetHitMontageTagByDirection(EPRHitDirection HitDirection) const
 {
 	switch (HitDirection)
 	{
@@ -180,17 +180,17 @@ FGameplayTag UPRGA_Hit::GetHitMontageTagByDirection(EPRHitDirection HitDirection
 	}
 }
 
-void UPRGA_Hit::OnMontageCompleted()
+void UPRGA_HitReact::OnMontageCompleted()
 {
 	K2_EndAbility();
 }
 
-void UPRGA_Hit::OnMontageBlendOut()
+void UPRGA_HitReact::OnMontageBlendOut()
 {
 	K2_EndAbility();
 }
 
-void UPRGA_Hit::OnMontageCancelled()
+void UPRGA_HitReact::OnMontageCancelled()
 {
 	K2_EndAbility();
 }

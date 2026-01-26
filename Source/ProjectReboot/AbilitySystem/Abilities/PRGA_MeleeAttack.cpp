@@ -206,20 +206,10 @@ void UPRGA_MeleeAttack::PerformAttackTrace()
 			continue;
 		}
 		
-		if (TraceSettings.TraceTargetClass && !HitActor->IsA(TraceSettings.TraceTargetClass))
-		{
-			continue;
-		}
-
 		// 중복 처리 방지 등록
 		HitActors.Add(HitActor);
 		ApplyMeleeDamage(HitResult);
 		
-		// 최대 타격 수 제한
-		if (TraceSettings.MaxHitCount > 0 && HitActors.Num() >= TraceSettings.MaxHitCount)
-		{
-			break;
-		}
 	}
 }
 

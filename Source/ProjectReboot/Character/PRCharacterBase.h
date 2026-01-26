@@ -12,6 +12,7 @@
 class UPRMontageSet;
 class UPRCommonAttributeSet;
 class UPRAbilitySystemComponent;
+struct FHitResult;
 
 UCLASS()
 class PROJECTREBOOT_API APRCharacterBase : public ACharacter, public IAbilitySystemInterface, public IPRCombatInterface, public IPRAnimRegistryInterface
@@ -28,6 +29,8 @@ public:
 	virtual bool IsDead() const override;
 	virtual void Die(const FGameplayEffectContextHandle& EffectContext) override;
 	virtual void FinishDie() override;
+	// 피격 이벤트 처리
+	virtual void OnHit(const FHitResult& HitResult) override;
 	
 	/*~ IPRAnimRegistryInterface Interface ~*/
 	virtual UAnimMontage* FindMontageByGameplayTag(const FGameplayTag& MontageTag) const override;

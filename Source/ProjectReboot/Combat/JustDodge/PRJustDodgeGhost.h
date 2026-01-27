@@ -25,6 +25,7 @@ public:
 	void InitCapsuleSize(UCapsuleComponent* InOriginalCapsule);
 
 	/*~ IPRCombatInterface ~*/
+	virtual UCapsuleComponent* GetCombatCapsuleComponent() const override;
 	virtual bool IsDead() const override;
 	virtual void Die(const FGameplayEffectContextHandle& EffectContext) override;
 	virtual void FinishDie() override;

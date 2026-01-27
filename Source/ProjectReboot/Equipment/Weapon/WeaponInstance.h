@@ -18,11 +18,11 @@ class PROJECTREBOOT_API UWeaponInstance : public UEquipmentInstance
 	GENERATED_BODY()
 
 public:
-	// 발사 가능 여부 (쿨다운 체크)
+	// 발사 가능 여부
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	virtual bool CanFire() const;
 
-	// 발사 후 호출 (마지막 발사 시간 기록)
+	// 발사 후 호출
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	virtual void OnFired();
 
@@ -88,13 +88,6 @@ protected:
 	// 현재 활성화된 총구 소켓 목록
 	UPROPERTY(BlueprintReadOnly, Category = "Weapon")
 	TArray<FName> ActiveMuzzleSockets;
-
-	// 마지막 발사 시간
-	UPROPERTY(BlueprintReadOnly, Category = "Weapon")
-	float LastFireTime = 0.0f;
-
-	// 발사 간격 (초) - AttributeSet의 FireRate로부터 계산
-	float GetFireInterval() const;
 
 	// ASC 참조 헬퍼
 	UAbilitySystemComponent* GetOwnerASC() const;

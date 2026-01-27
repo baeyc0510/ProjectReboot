@@ -6,6 +6,7 @@
 #include "UObject/Interface.h"
 #include "PRCombatInterface.generated.h"
 
+class UCapsuleComponent;
 struct FGameplayEffectContextHandle;
 struct FHitResult;
 
@@ -24,6 +25,9 @@ class PROJECTREBOOT_API IPRCombatInterface
 	GENERATED_BODY()
 
 public:
+	// 피격 판정 대상 CapsuleComponent 반환
+	virtual UCapsuleComponent* GetCombatCapsuleComponent() const = 0;
+	
 	/*~ Death ~*/
 	// 현재 사망 상태인지 반환
 	UFUNCTION(BlueprintCallable, Category = "Combat|Death")
@@ -38,4 +42,5 @@ public:
 	/*~ Hit ~*/
 	// 피격 이벤트 처리
 	virtual void OnHit(const FHitResult& HitResult) = 0;
+	
 };

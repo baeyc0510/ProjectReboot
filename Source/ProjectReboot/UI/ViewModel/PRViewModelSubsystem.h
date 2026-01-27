@@ -7,6 +7,29 @@
 
 class UPRViewModelBase;
 
+USTRUCT()
+struct FActorViewModelKey
+{
+    GENERATED_BODY()
+    
+    TWeakObjectPtr<AActor> Actor;
+    UClass* ViewModelClass;
+
+    FActorViewModelKey() = default;
+    FActorViewModelKey(AActor* InActor, UClass* InClass)
+        : Actor(InActor), ViewModelClass(InClass) {}
+
+    bool operator==(const FActorViewModelKey& Other) const
+    {
+        return Actor == Other.Actor && ViewModelClass == Other.ViewModelClass;
+    }
+
+    friend uint32 GetTypeHash(const FActorViewModelKey& Key)
+    {
+        return HashCombine(GetTypeHash(Key.Actor), GetTypeHash(Key.ViewModelClass));
+    }
+};
+
 /**
  * ViewModel 중앙 레지스트리
  * - Global ViewModel: 플레이어 전역 상태 (HUD, 설정 등)
@@ -99,32 +122,12 @@ private:
     void HandleActorDestroyed(AActor* DestroyedActor);
 
 private:
-    // Internal Actor-Bound Key
-    struct FActorViewModelKey
-    {
-        TWeakObjectPtr<AActor> Actor;
-        UClass* ViewModelClass;
-
-        FActorViewModelKey() = default;
-        FActorViewModelKey(AActor* InActor, UClass* InClass)
-            : Actor(InActor), ViewModelClass(InClass) {}
-
-        bool operator==(const FActorViewModelKey& Other) const
-        {
-            return Actor == Other.Actor && ViewModelClass == Other.ViewModelClass;
-        }
-
-        friend uint32 GetTypeHash(const FActorViewModelKey& Key)
-        {
-            return HashCombine(GetTypeHash(Key.Actor), GetTypeHash(Key.ViewModelClass));
-        }
-    };
-
     // Global ViewModel 저장소
     UPROPERTY()
     TMap<TSubclassOf<UPRViewModelBase>, TObjectPtr<UPRViewModelBase>> GlobalViewModelMap;
 
     // Actor-Bound ViewModel 저장소
+    UPROPERTY()
     TMap<FActorViewModelKey, TObjectPtr<UPRViewModelBase>> ActorViewModelMap;
 
     // 이미 OnDestroyed에 바인딩된 Actor 추적 (중복 바인딩 방지)

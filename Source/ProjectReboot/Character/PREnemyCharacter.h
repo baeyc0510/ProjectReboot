@@ -14,6 +14,7 @@ class UWidgetComponent;
 class UPRAbilitySet;
 struct FPRAICombatConfig;
 class UPRAIConfig;
+class UPRLockOnViewModel;
 
 UCLASS()
 class PROJECTREBOOT_API APREnemyCharacter : public APRCharacterBase
@@ -24,6 +25,10 @@ public:
 	// Sets default values for this character's properties
 	APREnemyCharacter();
 	
+	/*~ ICombatInterface ~*/
+	virtual void FinishDie() override;
+	
+	/*~ APREnemyCharacter Interface ~*/
 	UFUNCTION(BlueprintPure)
 	UPREnemyData* GetEnemyData() const {return EnemyData;}
 	
@@ -49,6 +54,10 @@ protected:
 	
 	virtual void BindViewModels();
 	virtual void UnBindViewModels();
+	
+	/*~ APREnemyCharacter Interface ~*/
+	void DestructWidget(UWidgetComponent* WidgetComponent);
+	
 protected:
 	/** Animation */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "PR Animation")
@@ -61,7 +70,10 @@ protected:
 	/*~ Components ~*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widget")
 	TObjectPtr<UWidgetComponent> StatusWidgetComponent;
-	
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Widget")
+	TObjectPtr<UWidgetComponent> LockOnWidgetComponent;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation")
 	TObjectPtr<UMotionWarpingComponent> MotionWarpingComponent;
 	

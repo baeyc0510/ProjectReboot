@@ -19,11 +19,22 @@ APRCharacterBase::APRCharacterBase()
 	AbilitySystem = CreateDefaultSubobject<UPRAbilitySystemComponent>(TEXT("AbilitySystem"));
 	CommonAttributeSet = CreateDefaultSubobject<UPRCommonAttributeSet>(TEXT("CommonAttributeSet"));
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("CombatCharacter"));
+	
+	CombatCapsuleComponent = GetCapsuleComponent();
 }
 
 UAbilitySystemComponent* APRCharacterBase::GetAbilitySystemComponent() const
 {
 	return AbilitySystem;
+}
+
+UCapsuleComponent* APRCharacterBase::GetCombatCapsuleComponent() const
+{
+	if (CombatCapsuleComponent)
+	{
+		return CombatCapsuleComponent;
+	}
+	return GetCapsuleComponent();
 }
 
 bool APRCharacterBase::IsDead() const
@@ -114,6 +125,14 @@ float APRCharacterBase::GetMaxMoveSpeed() const
 		return CommonAttributeSet->GetMoveSpeed() * BaseMoveSpeed;
 	}
 	return BaseMoveSpeed;
+}
+
+void APRCharacterBase::AddDefaultAbilitySystemTags() const
+{
+	if (AbilitySystem)
+	{
+		AbilitySystem->AddLooseGameplayTags(DefaultAbilitySystemTags);
+	}
 }
 
 void APRCharacterBase::HandleCollisionAndMovementOnDeath()

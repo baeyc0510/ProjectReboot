@@ -39,7 +39,15 @@ public:
 	/*~ UWeaponInstance Interface ~*/
 	virtual bool CanFire() const override;
 	virtual void OnFired() override;
+	virtual bool CanReload() const override;
+	virtual bool IsReloading() const override;
+	virtual void StartReload() override;
+	virtual void FinishReload() override;
+	virtual void CancelReload() override;
 	virtual FTransform GetMuzzleTransform() const override;
+
+	/*~ UEquipmentInstance Interface ~*/
+	virtual void DestroyAllVisuals() override;
 
 	/*~ UEquipmentInstance Interface ~*/
 	virtual void OnEquipmentTagsChanged() override;
@@ -60,6 +68,28 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Weapon|Missile")
 	void UpdateMissileVisuals();
 
+	/*~ 락온 타겟 관리 ~*/
+
+	// 락온 타겟 설정 (TargetLockComponent에서 호출)
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Missile|LockOn")
+	void SetLockedTargets(const TArray<AActor*>& Targets);
+
+	// 락온 타겟 목록 조회
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Missile|LockOn")
+	TArray<AActor*> GetLockedTargets() const;
+
+	// 락온 타겟 하나 소비 (발사 시 호출, 가장 먼저 락온된 타겟 반환 후 목록에서 제거)
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Missile|LockOn")
+	AActor* ConsumeLockedTarget();
+
+	// 락온 타겟 모두 제거
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Missile|LockOn")
+	void ClearLockedTargets();
+
+	// 현재 락온된 타겟 수
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Missile|LockOn")
+	int32 GetLockedTargetCount() const;
+
 protected:
 	// 탄환 메시 컴포넌트 스폰
 	void SpawnAmmoMeshComponents();
@@ -72,6 +102,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Missile")
 	TArray<FMissileAmmoMeshConfig> AmmoMeshConfigs;
 
+	// 재장전 중 여부
+	UPROPERTY(BlueprintReadOnly, Category = "Weapon|Missile")
+	bool bIsReloading = false;
+
 	// 생성된 탄환 메시 컴포넌트 목록
 	UPROPERTY(BlueprintReadOnly, Category = "Weapon|Missile")
 	TArray<TObjectPtr<USkeletalMeshComponent>> AmmoMeshComponents;
@@ -83,4 +117,8 @@ protected:
 	// 현재 발사 인덱스 (순차 발사용)
 	UPROPERTY(BlueprintReadOnly, Category = "Weapon|Missile")
 	int32 CurrentFireIndex = 0;
+
+	// 락온된 타겟 목록 (TWeakObjectPtr는 BP 미지원, GetLockedTargets() 사용)
+	UPROPERTY()
+	TArray<TWeakObjectPtr<AActor>> LockedTargets;
 };

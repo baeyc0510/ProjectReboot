@@ -26,6 +26,7 @@ public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	
 	/*~ IPRCombatInterface ~*/
+	virtual UCapsuleComponent* GetCombatCapsuleComponent() const override;
 	virtual bool IsDead() const override;
 	virtual void Die(const FGameplayEffectContextHandle& EffectContext) override;
 	virtual void FinishDie() override;
@@ -39,6 +40,7 @@ public:
 	float GetBaseMoveSpeed() const {return BaseMoveSpeed;}
 	float GetMaxMoveSpeed() const;
 	
+	void AddDefaultAbilitySystemTags() const;
 	virtual void HandleCollisionAndMovementOnDeath();
 	
 protected:
@@ -50,7 +52,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "PR Animation")
 	TObjectPtr<UPRMontageSet> MontageSet;
 	
+	/** AbilitySystem */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "PR AbilitySystem")
+	FGameplayTagContainer DefaultAbilitySystemTags;
+	
 	/*~ Components ~*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Combat")
+	TObjectPtr<UCapsuleComponent> CombatCapsuleComponent;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PR AbilitySystem")
 	TObjectPtr<UPRAbilitySystemComponent> AbilitySystem;
 	

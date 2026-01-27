@@ -61,16 +61,12 @@ protected:
 
 	// 락온 시야각 (컴포넌트 기본값 오버라이드)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LockOn|Settings")
-	float LockOnConeAngle = 30.0f;
+	float LockOnConeAngle = 60.0f;
 
 	// 락온 소요 시간 (컴포넌트 기본값 오버라이드)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LockOn|Settings")
-	float LockOnTime = 0.5f;
-
-	// 최대 동시 락온 수
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LockOn|Settings")
-	int32 MaxLockCount = 4;
-
+	float LockOnTime = 0.8f;
+	
 	// 락온 활성화 기준 상태 태그
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "LockOn|Settings")
 	FGameplayTag LockOnStateTag;

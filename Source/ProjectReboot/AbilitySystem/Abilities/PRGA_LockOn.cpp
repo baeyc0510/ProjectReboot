@@ -142,7 +142,6 @@ UPRTargetLockComponent* UPRGA_LockOn::CreateAndAttachLockComponent(AActor* Owner
 	NewComponent->OverrideLockOnRange(LockOnRange);
 	NewComponent->OverrideLockOnConeAngle(LockOnConeAngle);
 	NewComponent->OverrideLockOnTime(LockOnTime);
-	NewComponent->OverrideMaxLockCount(MaxLockCount);
 
 	// 컴포넌트 등록
 	NewComponent->RegisterComponent();

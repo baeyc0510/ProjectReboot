@@ -10,10 +10,9 @@
 class APRCharacterBase;
 class UMissileWeaponInstance;
 class UPREquipmentManagerComponent;
-
-// 락온 상태 변경 델리게이트 (UI 연동용)
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTargetLockStateChanged, AActor*, Target);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnLockOnProgress, AActor*, Target, float, Progress);
+class UPRLockOnViewModel;
+class ULocalPlayer;
+class UAbilitySystemComponent;
 
 // 락온 진행 중인 타겟 정보
 USTRUCT()
@@ -24,11 +23,27 @@ struct FLockingTarget
 	UPROPERTY()
 	TWeakObjectPtr<AActor> Target;
 
+	UPROPERTY()
+	TWeakObjectPtr<UPRLockOnViewModel> ViewModel;
+
+	// 타겟의 ASC (태그 이벤트 바인딩용)
+	UPROPERTY()
+	TWeakObjectPtr<UAbilitySystemComponent> TargetASC;
+
+	// 태그 변경 이벤트 델리게이트 핸들
+	FDelegateHandle TagEventHandle;
+
 	// 락온 진행 시간
 	float LockingTime = 0.0f;
 
 	// 락온 완료 여부
 	bool bIsLocked = false;
+
+	// 조건 실패 후 경과 시간 (유예 시간 추적)
+	float OutOfConditionTime = 0.0f;
+
+	// 현재 조건 충족 여부
+	bool bIsInCondition = true;
 };
 
 /**
@@ -78,35 +93,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "TargetLock|Override")
 	void OverrideLockOnTime(float NewTime) { LockOnTime = NewTime; }
 
-	UFUNCTION(BlueprintCallable, Category = "TargetLock|Override")
-	void OverrideMaxLockCount(int32 NewCount) { MaxLockCount = NewCount; }
+	// 현재 최대 락온 가능 수 (장착된 미사일 수 기반)
+	UFUNCTION(BlueprintPure, Category = "TargetLock")
+	int32 GetMaxLockCount() const;
 
 	UFUNCTION(BlueprintCallable, Category = "TargetLock|Override")
 	void OverrideLockableTargetTag(FGameplayTag NewTag) { LockableTargetTag = NewTag; }
 
 	UFUNCTION(BlueprintCallable, Category = "TargetLock|Override")
 	void OverrideTargetFilterClass(TSubclassOf<AActor> NewClass) { TargetFilterClass = NewClass; }
-
-public:
-	// 타겟 락온 완료 시
-	UPROPERTY(BlueprintAssignable, Category = "TargetLock|Events")
-	FOnTargetLockStateChanged OnTargetLocked;
-
-	// 타겟 락온 해제 시
-	UPROPERTY(BlueprintAssignable, Category = "TargetLock|Events")
-	FOnTargetLockStateChanged OnTargetUnlocked;
-
-	// 타겟이 락온 범위에 진입 시
-	UPROPERTY(BlueprintAssignable, Category = "TargetLock|Events")
-	FOnTargetLockStateChanged OnTargetEnteredRange;
-
-	// 타겟이 락온 범위에서 이탈 시
-	UPROPERTY(BlueprintAssignable, Category = "TargetLock|Events")
-	FOnTargetLockStateChanged OnTargetExitedRange;
-
-	// 락온 진행 업데이트 (UI 게이지용)
-	UPROPERTY(BlueprintAssignable, Category = "TargetLock|Events")
-	FOnLockOnProgress OnLockOnProgressUpdated;
 
 protected:
 	virtual void BeginPlay() override;
@@ -126,6 +121,9 @@ protected:
 	// 타겟에 대한 시야가 확보되어 있는지 (Line of Sight)
 	bool HasLineOfSightTo(AActor* Target) const;
 
+	// 타겟의 시야 체크용 위치들 반환 (머리/몸통/발)
+	TArray<FVector> GetTargetCheckLocations(AActor* Target) const;
+
 	// 락온 진행 업데이트
 	void UpdateLockingTargets(float DeltaTime);
 
@@ -137,6 +135,21 @@ protected:
 
 	// 카메라 뷰 정보 조회
 	void GetCameraViewInfo(FVector& OutLocation, FRotator& OutRotation) const;
+
+	// 타겟에 대한 ViewModel 조회 또는 생성
+	UPRLockOnViewModel* GetOrCreateLockOnViewModel(AActor* Target);
+
+	// 소유 LocalPlayer 조회
+	ULocalPlayer* GetLocalPlayer() const;
+
+	// 타겟에 태그 이벤트 바인딩
+	void BindTargetTagEvent(FLockingTarget& LockingTarget);
+
+	// 타겟의 태그 이벤트 언바인딩
+	void UnbindTargetTagEvent(FLockingTarget& LockingTarget);
+
+	// 락온 대상 태그 제거 시 호출
+	void HandleLockableTagRemoved(AActor* Target);
 
 protected:
 	// 락온 활성화 여부
@@ -153,19 +166,19 @@ protected:
 
 	// 락온 시야각 (도, 전체 각도)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TargetLock|Settings")
-	float LockOnConeAngle = 90.0f;
+	float LockOnConeAngle = 60.0f;
 
 	// 락온 소요 시간
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TargetLock|Settings")
-	float LockOnTime = 0.5f;
-
-	// 최대 동시 락온 수 (0 = 무제한)
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TargetLock|Settings")
-	int32 MaxLockCount = 4;
+	float LockOnTime = 0.8f;
 
 	// 락온 대상 판별 태그 (이 태그를 가진 액터만 락온 가능)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TargetLock|Settings")
 	FGameplayTag LockableTargetTag;
+
+	// 조건 미충족 시 유예 시간 (이 시간 동안은 락온 유지)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "TargetLock|Settings")
+	float LockGracePeriod = 0.3f;
 
 	// 현재 락온 진행 중인 타겟들
 	UPROPERTY()

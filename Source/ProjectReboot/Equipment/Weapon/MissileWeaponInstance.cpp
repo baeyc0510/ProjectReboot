@@ -1,7 +1,10 @@
 // MissileWeaponInstance.cpp
 #include "MissileWeaponInstance.h"
+
+#include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/AbilitySystem/PRWeaponAttributeSet.h"
 
 bool UMissileWeaponInstance::CanFire() const
@@ -156,10 +159,10 @@ int32 UMissileWeaponInstance::GetLoadedMissiles() const
 	if (IsValid(ASC))
 	{
 		bool bFound = false;
-		float Missiles = ASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetAmmoAttribute(), bFound);
+		float CurrentAmmo = ASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetAmmoAttribute(), bFound);
 		if (bFound)
 		{
-			return FMath::FloorToInt(Missiles);
+			return FMath::Clamp(FMath::FloorToInt(CurrentAmmo), 0, ActiveMuzzleSockets.Num()) ;
 		}
 	}
 
@@ -346,6 +349,13 @@ AActor* UMissileWeaponInstance::ConsumeLockedTarget()
 
 		if (WeakTarget.IsValid())
 		{
+			// 락온 초기화
+			if (UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(WeakTarget.Get()))
+			{
+				TargetASC->RemoveLooseGameplayTag(TAG_Target_Lockable);
+				TargetASC->AddLooseGameplayTag(TAG_Target_Lockable);
+			}
+			
 			return WeakTarget.Get();
 		}
 	}

@@ -4,12 +4,17 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
+#include "Components/CapsuleComponent.h"
+#include "Engine/LocalPlayer.h"
+#include "GameFramework/Character.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "ProjectReboot/Equipment/PREquipmentInterface.h"
 #include "ProjectReboot/Equipment/PREquipmentManagerComponent.h"
 #include "ProjectReboot/Equipment/Weapon/MissileWeaponInstance.h"
 #include "ProjectReboot/PRGameplayTags.h"
+#include "ProjectReboot/UI/LockOn/PRLockOnViewModel.h"
+#include "ProjectReboot/UI/ViewModel/PRViewModelSubsystem.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogPRTargetLock, Log, All);
 
@@ -40,27 +45,54 @@ void UPRTargetLockComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	// 범위 내 락온 가능 타겟 탐색
 	TArray<AActor*> PotentialTargets = FindLockableTargets();
 
-	// 범위 이탈한 타겟 처리
+	// 기존 타겟 상태 업데이트 (유예 시간 적용)
 	for (int32 Index = LockingTargets.Num() - 1; Index >= 0; --Index)
 	{
 		FLockingTarget& LockingTarget = LockingTargets[Index];
 
-		if (!LockingTarget.Target.IsValid() || !PotentialTargets.Contains(LockingTarget.Target.Get()))
+		// 무효화된 타겟 즉시 제거
+		if (!LockingTarget.Target.IsValid())
 		{
-			AActor* LostTarget = LockingTarget.Target.Get();
-			bool bWasLocked = LockingTarget.bIsLocked;
-
 			LockingTargets.RemoveAt(Index);
+			continue;
+		}
 
-			if (IsValid(LostTarget))
+		AActor* Target = LockingTarget.Target.Get();
+		bool bCurrentlyInCondition = PotentialTargets.Contains(Target);
+
+		if (bCurrentlyInCondition)
+		{
+			// 조건 충족 - 유예 시간 초기화
+			LockingTarget.bIsInCondition = true;
+			LockingTarget.OutOfConditionTime = 0.0f;
+		}
+		else
+		{
+			// 조건 미충족 - 유예 시간 누적
+			LockingTarget.bIsInCondition = false;
+			LockingTarget.OutOfConditionTime += DeltaTime;
+
+			// 유예 시간 초과 시 제거
+			if (LockingTarget.OutOfConditionTime > LockGracePeriod)
 			{
-				UE_LOG(LogPRTargetLock, Verbose, TEXT("락온 범위 이탈: %s"), *LostTarget->GetName());
+				bool bWasLocked = LockingTarget.bIsLocked;
+
+				UE_LOG(LogPRTargetLock, Verbose, TEXT("락온 범위 이탈: %s"), *Target->GetName());
 				if (bWasLocked)
 				{
-					UE_LOG(LogPRTargetLock, Verbose, TEXT("락온 해제: %s"), *LostTarget->GetName());
-					OnTargetUnlocked.Broadcast(LostTarget);
+					UE_LOG(LogPRTargetLock, Verbose, TEXT("락온 해제: %s"), *Target->GetName());
 				}
-				OnTargetExitedRange.Broadcast(LostTarget);
+
+				// ViewModel 가시성 해제
+				if (UPRLockOnViewModel* ViewModel = LockingTarget.ViewModel.Get())
+				{
+					ViewModel->SetVisible(false);
+				}
+
+				// 태그 이벤트 언바인딩
+				UnbindTargetTagEvent(LockingTarget);
+
+				LockingTargets.RemoveAt(Index);
 			}
 		}
 	}
@@ -80,8 +112,9 @@ void UPRTargetLockComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 		if (!bAlreadyTracking)
 		{
-			// 최대 락온 수 체크
-			if (MaxLockCount > 0 && LockingTargets.Num() >= MaxLockCount)
+			// 최대 락온 수 체크 (장착된 미사일 수 기반)
+			int32 MaxCount = GetMaxLockCount();
+			if (MaxCount > 0 && LockingTargets.Num() >= MaxCount)
 			{
 				continue;
 			}
@@ -90,10 +123,21 @@ void UPRTargetLockComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 			NewTarget.Target = Target;
 			NewTarget.LockingTime = 0.0f;
 			NewTarget.bIsLocked = false;
+			NewTarget.OutOfConditionTime = 0.0f;
+			NewTarget.bIsInCondition = true;
+			// ViewModel 할당 및 가시성 활성화
+			NewTarget.ViewModel = GetOrCreateLockOnViewModel(Target);
+			if (UPRLockOnViewModel* ViewModel = NewTarget.ViewModel.Get())
+			{
+				ViewModel->SetVisible(true);
+			}
+
+			// 태그 제거 이벤트 바인딩
+			BindTargetTagEvent(NewTarget);
+
 			LockingTargets.Add(NewTarget);
 
 			UE_LOG(LogPRTargetLock, Verbose, TEXT("락온 범위 진입: %s"), *Target->GetName());
-			OnTargetEnteredRange.Broadcast(Target);
 		}
 	}
 
@@ -161,16 +205,21 @@ float UPRTargetLockComponent::GetLockProgress(AActor* Target) const
 
 void UPRTargetLockComponent::ClearAllLocks()
 {
-	for (const FLockingTarget& LockingTarget : LockingTargets)
+	for (FLockingTarget& LockingTarget : LockingTargets)
 	{
 		if (LockingTarget.Target.IsValid())
 		{
-			UE_LOG(LogPRTargetLock, Verbose, TEXT("락온 초기화: %s"), *LockingTarget.Target->GetName());
-			if (LockingTarget.bIsLocked)
+			AActor* Target = LockingTarget.Target.Get();
+			UE_LOG(LogPRTargetLock, Verbose, TEXT("락온 초기화: %s"), *Target->GetName());
+
+			// ViewModel 가시성 해제
+			if (UPRLockOnViewModel* ViewModel = LockingTarget.ViewModel.Get())
 			{
-				OnTargetUnlocked.Broadcast(LockingTarget.Target.Get());
+				ViewModel->SetVisible(false);
 			}
-			OnTargetExitedRange.Broadcast(LockingTarget.Target.Get());
+
+			// 태그 이벤트 언바인딩
+			UnbindTargetTagEvent(LockingTarget);
 		}
 	}
 
@@ -266,13 +315,24 @@ bool UPRTargetLockComponent::IsTargetInViewCone(AActor* Target) const
 	GetCameraViewInfo(CameraLocation, CameraRotation);
 
 	FVector CameraForward = CameraRotation.Vector();
-	FVector ToTarget = (Target->GetActorLocation() - CameraLocation).GetSafeNormal();
+	float HalfConeAngle = LockOnConeAngle * 0.5f;
 
-	float DotProduct = FVector::DotProduct(CameraForward, ToTarget);
-	float AngleRad = FMath::Acos(DotProduct);
-	float AngleDeg = FMath::RadiansToDegrees(AngleRad);
+	// 멀티 포인트 체크 - 하나라도 시야각 내에 있으면 통과
+	TArray<FVector> CheckLocations = GetTargetCheckLocations(Target);
+	for (const FVector& CheckLocation : CheckLocations)
+	{
+		FVector ToTarget = (CheckLocation - CameraLocation).GetSafeNormal();
+		float DotProduct = FVector::DotProduct(CameraForward, ToTarget);
+		float AngleRad = FMath::Acos(DotProduct);
+		float AngleDeg = FMath::RadiansToDegrees(AngleRad);
 
-	return AngleDeg <= (LockOnConeAngle * 0.5f);
+		if (AngleDeg <= HalfConeAngle)
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 bool UPRTargetLockComponent::HasLineOfSightTo(AActor* Target) const
@@ -291,17 +351,70 @@ bool UPRTargetLockComponent::HasLineOfSightTo(AActor* Target) const
 	QueryParams.AddIgnoredActor(GetOwner());
 	QueryParams.AddIgnoredActor(Target);
 
-	FHitResult Hit;
-	bool bHit = World->LineTraceSingleByChannel(
-		Hit,
-		CameraLocation,
-		Target->GetActorLocation(),
-		ECC_Visibility,
-		QueryParams
-	);
+	// 멀티 포인트 체크 - 하나라도 보이면 시야 확보
+	TArray<FVector> CheckLocations = GetTargetCheckLocations(Target);
+	for (const FVector& CheckLocation : CheckLocations)
+	{
+		FHitResult Hit;
+		bool bHit = World->LineTraceSingleByChannel(
+			Hit,
+			CameraLocation,
+			CheckLocation,
+			ECC_Visibility,
+			QueryParams
+		);
 
-	// 장애물이 없으면 시야 확보
-	return !bHit;
+		if (!bHit)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+TArray<FVector> UPRTargetLockComponent::GetTargetCheckLocations(AActor* Target) const
+{
+	TArray<FVector> Locations;
+
+	if (!IsValid(Target))
+	{
+		return Locations;
+	}
+
+	FVector ActorLocation = Target->GetActorLocation();
+
+	
+	UCapsuleComponent* Capsule = nullptr;
+	
+	// CombatInterface인 경우 CombatCapsuleComponent
+	if (const IPRCombatInterface* CombatInterface = Cast<IPRCombatInterface>(Target))
+	{
+		Capsule = CombatInterface->GetCombatCapsuleComponent();
+	}
+	// 캐릭터인 경우 Capsule 기반
+	else if (const ACharacter* Character = Cast<ACharacter>(Target))
+	{
+		Capsule = Character->GetCapsuleComponent();
+	}
+	
+	if (Capsule)
+	{
+		float HalfHeight = Capsule->GetScaledCapsuleHalfHeight();
+
+		// 머리 (상단)
+		Locations.Add(ActorLocation + FVector(0, 0, HalfHeight * 0.8f));
+		// 몸통 (중앙)
+		Locations.Add(ActorLocation + FVector(0, 0, HalfHeight * 0.3f));
+		// 하체 (하단)
+		Locations.Add(ActorLocation - FVector(0, 0, HalfHeight * 0.3f));
+
+		return Locations;
+	}
+
+	// 폴백: 액터 위치만 사용
+	Locations.Add(ActorLocation);
+	return Locations;
 }
 
 void UPRTargetLockComponent::UpdateLockingTargets(float DeltaTime)
@@ -318,19 +431,33 @@ void UPRTargetLockComponent::UpdateLockingTargets(float DeltaTime)
 			continue;
 		}
 
-		// 락온 시간 누적
-		LockingTarget.LockingTime += DeltaTime;
+		// 조건 충족 시에만 락온 진행
+		if (LockingTarget.bIsInCondition)
+		{
+			LockingTarget.LockingTime += DeltaTime;
+		}
 
-		// 진행률 업데이트 브로드캐스트
+		// 진행률 업데이트
 		float Progress = FMath::Clamp(LockingTarget.LockingTime / LockOnTime, 0.0f, 1.0f);
-		OnLockOnProgressUpdated.Broadcast(LockingTarget.Target.Get(), Progress);
+
+		// ViewModel 갱신
+		UPRLockOnViewModel* ViewModel = LockingTarget.ViewModel.Get();
+		if (ViewModel)
+		{
+			ViewModel->SetProgress(Progress);
+		}
 
 		// 락온 완료 체크
-		if (LockingTarget.LockingTime >= LockOnTime)
+		if (FMath::IsNearlyEqual(Progress, 1.0f))
 		{
 			LockingTarget.bIsLocked = true;
 			UE_LOG(LogPRTargetLock, Log, TEXT("락온 완료: %s"), *LockingTarget.Target->GetName());
-			OnTargetLocked.Broadcast(LockingTarget.Target.Get());
+
+			// ViewModel 락온 완료 상태 설정
+			if (ViewModel)
+			{
+				ViewModel->SetLocked(true);
+			}
 		}
 	}
 }
@@ -384,6 +511,17 @@ UMissileWeaponInstance* UPRTargetLockComponent::GetMissileWeaponInstance() const
 	return Cast<UMissileWeaponInstance>(Instance);
 }
 
+int32 UPRTargetLockComponent::GetMaxLockCount() const
+{
+	UMissileWeaponInstance* MissileWeapon = GetMissileWeaponInstance();
+	if (!IsValid(MissileWeapon))
+	{
+		return 0;
+	}
+
+	return MissileWeapon->GetLoadedMissiles();
+}
+
 void UPRTargetLockComponent::GetCameraViewInfo(FVector& OutLocation, FRotator& OutRotation) const
 {
 	AActor* Owner = GetOwner();
@@ -408,4 +546,122 @@ void UPRTargetLockComponent::GetCameraViewInfo(FVector& OutLocation, FRotator& O
 	// 폴백: 액터 위치/방향
 	OutLocation = Owner->GetActorLocation();
 	OutRotation = Owner->GetActorRotation();
+}
+
+UPRLockOnViewModel* UPRTargetLockComponent::GetOrCreateLockOnViewModel(AActor* Target)
+{
+	ULocalPlayer* LP = GetLocalPlayer();
+	if (!IsValid(LP) || !IsValid(Target))
+	{
+		return nullptr;
+	}
+
+	UPRViewModelSubsystem* VMS = LP->GetSubsystem<UPRViewModelSubsystem>();
+	if (!IsValid(VMS))
+	{
+		return nullptr;
+	}
+
+	return VMS->GetOrCreateActorViewModel<UPRLockOnViewModel>(Target);
+}
+
+ULocalPlayer* UPRTargetLockComponent::GetLocalPlayer() const
+{
+	AActor* Owner = GetOwner();
+	if (!IsValid(Owner))
+	{
+		return nullptr;
+	}
+
+	APawn* Pawn = Cast<APawn>(Owner);
+	if (!IsValid(Pawn))
+	{
+		return nullptr;
+	}
+
+	APlayerController* PC = Cast<APlayerController>(Pawn->GetController());
+	if (!IsValid(PC))
+	{
+		return nullptr;
+	}
+
+	return PC->GetLocalPlayer();
+}
+
+void UPRTargetLockComponent::BindTargetTagEvent(FLockingTarget& LockingTarget)
+{
+	if (!LockingTarget.Target.IsValid() || !LockableTargetTag.IsValid())
+	{
+		return;
+	}
+
+	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(LockingTarget.Target.Get());
+	if (!IsValid(ASC))
+	{
+		return;
+	}
+
+	LockingTarget.TargetASC = ASC;
+
+	// 태그 제거 이벤트 바인딩
+	LockingTarget.TagEventHandle = ASC->RegisterGameplayTagEvent(
+		LockableTargetTag,
+		EGameplayTagEventType::NewOrRemoved
+	).AddLambda([this, WeakTarget = LockingTarget.Target](const FGameplayTag Tag, int32 NewCount)
+	{
+		// 태그가 제거되었을 때 (NewCount == 0)
+		if (NewCount == 0 && WeakTarget.IsValid())
+		{
+			HandleLockableTagRemoved(WeakTarget.Get());
+		}
+	});
+}
+
+void UPRTargetLockComponent::UnbindTargetTagEvent(FLockingTarget& LockingTarget)
+{
+	if (!LockingTarget.TargetASC.IsValid() || !LockingTarget.TagEventHandle.IsValid())
+	{
+		return;
+	}
+
+	LockingTarget.TargetASC->RegisterGameplayTagEvent(
+		LockableTargetTag,
+		EGameplayTagEventType::NewOrRemoved
+	).Remove(LockingTarget.TagEventHandle);
+
+	LockingTarget.TagEventHandle.Reset();
+	LockingTarget.TargetASC.Reset();
+}
+
+void UPRTargetLockComponent::HandleLockableTagRemoved(AActor* Target)
+{
+	if (!IsValid(Target))
+	{
+		return;
+	}
+
+	// 해당 타겟을 LockingTargets에서 찾아 제거
+	for (int32 Index = LockingTargets.Num() - 1; Index >= 0; --Index)
+	{
+		FLockingTarget& LockingTarget = LockingTargets[Index];
+
+		if (LockingTarget.Target.Get() == Target)
+		{
+			UE_LOG(LogPRTargetLock, Log, TEXT("락온 대상 태그 제거됨: %s"), *Target->GetName());
+
+			// ViewModel 가시성 해제
+			if (UPRLockOnViewModel* ViewModel = LockingTarget.ViewModel.Get())
+			{
+				ViewModel->SetVisible(false);
+			}
+
+			// 이벤트 언바인딩
+			UnbindTargetTagEvent(LockingTarget);
+
+			LockingTargets.RemoveAt(Index);
+			break;
+		}
+	}
+
+	SyncLockedTargetsToWeapon();
 }

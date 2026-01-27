@@ -15,10 +15,12 @@ UPRGA_Reload::UPRGA_Reload()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	ActivationPolicy = EPRAbilityActivationPolicy::OnInputTriggered;
-
+	
 	AbilityTags.AddTag(TAG_Ability_Reload);
 	ActivationBlockedTags.AddTag(TAG_State_Dead);
 	ActivationOwnedTags.AddTag(TAG_State_Weapon_CannotFire);
+	
+	WeaponSlotTag = TAG_Equipment_Slot_Weapon_Primary;
 }
 
 bool UPRGA_Reload::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,

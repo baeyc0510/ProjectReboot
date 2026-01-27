@@ -15,6 +15,14 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type_Bullet, "Equipment.Weapon.Type.
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type_Beam, "Equipment.Weapon.Type.Beam");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type_Missile, "Equipment.Weapon.Type.Missile");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot_Weapon, "Equipment.Slot.Weapon");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot_Weapon_Primary, "Equipment.Slot.Weapon.Primary");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot_Weapon_Barrel, "Equipment.Slot.Weapon.Barrel");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot_Weapon_Mag, "Equipment.Slot.Weapon.Mag");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot_Weapon_Scope, "Equipment.Slot.Weapon.Scope");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot_Weapon_Stock, "Equipment.Slot.Weapon.Stock");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot_Weapon_Trigger, "Equipment.Slot.Weapon.Trigger");
+
 /*~ Damage Type Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_DamageType, "DamageType");
 UE_DEFINE_GAMEPLAY_TAG(TAG_DamageType_Kinetic, "DamageType.Kinetic");
@@ -118,3 +126,13 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_EffectRadius, "SetByCaller.Weapon.
 /*~ SetByCaller Tags - Combat Attributes ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Combat_Damage, "SetByCaller.Combat.Damage");
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Combat_PenetrationCount, "SetByCaller.Combat.PenetrationCount");
+
+/*~ Target Tags ~*/
+UE_DEFINE_GAMEPLAY_TAG(TAG_Target, "Target");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Target_Lockable, "Target.Lockable");
+
+/*~ GameplayCue Tags - Weapon Impact ~*/
+UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Weapon_Impact, "GameplayCue.Weapon.Impact");
+UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Weapon_Impact_Bullet, "GameplayCue.Weapon.Impact.Bullet");
+UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Weapon_Impact_Beam, "GameplayCue.Weapon.Impact.Beam");
+UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Weapon_Impact_Missile, "GameplayCue.Weapon.Impact.Missile");

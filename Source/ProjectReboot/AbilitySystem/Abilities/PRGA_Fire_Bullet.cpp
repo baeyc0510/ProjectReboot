@@ -1,10 +1,14 @@
 // PRGA_Fire_Bullet.cpp
 #include "PRGA_Fire_Bullet.h"
+
+#include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/Equipment/Weapon/BulletWeaponInstance.h"
 
 UPRGA_Fire_Bullet::UPRGA_Fire_Bullet()
 {
 	ActivationPolicy = EPRAbilityActivationPolicy::WhileInputHeld;
+	
+	ActivationRequiredTags.AddTag(TAG_State_Aiming);
 }
 
 bool UPRGA_Fire_Bullet::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, OUT FGameplayTagContainer* OptionalRelevantTags) const

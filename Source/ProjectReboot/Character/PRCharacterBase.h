@@ -39,6 +39,7 @@ public:
 	float GetBaseMoveSpeed() const {return BaseMoveSpeed;}
 	float GetMaxMoveSpeed() const;
 	
+	void GiveDefaultAbilitySystemTags() const;
 	virtual void HandleCollisionAndMovementOnDeath();
 	
 protected:
@@ -49,6 +50,10 @@ protected:
 	/** Animations */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "PR Animation")
 	TObjectPtr<UPRMontageSet> MontageSet;
+	
+	/** AbilitySystem */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "PR AbilitySystem")
+	FGameplayTagContainer DefaultAbilitySystemTags;
 	
 	/*~ Components ~*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PR AbilitySystem")

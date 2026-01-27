@@ -176,6 +176,7 @@ void APRPlayerCharacter::PossessedBy(AController* NewController)
 	if (AbilitySystem)
 	{
 		AbilitySystem->InitAbilityActorInfo(this, this);
+		GiveDefaultAbilitySystemTags();
 		AbilitySystem->GiveAbilitySet(DefaultAbilitySet, DefaultAbilitySetHandles);
 	}
 

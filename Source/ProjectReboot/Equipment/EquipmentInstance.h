@@ -56,7 +56,7 @@ public:
 	
 	// 모든 외형 파괴
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
-	void DestroyAllVisuals();
+	virtual void DestroyAllVisuals();
 
 	// 태그 조회
 	UFUNCTION(BlueprintCallable, Category = "Equipment")

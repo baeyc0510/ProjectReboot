@@ -6,6 +6,7 @@
 #include "MotionWarpingComponent.h"
 #include "PREnemyData.h"
 #include "Components/WidgetComponent.h"
+#include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/AbilitySystem/PRAbilitySystemComponent.h"
 #include "ProjectReboot/UI/Enemy/PREnemyStatusViewModel.h"
 #include "ProjectReboot/UI/Enemy/PREnemyStatusWidget.h"
@@ -21,6 +22,8 @@ APREnemyCharacter::APREnemyCharacter()
 	StatusWidgetComponent->SetupAttachment(RootComponent);
 	
 	MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarpingComponent"));
+	
+	DefaultAbilitySystemTags.AddTag(TAG_Target_Lockable);
 }
 
 FText APREnemyCharacter::GetEnemyDisplayName() const
@@ -61,6 +64,7 @@ void APREnemyCharacter::BeginPlay()
 	if (AbilitySystem)
 	{
 		AbilitySystem->InitAbilityActorInfo(this,this);
+		GiveDefaultAbilitySystemTags();
 		if (EnemyData && EnemyData->AbilitySet)
 		{
 			AbilitySystem->GiveAbilitySet(EnemyData->AbilitySet, AbilitySetHandles);	

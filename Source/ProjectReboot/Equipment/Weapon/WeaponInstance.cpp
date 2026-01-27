@@ -4,22 +4,14 @@
 #include "AbilitySystemInterface.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
-#include "ProjectReboot/AbilitySystem/PRWeaponAttributeSet.h"
 
 bool UWeaponInstance::CanFire() const
 {
-	float CurrentTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f;
-	float Interval = GetFireInterval();
-
-	return (CurrentTime - LastFireTime) >= Interval;
+	return true;
 }
 
 void UWeaponInstance::OnFired()
 {
-	if (GetWorld())
-	{
-		LastFireTime = GetWorld()->GetTimeSeconds();
-	}
 }
 
 bool UWeaponInstance::CanReload() const
@@ -150,24 +142,6 @@ void UWeaponInstance::PlayImpact(const FHitResult& HitResult)
 			HitResult.ImpactPoint
 		);
 	}
-}
-
-float UWeaponInstance::GetFireInterval() const
-{
-	UAbilitySystemComponent* ASC = GetOwnerASC();
-	if (IsValid(ASC))
-	{
-		bool bFound = false;
-		float FireRate = ASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetFireRateAttribute(), bFound);
-		if (bFound && FireRate > 0.0f)
-		{
-			// FireRate는 발/분 단위이므로 초 단위로 변환
-			return 60.0f / FireRate;
-		}
-	}
-
-	// 기본값: 초당 10발
-	return 0.1f;
 }
 
 UAbilitySystemComponent* UWeaponInstance::GetOwnerASC() const

@@ -116,6 +116,14 @@ float APRCharacterBase::GetMaxMoveSpeed() const
 	return BaseMoveSpeed;
 }
 
+void APRCharacterBase::GiveDefaultAbilitySystemTags() const
+{
+	if (AbilitySystem)
+	{
+		AbilitySystem->AddLooseGameplayTags(DefaultAbilitySystemTags);
+	}
+}
+
 void APRCharacterBase::HandleCollisionAndMovementOnDeath()
 {
 	// 콜리전 비활성화

@@ -37,7 +37,7 @@ float UPRFireRateSecondsMMC::CalculateBaseMagnitude_Implementation(const FGamepl
 
 	float FireRate = 0.0f;
 	GetCapturedAttributeMagnitude(GetWeaponFireRateToSecondsCapture().FireRateDef, Spec, EvaluationParameters, FireRate);
-	FireRate = FMath::Max(0.0f, FireRate);
+	FireRate = FMath::Max(0.f, FireRate);
 
 	// 발/분 -> 초(발당)
 	if (FireRate <= KINDA_SMALL_NUMBER)

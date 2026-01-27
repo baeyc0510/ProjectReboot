@@ -18,6 +18,14 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Weapon_Type_Bullet);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Weapon_Type_Beam);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Weapon_Type_Missile);
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Weapon);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Weapon_Primary);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Weapon_Barrel);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Weapon_Mag);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Weapon_Scope);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Weapon_Stock);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Weapon_Trigger);
+
 /*~ Damage Type Tags ~*/
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_DamageType);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_DamageType_Kinetic);
@@ -123,3 +131,13 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Weapon_EffectRadius);
 /*~ SetByCaller Tags - Combat Attributes ~*/
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Combat_Damage);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Combat_PenetrationCount);
+
+/*~ Target Tags ~*/
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Target);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Target_Lockable);
+
+/*~ GameplayCue Tags - Weapon Impact ~*/
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_Weapon_Impact);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_Weapon_Impact_Bullet);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_Weapon_Impact_Beam);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_Weapon_Impact_Missile);

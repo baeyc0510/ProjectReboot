@@ -5,7 +5,7 @@
 UPRWeaponAttributeSet::UPRWeaponAttributeSet()
 {
 	// 공통
-	InitFireRate(600.0f);
+	InitFireRate(0.0f);
 	InitReloadTime(2.0f);
 	InitBaseDamage(1.0f);
 	InitDamageMultiplier(1.0f);

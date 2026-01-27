@@ -6,7 +6,6 @@
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEffectRemoved.h"
 #include "GameFramework/Character.h"
 #include "ProjectReboot/PRGameplayTags.h"
-#include "ProjectReboot/JustDodge/PRJustDodgeGhost.h"
 
 UPRGA_JustDodge::UPRGA_JustDodge()
 {

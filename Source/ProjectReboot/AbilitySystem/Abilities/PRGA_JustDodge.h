@@ -4,7 +4,7 @@
 #include "CoreMinimal.h"
 #include "GameplayEffectTypes.h"
 #include "ProjectReboot/AbilitySystem/PRGameplayAbility.h"
-#include "ProjectReboot/JustDodge/PRJustDodgeGhost.h"
+#include "ProjectReboot/Combat/JustDodge/PRJustDodgeGhost.h"
 #include "PRGA_JustDodge.generated.h"
 
 class UAbilityTask_WaitGameplayEvent;

@@ -76,3 +76,18 @@ Plugins/**/Intermediate/*
 DerivedDataCache/*
 ProjectReboot.sln.DotSettings.user
 .github
+
+# 유료 에셋 폴더
+Content/DUWepCustSys/
+Content/sA_Megapack_v1/
+Content/SciFi_Beasts_Pack/
+Content/MuzzleFlash/
+Content/Characters/Enemy/Minotaur/Animations/
+Content/Characters/Enemy/Minotaur/Materials/
+Content/Characters/Enemy/Minotaur/Mesh/
+Content/Characters/Enemy/Minotaur/Textures/
+Content/Characters/Enemy/Whale/Animations/
+Content/Characters/Enemy/Whale/Maps/
+Content/Characters/Enemy/Whale/Materials/
+Content/Characters/Enemy/Whale/Mesh/
+Content/Characters/Enemy/Whale/Textures/

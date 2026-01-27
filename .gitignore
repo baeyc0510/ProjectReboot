@@ -77,7 +77,7 @@ DerivedDataCache/*
 ProjectReboot.sln.DotSettings.user
 .github
 
-# 유료 에셋 폴더
+# Begin 유료 에셋 폴더
 Content/DUWepCustSys/
 Content/sA_Megapack_v1/
 Content/SciFi_Beasts_Pack/
@@ -91,3 +91,6 @@ Content/Characters/Enemy/Whale/Maps/
 Content/Characters/Enemy/Whale/Materials/
 Content/Characters/Enemy/Whale/Mesh/
 Content/Characters/Enemy/Whale/Textures/
+# End 유료 에셋 폴더
+
+Backup

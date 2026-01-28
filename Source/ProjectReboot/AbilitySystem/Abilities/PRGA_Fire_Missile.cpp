@@ -1,7 +1,6 @@
 // PRGA_Fire_Missile.cpp
 #include "PRGA_Fire_Missile.h"
 #include "AbilitySystemComponent.h"
-#include "GameFramework/ProjectileMovementComponent.h"
 #include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/Combat/Projectile/PRMissileProjectile.h"
 #include "ProjectReboot/Equipment/Weapon/MissileWeaponInstance.h"
@@ -83,15 +82,11 @@ void UPRGA_Fire_Missile::FireSingleMissile(UMissileWeaponInstance* Weapon, AActo
 		// 발사체 초기화 (데미지, 폭발 반경, 유도 타겟 등)
 		InitializeProjectile(Projectile, HomingTarget);
 
-		// 초기 속도 설정
-		UProjectileMovementComponent* MoveComp = Projectile->FindComponentByClass<UProjectileMovementComponent>();
-		if (IsValid(MoveComp))
-		{
-			MoveComp->InitialSpeed = ProjectileSpeed;
-			MoveComp->MaxSpeed = ProjectileSpeed;
-			MoveComp->Velocity = LaunchDir * ProjectileSpeed;
-			MoveComp->HomingAccelerationMagnitude = HomingAccelerationMagnitude;
-		}
+		// 발사 속도 및 유도 파라미터 설정
+		Projectile->LaunchInDirection(LaunchDir, ProjectileSpeed);
+		Projectile->SetNavigationConstant(NavigationConstant);
+		Projectile->SetMaxNavigationAcceleration(MaxNavigationAcceleration);
+		Projectile->SetMaxRange(MaxRange);
 	}
 
 	Weapon->PlayMuzzleFlash();

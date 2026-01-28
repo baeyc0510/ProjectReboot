@@ -2,6 +2,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ProjectReboot/ProjectReboot.h"
 #include "ProjectReboot/AbilitySystem/PRGameplayAbility.h"
 #include "PRGameplayAbility_WeaponFire.generated.h"
 
@@ -20,6 +21,7 @@ class PROJECTREBOOT_API UPRGameplayAbility_WeaponFire : public UPRGameplayAbilit
 public:
 	UPRGameplayAbility_WeaponFire();
 	
+	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 	virtual void OnActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData);
 protected:
@@ -67,5 +69,5 @@ public:
 
 	// 트레이스 채널
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
-	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Visibility;
+	TEnumAsByte<ECollisionChannel> TraceChannel = PRCollision::AttackTrace;
 };

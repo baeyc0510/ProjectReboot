@@ -112,6 +112,8 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_SlowMotion);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Active);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Active_Aim);
 
+/*~ Ability Cooldown Tags ~*/
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Cooldown_WeaponFire);
 
 /*~ SetByCaller Tags - Weapon Attributes ~*/
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller);

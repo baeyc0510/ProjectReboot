@@ -142,6 +142,8 @@ void UPRActionDecisionPanel::HandleItemClicked(UPRActionListItemWidget* ClickedI
 
 void UPRActionDecisionPanel::HandleConfirmButtonClicked()
 {
+	RestoreOriginalEquipment();
+	
 	if (SelectedItem)
 	{
 		if (URogueliteActionData* ActionToAcquire = SelectedItem->GetActionData())

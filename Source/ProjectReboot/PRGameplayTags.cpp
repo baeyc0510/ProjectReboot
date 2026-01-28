@@ -108,6 +108,8 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_SlowMotion, "Ability.SlowMotion");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Active, "Ability.Active");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Active_Aim, "Ability.Active.Aim");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cooldown_WeaponFire, "Cooldown.WeaponFire");
+
 /*~ SetByCaller Tags - Weapon Attributes ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller, "SetByCaller");
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon, "SetByCaller.Weapon");

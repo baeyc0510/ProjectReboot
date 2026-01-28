@@ -51,7 +51,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Missile")
 	float ProjectileSpeed = 3000.0f;
 
-	// 유도 가속도
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Missile|Homing")
-	float HomingAccelerationMagnitude = 5000.0f;
+	// 비례항법 상수 (N) - 높을수록 공격적 기동 (3~5 권장)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Missile|Homing", meta = (ClampMin = "1.0", ClampMax = "10.0"))
+	float NavigationConstant = 4.0f;
+
+	// 최대 유도 가속도 (cm/s²)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Missile|Homing", meta = (ClampMin = "0.0"))
+	float MaxNavigationAcceleration = 4000.0f;
+
+	// 최대 사거리 (0 이하면 무제한)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Missile", meta = (ClampMin = "0.0"))
+	float MaxRange = 5000.0f;
 };

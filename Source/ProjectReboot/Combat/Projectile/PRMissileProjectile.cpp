@@ -1,15 +1,17 @@
 // PRMissileProjectile.cpp
 #include "PRMissileProjectile.h"
+#include "PRProportionalNavigationComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
-#include "GameFramework/ProjectileMovementComponent.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
+#include "Components/CapsuleComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/AbilitySystem/PRWeaponAttributeSet.h"
+#include "ProjectReboot/Combat/PRCombatInterface.h"
 
 APRMissileProjectile::APRMissileProjectile()
 {
@@ -27,8 +29,8 @@ APRMissileProjectile::APRMissileProjectile()
 	MeshComponent->SetupAttachment(RootComponent);
 	MeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	// 발사체 이동 컴포넌트
-	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
+	// 발사체 이동 컴포넌트 (비례항법 유도)
+	ProjectileMovement = CreateDefaultSubobject<UPRProportionalNavigationComponent>(TEXT("ProjectileMovement"));
 	ProjectileMovement->UpdatedComponent = CollisionComponent;
 	ProjectileMovement->InitialSpeed = 3000.0f;
 	ProjectileMovement->MaxSpeed = 3000.0f;
@@ -36,14 +38,16 @@ APRMissileProjectile::APRMissileProjectile()
 	ProjectileMovement->bShouldBounce = false;
 	ProjectileMovement->ProjectileGravityScale = 0.0f;
 
-	// 유도 기본값 (비활성)
-	ProjectileMovement->bIsHomingProjectile = false;
-	ProjectileMovement->HomingAccelerationMagnitude = 5000.0f;
+	// 비례항법 기본값 (비활성)
+	ProjectileMovement->EnableProportionalNavigation(false);
 }
 
 void APRMissileProjectile::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// 발사 위치 저장 (사거리 계산용)
+	LaunchLocation = GetActorLocation();
 
 	// 발사자 및 소유자 충돌 무시
 	if (IsValid(CollisionComponent))
@@ -66,6 +70,9 @@ void APRMissileProjectile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// 최대 사거리 초과 체크
+	CheckMaxRangeDetonation();
+
 	// 유도 미사일일 경우 근접 폭발 체크
 	if (HomingTarget.IsValid())
 	{
@@ -78,14 +85,33 @@ void APRMissileProjectile::SetHomingTarget(AActor* Target)
 	if (!IsValid(Target))
 	{
 		HomingTarget.Reset();
-		ProjectileMovement->bIsHomingProjectile = false;
-		ProjectileMovement->HomingTargetComponent = nullptr;
+		ProjectileMovement->EnableProportionalNavigation(false);
+		ProjectileMovement->SetNavigationTarget(nullptr);
 		return;
 	}
 
 	HomingTarget = Target;
-	ProjectileMovement->bIsHomingProjectile = true;
-	ProjectileMovement->HomingTargetComponent = Target->GetRootComponent();
+
+	// 비례항법 유도 활성화
+	USceneComponent* TargetComponent = nullptr;
+
+	// 기본 CombatCapsule 사용
+	if (IPRCombatInterface* CombatInterface = Cast<IPRCombatInterface>(Target))
+	{
+		if (UCapsuleComponent* CombatCapsule = CombatInterface->GetCombatCapsuleComponent())
+		{
+			TargetComponent = CombatCapsule;
+		}
+	}
+
+	// Fallback: RootComponent 사용
+	if (!IsValid(TargetComponent))
+	{
+		TargetComponent = Target->GetRootComponent();
+	}
+
+	ProjectileMovement->SetNavigationTarget(TargetComponent);
+	ProjectileMovement->EnableProportionalNavigation(true);
 }
 
 void APRMissileProjectile::SetExplosionRadius(float Radius)
@@ -103,6 +129,45 @@ void APRMissileProjectile::SetDamageEffectClass(TSubclassOf<UGameplayEffect> Eff
 void APRMissileProjectile::SetInstigatorASC(UAbilitySystemComponent* ASC)
 {
 	InstigatorASC = ASC;
+}
+
+void APRMissileProjectile::LaunchInDirection(const FVector& Direction, float Speed)
+{
+	if (!IsValid(ProjectileMovement))
+	{
+		return;
+	}
+
+	FVector NormalizedDir = Direction.GetSafeNormal();
+	if (NormalizedDir.IsNearlyZero())
+	{
+		NormalizedDir = GetActorForwardVector();
+	}
+
+	ProjectileMovement->InitialSpeed = Speed;
+	ProjectileMovement->MaxSpeed = Speed;
+	ProjectileMovement->Velocity = NormalizedDir * Speed;
+}
+
+void APRMissileProjectile::SetNavigationConstant(float N)
+{
+	if (IsValid(ProjectileMovement))
+	{
+		ProjectileMovement->NavigationConstant = FMath::Clamp(N, 1.0f, 10.0f);
+	}
+}
+
+void APRMissileProjectile::SetMaxNavigationAcceleration(float MaxAcceleration)
+{
+	if (IsValid(ProjectileMovement))
+	{
+		ProjectileMovement->MaxNavigationAcceleration = FMath::Max(0.0f, MaxAcceleration);
+	}
+}
+
+void APRMissileProjectile::SetMaxRange(float Range)
+{
+	MaxRange = Range;
 }
 
 void APRMissileProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -125,6 +190,20 @@ void APRMissileProjectile::CheckProximityDetonation()
 
 	float Distance = FVector::Dist(GetActorLocation(), HomingTarget->GetActorLocation());
 	if (Distance <= ProximityDetonationRadius)
+	{
+		Explode();
+	}
+}
+
+void APRMissileProjectile::CheckMaxRangeDetonation()
+{
+	if (bHasExploded || MaxRange <= 0.0f)
+	{
+		return;
+	}
+
+	float TraveledDistance = FVector::Dist(GetActorLocation(), LaunchLocation);
+	if (TraveledDistance >= MaxRange)
 	{
 		Explode();
 	}

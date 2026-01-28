@@ -7,6 +7,7 @@
 
 class USphereComponent;
 class UProjectileMovementComponent;
+class UPRProportionalNavigationComponent;
 class UGameplayEffect;
 class UAbilitySystemComponent;
 class UNiagaraSystem;
@@ -43,6 +44,22 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Missile")
 	void SetInstigatorASC(UAbilitySystemComponent* ASC);
 
+	// 발사 속도 및 방향 설정
+	UFUNCTION(BlueprintCallable, Category = "Missile")
+	void LaunchInDirection(const FVector& Direction, float Speed);
+
+	// 항법 상수 설정 (비례항법 공격성, 3~5 권장)
+	UFUNCTION(BlueprintCallable, Category = "Missile|Homing")
+	void SetNavigationConstant(float N);
+
+	// 최대 유도 가속도 설정
+	UFUNCTION(BlueprintCallable, Category = "Missile|Homing")
+	void SetMaxNavigationAcceleration(float MaxAcceleration);
+
+	// 최대 사거리 설정 (0 이하면 무제한)
+	UFUNCTION(BlueprintCallable, Category = "Missile")
+	void SetMaxRange(float Range);
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -62,14 +79,17 @@ protected:
 	// 근접 폭발 체크 (유도 미사일용)
 	void CheckProximityDetonation();
 
+	// 최대 사거리 초과 체크
+	void CheckMaxRangeDetonation();
+
 protected:
 	// 충돌 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<USphereComponent> CollisionComponent;
 
-	// 발사체 이동 컴포넌트
+	// 발사체 이동 컴포넌트 (비례항법 유도)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	TObjectPtr<UProjectileMovementComponent> ProjectileMovement;
+	TObjectPtr<UPRProportionalNavigationComponent> ProjectileMovement;
 
 	// 메시 컴포넌트 (선택적, BP에서 설정)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -101,4 +121,11 @@ protected:
 
 	// 폭발 여부 (중복 폭발 방지)
 	bool bHasExploded = false;
+
+	// 최대 사거리 (0 이하면 무제한)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Missile")
+	float MaxRange = 5000.0f;
+
+	// 발사 위치 (사거리 계산용)
+	FVector LaunchLocation = FVector::ZeroVector;
 };

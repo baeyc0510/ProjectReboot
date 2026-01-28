@@ -1,205 +1,127 @@
-// PRProportionalNavigationComponent.cpp
 #include "PRProportionalNavigationComponent.h"
 
 UPRProportionalNavigationComponent::UPRProportionalNavigationComponent()
 {
-	// 기본 호밍 비활성화 (비례항법으로 대체)
-	bIsHomingProjectile = false;
-	HomingAccelerationMagnitude = 0.0f;
-
-	// 속도 방향으로 회전
-	bRotationFollowsVelocity = true;
-
-	// 중력 비활성화
-	ProjectileGravityScale = 0.0f;
+    // 비례항법 기동을 위해 기존 호밍 및 물리 옵션 최적화
+    bIsHomingProjectile = false;
+    HomingAccelerationMagnitude = 0.0f;
+    bRotationFollowsVelocity = true;
+    ProjectileGravityScale = 0.0f;
 }
 
 void UPRProportionalNavigationComponent::EnableProportionalNavigation(bool bEnable)
 {
-	bUseProportionalNavigation = bEnable;
-
-	if (!bEnable)
-	{
-		// 비활성화 시 상태 초기화
-		bIsFirstFrame = true;
-		PreviousLOSVector = FVector::ZeroVector;
-		PreviousTargetLocation = FVector::ZeroVector;
-	}
+    bUseProportionalNavigation = bEnable;
+    if (!bEnable) bIsFirstFrame = true;
 }
 
 void UPRProportionalNavigationComponent::SetNavigationTarget(USceneComponent* TargetComponent)
 {
-	NavigationTargetComponent = TargetComponent;
-
-	// 타겟 변경 시 상태 초기화
-	bIsFirstFrame = true;
-	PreviousLOSVector = FVector::ZeroVector;
-	PreviousTargetLocation = FVector::ZeroVector;
+    NavigationTargetComponent = TargetComponent;
+    bIsFirstFrame = true;
 }
 
 void UPRProportionalNavigationComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
-	// 비례항법 적용 (부모 Tick 전에 가속도 계산)
-	if (bUseProportionalNavigation && NavigationTargetComponent.IsValid())
-	{
-		ApplyProportionalNavigation(DeltaTime);
-	}
+    // 이동 업데이트 수행 전 유도 가속도를 계산하여 Velocity 수정
+    if (bUseProportionalNavigation && NavigationTargetComponent.IsValid())
+    {
+        ApplyProportionalNavigation(DeltaTime);
+    }
 
-	// 부모 클래스의 이동 처리
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+    // 기본 이동 업데이트
+    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
 void UPRProportionalNavigationComponent::ApplyProportionalNavigation(float DeltaTime)
 {
-	if (DeltaTime <= SMALL_NUMBER)
-	{
-		return;
-	}
+    if (DeltaTime <= SMALL_NUMBER || !UpdatedComponent)
+    {
+        return;
+    }
 
-	// 현재 LOS 벡터 계산
-	FVector CurrentLOS = ComputeLOSVector();
-	if (CurrentLOS.IsNearlyZero())
-	{
-		return;
-	}
+    FVector CurrentLocation = UpdatedComponent->GetComponentLocation();
+    FVector TargetLocation = NavigationTargetComponent->GetComponentLocation();
+    FVector CurrentLOS = TargetLocation - CurrentLocation;
+    float Distance = CurrentLOS.Size();
 
-	// 첫 프레임이면 이전 값 초기화 후 리턴
-	if (bIsFirstFrame)
-	{
-		PreviousLOSVector = CurrentLOS;
-		PreviousTargetLocation = NavigationTargetComponent->GetComponentLocation();
-		bIsFirstFrame = false;
-		return;
-	}
+    // 타겟과 너무 가까우면 마지막 유도 방향을 유지
+    if (Distance < MinGuidanceDistance)
+    {
+        return;
+    }
 
-	// LOS 방향 (정규화)
-	FVector LOSDirection = CurrentLOS.GetSafeNormal();
+    // 타겟의 현재 속도 추정
+    FVector TargetVelocity = FVector::ZeroVector;
+    if (AActor* TargetActor = NavigationTargetComponent->GetOwner())
+    {
+        TargetVelocity = TargetActor->GetVelocity();
+        // 타겟의 GetVelocity가 유효하지 않을 경우 위치 변화량으로 보정
+        if (TargetVelocity.IsNearlyZero() && !bIsFirstFrame)
+        {
+            TargetVelocity = (TargetLocation - PreviousTargetLocation) / DeltaTime;
+        }
+    }
 
-	// 시선각 변화율 계산 (LOS 회전 각속도 벡터)
-	FVector LOSRate = ComputeLOSRate(CurrentLOS, DeltaTime);
+    FVector CurrentLOSDirection = CurrentLOS.GetSafeNormal();
 
-	// 접근 속도 계산
-	float ClosingVelocity = ComputeClosingVelocity(LOSDirection);
+    // 초기 프레임 데이터 샘플링 (변화율 계산을 위한 준비)
+    if (bIsFirstFrame)
+    {
+        PreviousLOSDirection = CurrentLOSDirection;
+        PreviousTargetLocation = TargetLocation;
+        bIsFirstFrame = false;
+        return;
+    }
 
-	// 비례항법 가속도 계산
-	// a = N × Vc × (LOS 회전축 × LOS 방향) = N × Vc × LOSRate
-	// LOSRate는 이미 LOS에 수직인 성분만 포함
-	FVector PNAcceleration = NavigationConstant * ClosingVelocity * LOSRate;
+    // 각속도 벡터 계산
+    FVector LOSRateVector = ComputeLOSRateVector(CurrentLOSDirection, DeltaTime);
 
-	// Augmented PN: 타겟 방향 보정항 추가
-	// 미사일 진행 방향과 LOS 방향의 차이를 보정
-	FVector VelocityDir = Velocity.GetSafeNormal();
-	FVector LOSCorrectionDir = LOSDirection - VelocityDir;
+    // 접근 속도 계산
+    float Vc = ComputeClosingVelocity(CurrentLOSDirection, TargetVelocity);
 
-	// LOS에 수직인 성분만 추출 (진행 방향 성분 제거)
-	LOSCorrectionDir = LOSCorrectionDir - (FVector::DotProduct(LOSCorrectionDir, VelocityDir) * VelocityDir);
+    // 비례항법 기본 공식 적용 (Accel = N * Vc * LOS_Rate)
+    FVector PNAcceleration = NavigationConstant * Vc * LOSRateVector;
 
-	// 보정 가속도 = 게인 × 속도 × 방향 오차
-	FVector CorrectionAcceleration = DirectionCorrectionGain * Velocity.Size() * LOSCorrectionDir;
+    // 가속도 한계치 제한: 급격한 화면 전환 시 발생하는 비정상적 기동 방지
+    if (PNAcceleration.Size() > MaxNavigationAcceleration)
+    {
+        PNAcceleration = PNAcceleration.GetSafeNormal() * MaxNavigationAcceleration;
+    }
 
-	// 총 유도 가속도
-	FVector NavigationAcceleration = PNAcceleration + CorrectionAcceleration;
+    // 현재 속력을 유지하며 가속도에 의한 방향만 수정
+    float CurrentSpeed = Velocity.Size();
+    Velocity += PNAcceleration * DeltaTime;
+    Velocity = Velocity.GetSafeNormal() * CurrentSpeed;
 
-	// 최대 가속도 제한
-	float AccelMagnitude = NavigationAcceleration.Size();
-	if (AccelMagnitude > MaxNavigationAcceleration)
-	{
-		NavigationAcceleration = NavigationAcceleration.GetSafeNormal() * MaxNavigationAcceleration;
-	}
-
-	// 현재 속도 크기 저장
-	float OriginalSpeed = Velocity.Size();
-
-	// 가속도를 속도에 적용
-	Velocity += NavigationAcceleration * DeltaTime;
-
-	// 속도 크기 유지 (방향만 변경, 속도는 원래 값 유지)
-	// 유도 미사일은 추력으로 속도를 유지한다고 가정
-	float TargetSpeed = FMath::Min(OriginalSpeed, MaxSpeed);
-	Velocity = Velocity.GetSafeNormal() * TargetSpeed;
-
-	// 다음 프레임을 위해 현재 값 저장
-	PreviousLOSVector = CurrentLOS;
-	PreviousTargetLocation = NavigationTargetComponent->GetComponentLocation();
+    // 상태값 저장
+    PreviousLOSDirection = CurrentLOSDirection;
+    PreviousTargetLocation = TargetLocation;
 }
 
-FVector UPRProportionalNavigationComponent::ComputeLOSVector() const
+FVector UPRProportionalNavigationComponent::ComputeLOSRateVector(const FVector& CurrentLOSDirection, float DeltaTime) const
 {
-	if (!NavigationTargetComponent.IsValid() || !UpdatedComponent)
-	{
-		return FVector::ZeroVector;
-	}
+    // 단위 벡터의 변화율을 통해 시선 방향의 회전량 추출
+    FVector Rate = (CurrentLOSDirection - PreviousLOSDirection) / DeltaTime;
 
-	FVector MissileLocation = UpdatedComponent->GetComponentLocation();
-	FVector TargetLocation = NavigationTargetComponent->GetComponentLocation();
+    // 급작스러운 발사 오차나 화면 전환 시 미사일이 튀는 것을 막기 위한 초당 회전 가능한 각속도의 상한선
+    const float MaxRateMagnitude = 15.0f; 
+    if (Rate.Size() > MaxRateMagnitude)
+    {
+        Rate = Rate.GetSafeNormal() * MaxRateMagnitude;
+    }
 
-	return TargetLocation - MissileLocation;
+    return Rate;
 }
 
-FVector UPRProportionalNavigationComponent::ComputeLOSRate(const FVector& CurrentLOS, float DeltaTime) const
+float UPRProportionalNavigationComponent::ComputeClosingVelocity(const FVector& LOSDirection, const FVector& TargetVelocity) const
 {
-	if (PreviousLOSVector.IsNearlyZero() || DeltaTime <= SMALL_NUMBER)
-	{
-		return FVector::ZeroVector;
-	}
+    // 상대 속도 계산
+    FVector RelativeVelocity = Velocity - TargetVelocity;
 
-	// LOS 방향 변화 계산 (각도 변화)
-	FVector PrevLOSDir = PreviousLOSVector.GetSafeNormal();
-	FVector CurrLOSDir = CurrentLOS.GetSafeNormal();
+    // 시선 방향으로의 접근 속도 성분 추출
+    float Vc = -FVector::DotProduct(RelativeVelocity, LOSDirection);
 
-	// 두 방향 벡터의 외적 = 회전축 × sin(각도)
-	FVector CrossProduct = FVector::CrossProduct(PrevLOSDir, CurrLOSDir);
-
-	// 두 방향 벡터의 내적 = cos(각도)
-	float DotProduct = FVector::DotProduct(PrevLOSDir, CurrLOSDir);
-	DotProduct = FMath::Clamp(DotProduct, -1.0f, 1.0f);
-
-	// 각도 변화량 (라디안)
-	float AngleChange = FMath::Acos(DotProduct);
-
-	// 회전축 (정규화)
-	FVector RotationAxis = CrossProduct.GetSafeNormal();
-	if (RotationAxis.IsNearlyZero())
-	{
-		return FVector::ZeroVector;
-	}
-
-	// 각속도 (rad/s)
-	float AngularRate = AngleChange / DeltaTime;
-
-	// LOS 회전 방향으로의 단위 벡터 (LOS에 수직)
-	// 가속도는 LOS에 수직인 방향으로 적용되어야 함
-	FVector LOSPerpendicular = FVector::CrossProduct(RotationAxis, CurrLOSDir);
-
-	return LOSPerpendicular * AngularRate;
-}
-
-float UPRProportionalNavigationComponent::ComputeClosingVelocity(const FVector& LOSDirection) const
-{
-	if (!NavigationTargetComponent.IsValid())
-	{
-		return Velocity.Size();
-	}
-
-	// 타겟 속도 추정 (이전 위치와 현재 위치로부터)
-	FVector TargetVelocity = FVector::ZeroVector;
-	if (!PreviousTargetLocation.IsZero())
-	{
-		// 주의: 이 시점에서 DeltaTime을 직접 알 수 없으므로
-		// 타겟이 AActor인 경우 GetVelocity() 사용 시도
-		if (AActor* TargetActor = NavigationTargetComponent->GetOwner())
-		{
-			TargetVelocity = TargetActor->GetVelocity();
-		}
-	}
-
-	// 상대 속도 = 미사일 속도 - 타겟 속도
-	FVector RelativeVelocity = Velocity - TargetVelocity;
-
-	// 접근 속도 = -상대 속도 · LOS 방향
-	// (양수면 접근 중, 음수면 멀어지는 중)
-	float ClosingVelocity = -FVector::DotProduct(RelativeVelocity, LOSDirection);
-
-	// 최소 접근 속도 보장 (멀어지는 경우에도 유도 유지)
-	return FMath::Max(ClosingVelocity, Velocity.Size() * 0.5f);
+    // 타겟을 지나치더라도 유도력을 잃지 않도록 최소 접근 속도를 현재 속도의 50%로 유지
+    return FMath::Max(Vc, Velocity.Size() * 0.5f);
 }

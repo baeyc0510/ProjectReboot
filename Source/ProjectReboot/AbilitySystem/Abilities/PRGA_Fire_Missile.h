@@ -57,7 +57,7 @@ protected:
 
 	// 최대 유도 가속도 (cm/s²)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Missile|Homing", meta = (ClampMin = "0.0"))
-	float MaxNavigationAcceleration = 10000.0f;
+	float MaxNavigationAcceleration = 4000.0f;
 
 	// 최대 사거리 (0 이하면 무제한)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Missile", meta = (ClampMin = "0.0"))

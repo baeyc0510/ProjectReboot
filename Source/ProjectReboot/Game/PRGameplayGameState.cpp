@@ -7,6 +7,12 @@
 #include "Components/StateTreeComponent.h"
 #include "ProjectReboot/Room/PRRoomController.h"
 #include "ProjectReboot/Room/PRRoomStateTreeComponent.h"
+#include "ProjectReboot/Upgrade/PRUpgradeManagerComponent.h"
+
+APRGameplayGameState::APRGameplayGameState()
+{
+	UpgradeManager = CreateDefaultSubobject<UPRUpgradeManagerComponent>(TEXT("UpgradeManager"));
+}
 
 void APRGameplayGameState::NotifyRoomEnter(APRRoomController* NewRoom)
 {

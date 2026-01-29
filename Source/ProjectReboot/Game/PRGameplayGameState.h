@@ -9,6 +9,7 @@
 
 struct FGameplayTag;
 class APRRoomController;
+class UPRUpgradeManagerComponent;
 /**
  * 
  */
@@ -18,6 +19,9 @@ class PROJECTREBOOT_API APRGameplayGameState : public AGameStateBase
 	GENERATED_BODY()
 
 public:
+	// 기본 생성자
+	APRGameplayGameState();
+
 	UFUNCTION(BlueprintPure, Category = "Room")
 	APRRoomController* GetCurrentRoomController() const {return CurrentRoomController;}
 	
@@ -36,6 +40,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Room")
 	int32 GetEventCount(const FGameplayTag& EventTag) const;
 
+	// 업그레이드 매니저 반환
+	UFUNCTION(BlueprintPure, Category = "Upgrade")
+	UPRUpgradeManagerComponent* GetUpgradeManager() const { return UpgradeManager; }
+
 public:
 	// 현재 플레이어가 있는 방
 	UPROPERTY(BlueprintReadOnly, Category = "Room")
@@ -44,4 +52,8 @@ public:
 	// 현재 이벤트 카운트 (태그 -> 누적 수치)
 	UPROPERTY(BlueprintReadOnly, Category = "Room")
 	TMap<FGameplayTag, int32> CurrentEventCounts;
+
+	// 업그레이드 매니저 컴포넌트
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Upgrade")
+	TObjectPtr<UPRUpgradeManagerComponent> UpgradeManager;
 };

@@ -83,7 +83,11 @@ public:
 public:
 	// 포맷팅된 DisplayName
 	UFUNCTION(BlueprintPure, Category = "Roguelite|ActionData")
-	virtual FText GetFormattedTextWithValues(const FText& TextToFormat);
+	virtual FText GetFormattedTextWithValuesByIndex(const FText& TextToFormat) const;
+
+	// 태그 템플릿 기반 포맷팅 (예: "{Stat.Attack}")
+	UFUNCTION(BlueprintPure, Category = "Roguelite|ActionData")
+	virtual FText GetFormattedTextWithValues(const FText& TextToFormat) const;
 	
 	// 특정 키의 값 조회
 	UFUNCTION(BlueprintPure, Category = "Roguelite|ActionData")
@@ -112,4 +116,7 @@ public:
 	// 조건 충족 여부 (RequiredTags, BlockedByTags 체크)
 	UFUNCTION(BlueprintPure, Category = "Roguelite|ActionData")
 	bool MeetsConditions(const FGameplayTagContainer& ActiveTags) const;
+	
+	// ValueEntry 포맷팅
+	static FText FormatValueEntry(const FRogueliteValueEntry& ValueEntry);
 };

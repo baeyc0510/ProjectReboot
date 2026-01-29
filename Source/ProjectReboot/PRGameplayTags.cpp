@@ -7,6 +7,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Aim, "Input.Aim");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Fire, "Input.Fire");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Reload, "Input.Reload");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Dash, "Input.Dash");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Input_Interact, "Input.Interact");
 
 /*~ Equipment Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment, "Equipment");
@@ -118,12 +119,22 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_MaxAmmo, "SetByCaller.Weapon.MaxAm
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_ReserveAmmo, "SetByCaller.Weapon.ReserveAmmo");
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_MaxReserveAmmo, "SetByCaller.Weapon.MaxReserveAmmo");
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_FireRate, "SetByCaller.Weapon.FireRate");
+UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_FireRateMultiplier, "SetByCaller.Weapon.FireRateMultiplier");
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_ReloadTime, "SetByCaller.Weapon.ReloadTime");
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_BaseDamage, "SetByCaller.Weapon.BaseDamage");
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_DamageMultiplier, "SetByCaller.Weapon.DamageMultiplier");
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_MaxPenetration, "SetByCaller.Weapon.MaxPenetration");
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_PenetrationDamageFalloff, "SetByCaller.Weapon.PenetrationDamageFalloff");
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_EffectRadius, "SetByCaller.Weapon.EffectRadius");
+
+/*~ SetByCaller Tags - Common Attributes ~*/
+UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Common_MoveSpeed,"SetByCaller.Common.MoveSpeed");
+UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Common_Health,"SetByCaller.Common.Health");
+UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Common_MaxHealth,"SetByCaller.Common.MaxHealth");
+UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Common_Shield,"SetByCaller.Common.Shield");
+UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Common_MaxShield,"SetByCaller.Common.MaxShield");
+UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Common_Stagger,"SetByCaller.Common.Stagger");
+UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Common_HitImmunity,"SetByCaller.Common.HitImmunity");
 
 /*~ SetByCaller Tags - Combat Attributes ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Combat_Damage, "SetByCaller.Combat.Damage");
@@ -138,3 +149,11 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Weapon_Impact, "GameplayCue.Weapon.Impact
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Weapon_Impact_Bullet, "GameplayCue.Weapon.Impact.Bullet");
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Weapon_Impact_Beam, "GameplayCue.Weapon.Impact.Beam");
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Weapon_Impact_Missile, "GameplayCue.Weapon.Impact.Missile");
+
+/*~ Upgrade Tags ~*/
+UE_DEFINE_GAMEPLAY_TAG(TAG_Upgrade, "Upgrade");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Upgrade_Module, "Upgrade.Module");
+
+/*~ Currency Tags ~*/
+UE_DEFINE_GAMEPLAY_TAG(TAG_Currency, "Currency");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Currency_Core, "Currency.Core");

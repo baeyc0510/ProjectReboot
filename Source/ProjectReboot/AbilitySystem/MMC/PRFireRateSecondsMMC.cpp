@@ -7,10 +7,12 @@
 struct FPRWeaponFireRateToSecondsCapture
 {
 	DECLARE_ATTRIBUTE_CAPTUREDEF(FireRate);
+	DECLARE_ATTRIBUTE_CAPTUREDEF(FireRateMultiplier);
 
 	FPRWeaponFireRateToSecondsCapture()
 	{
 		DEFINE_ATTRIBUTE_CAPTUREDEF(UPRWeaponAttributeSet, FireRate, Source, true);
+		DEFINE_ATTRIBUTE_CAPTUREDEF(UPRWeaponAttributeSet, FireRateMultiplier, Source, true);
 	}
 };
 
@@ -24,6 +26,7 @@ UPRFireRateSecondsMMC::UPRFireRateSecondsMMC()
 {
 	// FireRate 캡처 등록
 	RelevantAttributesToCapture.Add(GetWeaponFireRateToSecondsCapture().FireRateDef);
+	RelevantAttributesToCapture.Add(GetWeaponFireRateToSecondsCapture().FireRateMultiplierDef);
 }
 
 float UPRFireRateSecondsMMC::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
@@ -39,6 +42,12 @@ float UPRFireRateSecondsMMC::CalculateBaseMagnitude_Implementation(const FGamepl
 	GetCapturedAttributeMagnitude(GetWeaponFireRateToSecondsCapture().FireRateDef, Spec, EvaluationParameters, FireRate);
 	FireRate = FMath::Max(0.f, FireRate);
 
+	float FireRateMultiplier = 1.0f;
+	GetCapturedAttributeMagnitude(GetWeaponFireRateToSecondsCapture().FireRateMultiplierDef, Spec, EvaluationParameters, FireRateMultiplier);
+	FireRateMultiplier = FMath::Max(0.f, FireRateMultiplier);
+
+	FireRate *= FireRateMultiplier;
+	
 	// 발/분 -> 초(발당)
 	if (FireRate <= KINDA_SMALL_NUMBER)
 	{

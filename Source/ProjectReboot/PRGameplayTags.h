@@ -10,6 +10,7 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Input_Aim);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Input_Fire);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Input_Reload);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Input_Dash);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Input_Interact);
 
 /*~ Equipment Tags ~*/
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment);
@@ -123,12 +124,22 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Weapon_MaxAmmo);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Weapon_ReserveAmmo);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Weapon_MaxReserveAmmo);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Weapon_FireRate);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Weapon_FireRateMultiplier);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Weapon_ReloadTime);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Weapon_BaseDamage);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Weapon_DamageMultiplier);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Weapon_MaxPenetration);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Weapon_PenetrationDamageFalloff);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Weapon_EffectRadius);
+
+/*~ SetByCaller Tags - Common Attributes ~*/
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Common_MoveSpeed);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Common_Health);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Common_MaxHealth);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Common_Shield);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Common_MaxShield);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Common_Stagger);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Common_HitImmunity);
 
 /*~ SetByCaller Tags - Combat Attributes ~*/
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Combat_Damage);
@@ -143,3 +154,11 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_Weapon_Impact);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_Weapon_Impact_Bullet);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_Weapon_Impact_Beam);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_Weapon_Impact_Missile);
+
+/*~ Upgrade Tags ~*/
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Upgrade);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Upgrade_Module);
+
+/*~ Currency Tags ~*/
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Currency);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Currency_Core);

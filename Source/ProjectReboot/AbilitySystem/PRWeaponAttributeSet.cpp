@@ -6,6 +6,7 @@ UPRWeaponAttributeSet::UPRWeaponAttributeSet()
 {
 	// 공통
 	InitFireRate(0.0f);
+	InitFireRateMultiplier(1.0f);
 	InitReloadTime(2.0f);
 	InitBaseDamage(1.0f);
 	InitDamageMultiplier(1.0f);
@@ -51,6 +52,11 @@ void UPRWeaponAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribu
 	}
 	// 배율 최소값
 	else if (Attribute == GetDamageMultiplierAttribute())
+	{
+		NewValue = FMath::Max(0.0f, NewValue);
+	}
+	// 발사 속도 배율 최소값
+	else if (Attribute == GetFireRateMultiplierAttribute())
 	{
 		NewValue = FMath::Max(0.0f, NewValue);
 	}

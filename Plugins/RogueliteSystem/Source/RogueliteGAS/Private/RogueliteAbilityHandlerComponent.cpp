@@ -556,10 +556,13 @@ void URogueliteAbilityHandlerComponent::ApplySetByCallerValues(URogueliteGASActi
 	}
 
 	// 스택 수를 설정된 SetByCaller 태그로 전달
-	const FGameplayTag& StacksTag = Action->StacksSetByCallerTag;
-	if (StacksTag.IsValid())
+	if (Action->StackScalingMode == ERogueliteStackScalingMode::SetByCaller)
 	{
-		SpecHandle.Data->SetSetByCallerMagnitude(StacksTag, static_cast<float>(Stacks));
+		const FGameplayTag& StacksTag = Action->StacksSetByCallerTag;
+		if (StacksTag.IsValid())
+		{
+			SpecHandle.Data->SetSetByCallerMagnitude(StacksTag, static_cast<float>(Stacks));
+		}
 	}
 
 	// ActionData의 Values를 SetByCaller로 매핑

@@ -5,55 +5,13 @@ FPrimaryAssetId URogueliteActionData::GetPrimaryAssetId() const
 	return FPrimaryAssetId(TEXT("RogueliteActionData"), GetFName());
 }
 
-FText URogueliteActionData::GetFormattedTextWithValues(const FText& TextToFormat)
+FText URogueliteActionData::GetFormattedTextWithValuesByIndex(const FText& TextToFormat) const
 {
 	TArray<FText> Args;
     
 	for (const FRogueliteValueEntry& ValueEntry : Values)
 	{
-		FText FormattedValue;
-        
-		// 포맷 모드에 따른 값 변환
-		switch (ValueEntry.FormatMode)
-		{
-		case ERogueliteFormatMode::Float:
-			FormattedValue = FText::AsNumber(ValueEntry.Value);
-			break;
-            
-		case ERogueliteFormatMode::Integer:
-			FormattedValue = FText::AsNumber(FMath::RoundToInt(ValueEntry.Value));
-			break;
-            
-		case ERogueliteFormatMode::Percent:
-			FormattedValue = FText::AsPercent(ValueEntry.Value); // 0.1 → "10%"
-			break;
-            
-		default:
-			FormattedValue = FText::AsNumber(ValueEntry.Value);
-			break;
-		}
-        
-		// 적용 모드에 따른 부호 추가
-		switch (ValueEntry.ApplyMode)
-		{
-		case ERogueliteApplyMode::Add:
-			if (ValueEntry.Value >= 0)
-			{
-				FormattedValue = FText::Format(NSLOCTEXT("Roguelite", "AddPositive", "+{0}"), FormattedValue);
-			}
-			// 음수는 이미 - 붙어있음
-			break;
-            
-		case ERogueliteApplyMode::Multiply:
-			FormattedValue = FText::Format(NSLOCTEXT("Roguelite", "Multiply", "x{0}"), FormattedValue);
-			break;
-            
-			// TODO: 다른 Mode 지원
-		default:
-			break;
-		}
-        
-		Args.Add(FormattedValue);
+		Args.Add(FormatValueEntry(ValueEntry));
 	}
     
 	// Ordered Arguments로 변환
@@ -64,6 +22,25 @@ FText URogueliteActionData::GetFormattedTextWithValues(const FText& TextToFormat
 	}
     
 	return FText::Format(TextToFormat, OrderedArgs);
+}
+
+FText URogueliteActionData::GetFormattedTextWithValues(const FText& TextToFormat) const
+{
+	FString Result = TextToFormat.ToString();
+
+	for (const FRogueliteValueEntry& ValueEntry : Values)
+	{
+		if (!ValueEntry.Key.IsValid())
+		{
+			continue;
+		}
+
+		const FString TagToken = FString::Printf(TEXT("{%s}"), *ValueEntry.Key.ToString());
+		const FString ValueString = FormatValueEntry(ValueEntry).ToString();
+		Result.ReplaceInline(*TagToken, *ValueString, ESearchCase::IgnoreCase);
+	}
+
+	return FText::FromString(Result);
 }
 
 float URogueliteActionData::GetValue(FGameplayTag Key, float DefaultValue) const
@@ -123,4 +100,51 @@ bool URogueliteActionData::MeetsConditions(const FGameplayTagContainer& ActiveTa
 	}
 
 	return true;
+}
+
+FText URogueliteActionData::FormatValueEntry(const FRogueliteValueEntry& ValueEntry)
+{
+	FText FormattedValue;
+
+	// 포맷 모드에 따른 값 변환
+	switch (ValueEntry.FormatMode)
+	{
+	case ERogueliteFormatMode::Float:
+		FormattedValue = FText::AsNumber(ValueEntry.Value);
+		break;
+
+	case ERogueliteFormatMode::Integer:
+		FormattedValue = FText::AsNumber(FMath::RoundToInt(ValueEntry.Value));
+		break;
+
+	case ERogueliteFormatMode::Percent:
+		FormattedValue = FText::AsPercent(ValueEntry.Value); // 0.1 → "10%"
+		break;
+
+	default:
+		FormattedValue = FText::AsNumber(ValueEntry.Value);
+		break;
+	}
+
+	// 적용 모드에 따른 부호 추가
+	switch (ValueEntry.ApplyMode)
+	{
+	case ERogueliteApplyMode::Add:
+		if (ValueEntry.Value >= 0)
+		{
+			FormattedValue = FText::Format(NSLOCTEXT("Roguelite", "AddPositive", "+{0}"), FormattedValue);
+		}
+		// 음수는 이미 - 붙어있음
+		break;
+
+	case ERogueliteApplyMode::Multiply:
+		FormattedValue = FText::Format(NSLOCTEXT("Roguelite", "Multiply", "x{0}"), FormattedValue);
+		break;
+
+		// TODO: 다른 Mode 지원
+	default:
+		break;
+	}
+
+	return FormattedValue;
 }

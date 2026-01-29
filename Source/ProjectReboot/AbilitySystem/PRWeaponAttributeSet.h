@@ -32,6 +32,11 @@ public:
     UPROPERTY(BlueprintReadOnly, Category = "Weapon")
     FGameplayAttributeData FireRate;
     ATTRIBUTE_ACCESSORS(UPRWeaponAttributeSet, FireRate)
+
+    // 발사 속도 배율
+    UPROPERTY(BlueprintReadOnly, Category = "Weapon")
+    FGameplayAttributeData FireRateMultiplier;
+    ATTRIBUTE_ACCESSORS(UPRWeaponAttributeSet, FireRateMultiplier)
     
     // 재장전 시간 (초)
     UPROPERTY(BlueprintReadOnly, Category = "Weapon")

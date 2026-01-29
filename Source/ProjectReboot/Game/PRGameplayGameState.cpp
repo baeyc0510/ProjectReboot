@@ -1,5 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PRGameplayGameState.h"
 
@@ -7,12 +6,6 @@
 #include "Components/StateTreeComponent.h"
 #include "ProjectReboot/Room/PRRoomController.h"
 #include "ProjectReboot/Room/PRRoomStateTreeComponent.h"
-#include "ProjectReboot/Upgrade/PRUpgradeManagerComponent.h"
-
-APRGameplayGameState::APRGameplayGameState()
-{
-	UpgradeManager = CreateDefaultSubobject<UPRUpgradeManagerComponent>(TEXT("UpgradeManager"));
-}
 
 void APRGameplayGameState::NotifyRoomEnter(APRRoomController* NewRoom)
 {

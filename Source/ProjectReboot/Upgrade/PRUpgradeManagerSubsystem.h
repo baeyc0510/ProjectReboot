@@ -4,32 +4,51 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "Components/ActorComponent.h"
-#include "PRUpgradeManagerComponent.generated.h"
+#include "Subsystems/GameInstanceSubsystem.h"
+#include "PRUpgradeManagerSubsystem.generated.h"
 
 class URogueliteSubsystem;
 class UPRUpgradeModuleData;
+
+/**
+ * 업그레이드 구매 정보 (세이브/로드용)
+ */
+USTRUCT(BlueprintType)
+struct FPRUpgradePurchaseInfo
+{
+	GENERATED_BODY()
+
+	// 구매한 모듈
+	UPROPERTY(BlueprintReadOnly, Category = "Upgrade")
+	TSoftObjectPtr<UPRUpgradeModuleData> Module;
+
+	// 구매한 레벨
+	UPROPERTY(BlueprintReadOnly, Category = "Upgrade")
+	int32 PurchasedLevel = 0;
+};
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUpgradePurchased, UPRUpgradeModuleData*, Module, int32, NewLevel);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnUpgradeCurrencyChanged, FGameplayTag, CurrencyTag, float, OldValue, float, NewValue);
 
 /**
- * 업그레이드 상태 관리 및 구매 로직을 담당하는 컴포넌트
+ * 업그레이드 상태 관리 및 구매 로직을 담당하는 서브시스템
  */
-UCLASS(meta = (BlueprintSpawnableComponent))
-class PROJECTREBOOT_API UPRUpgradeManagerComponent : public UActorComponent
+UCLASS()
+class PROJECTREBOOT_API UPRUpgradeManagerSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 
 public:
-	UPRUpgradeManagerComponent();
+	/*~ USubsystem Interface ~*/
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	virtual void Deinitialize() override;
 
-protected:
-	/*~ UActorComponent Interface ~*/
-	virtual void BeginPlay() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	/*~ Static Access ~*/
 
-public:
+	// 서브시스템 인스턴스 획득
+	UFUNCTION(BlueprintCallable, Category = "Upgrade", meta = (WorldContext = "WorldContextObject"))
+	static UPRUpgradeManagerSubsystem* Get(const UObject* WorldContextObject);
+
 	/*~ Purchase Operations ~*/
 
 	// 업그레이드 구매 시도
@@ -55,9 +74,16 @@ public:
 	float GetNextLevelCost(UPRUpgradeModuleData* InModule) const;
 
 	/*~ Currency Operations ~*/
+
 	// 화폐 조회
 	UFUNCTION(BlueprintPure, Category = "Upgrade|Currency")
 	float GetCurrency(FGameplayTag CurrencyTag) const;
+
+	/*~ Purchase History ~*/
+
+	// 구매한 모듈 목록 조회 (세이브용)
+	UFUNCTION(BlueprintPure, Category = "Upgrade|History")
+	const TArray<FPRUpgradePurchaseInfo>& GetPurchasedModules() const;
 
 public:
 	/*~ Delegates ~*/
@@ -69,11 +95,11 @@ public:
 	FOnUpgradeCurrencyChanged OnCurrencyChanged;
 
 private:
-	// Subsystem 바인딩
+	// RogueliteSubsystem 바인딩
 	void BindToRogueliteSubsystem();
 	void UnbindFromRogueliteSubsystem();
 
-	// Subsystem 헬퍼
+	// RogueliteSubsystem 헬퍼
 	URogueliteSubsystem* GetRogueliteSubsystem() const;
 
 	// 이벤트 핸들러
@@ -81,5 +107,9 @@ private:
 	void HandleRunStateValueChanged(FGameplayTag Key, float OldValue, float NewValue);
 
 private:
+	// 구매한 모듈 목록 (세이브/로드용)
+	UPROPERTY()
+	TArray<FPRUpgradePurchaseInfo> PurchasedModules;
+
 	bool bIsBoundToSubsystem = false;
 };

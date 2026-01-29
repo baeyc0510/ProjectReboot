@@ -5,9 +5,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/PlayerController.h"
-#include "ProjectReboot/Character/PRPlayerCharacter.h"
-#include "ProjectReboot/Game/PRGameplayGameState.h"
-#include "ProjectReboot/Upgrade/PRUpgradeManagerComponent.h"
+#include "ProjectReboot/UI/PRUIBlueprintLibrary.h"
 #include "ProjectReboot/UI/Upgrade/PRUpgradeViewModel.h"
 #include "ProjectReboot/UI/PRUIManagerSubsystem.h"
 #include "ProjectReboot/UI/ViewModel/PRViewModelSubsystem.h"
@@ -39,37 +37,13 @@ void APRMechanicNPC::OpenUpgradeUI(const APawn* Interactor)
 		return;
 	}
 
-	UWorld* World = GetWorld();
-	if (!IsValid(World))
-	{
-		return;
-	}
-
-	AGameStateBase* GameState = World->GetGameState();
-	if (!IsValid(GameState))
-	{
-		return;
-	}
-
-	UPRUpgradeManagerComponent* UpgradeManager = GameState->FindComponentByClass<UPRUpgradeManagerComponent>();
-	if (!IsValid(UpgradeManager))
-	{
-		return;
-	}
-
 	APlayerController* PlayerController = Interactor->GetController<APlayerController>();
 	if (!IsValid(PlayerController))
 	{
 		return;
 	}
-
-	ULocalPlayer* LocalPlayer = PlayerController->GetLocalPlayer();
-	if (!IsValid(LocalPlayer))
-	{
-		return;
-	}
-
-	UPRViewModelSubsystem* ViewModelSubsystem = LocalPlayer->GetSubsystem<UPRViewModelSubsystem>();
+	
+	UPRViewModelSubsystem* ViewModelSubsystem = UPRUIBlueprintLibrary::GetViewModelSubsystem(PlayerController);
 	if (!IsValid(ViewModelSubsystem))
 	{
 		return;
@@ -80,11 +54,11 @@ void APRMechanicNPC::OpenUpgradeUI(const APawn* Interactor)
 	{
 		return;
 	}
-
-	ViewModel->BindToManager(UpgradeManager);
+	
+	// ViewModel 갱신
 	ViewModel->SetAvailableUpgrades(AvailableUpgrades);
 
-	UPRUIManagerSubsystem* UIManager = LocalPlayer->GetSubsystem<UPRUIManagerSubsystem>();
+	UPRUIManagerSubsystem* UIManager = UPRUIBlueprintLibrary::GetUIManager(PlayerController); 
 	if (!IsValid(UIManager) || !IsValid(UpgradePanelClass))
 	{
 		return;

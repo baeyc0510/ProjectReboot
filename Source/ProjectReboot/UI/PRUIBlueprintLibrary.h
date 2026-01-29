@@ -49,7 +49,7 @@ public:
 	// Global ViewModel 조회 또는 생성
 	UFUNCTION(BlueprintCallable, Category = "ViewModel|Global", meta = (DeterminesOutputType = "ViewModelClass"))
 	static UPRViewModelBase* GetOrCreateGlobalViewModel(APlayerController* OwningPlayer, TSubclassOf<UPRViewModelBase> ViewModelClass);
-
+	
 	// Global ViewModel 등록 해제
 	UFUNCTION(BlueprintCallable, Category = "ViewModel|Global")
 	static bool UnregisterGlobalViewModel(APlayerController* OwningPlayer, TSubclassOf<UPRViewModelBase> ViewModelClass);

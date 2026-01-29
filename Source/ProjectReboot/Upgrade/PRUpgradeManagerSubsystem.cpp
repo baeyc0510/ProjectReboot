@@ -1,29 +1,52 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "PRUpgradeManagerComponent.h"
+#include "PRUpgradeManagerSubsystem.h"
 #include "RogueliteSubsystem.h"
 #include "RogueliteActionData.h"
 #include "PRUpgradeModuleData.h"
 #include "ProjectReboot/PRGameplayTags.h"
 
-UPRUpgradeManagerComponent::UPRUpgradeManagerComponent()
+void UPRUpgradeManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
-	PrimaryComponentTick.bCanEverTick = false;
-}
+	Super::Initialize(Collection);
 
-void UPRUpgradeManagerComponent::BeginPlay()
-{
-	Super::BeginPlay();
+	// RogueliteSubsystem 의존성 추가
+	Collection.InitializeDependency<URogueliteSubsystem>();
+
 	BindToRogueliteSubsystem();
 }
 
-void UPRUpgradeManagerComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+void UPRUpgradeManagerSubsystem::Deinitialize()
 {
 	UnbindFromRogueliteSubsystem();
-	Super::EndPlay(EndPlayReason);
+	PurchasedModules.Empty();
+
+	Super::Deinitialize();
 }
 
-bool UPRUpgradeManagerComponent::TryPurchaseUpgrade(UPRUpgradeModuleData* InModule, FString& OutFailReason)
+UPRUpgradeManagerSubsystem* UPRUpgradeManagerSubsystem::Get(const UObject* WorldContextObject)
+{
+	if (!IsValid(WorldContextObject))
+	{
+		return nullptr;
+	}
+
+	UWorld* World = WorldContextObject->GetWorld();
+	if (!IsValid(World))
+	{
+		return nullptr;
+	}
+
+	UGameInstance* GameInstance = World->GetGameInstance();
+	if (!IsValid(GameInstance))
+	{
+		return nullptr;
+	}
+
+	return GameInstance->GetSubsystem<UPRUpgradeManagerSubsystem>();
+}
+
+bool UPRUpgradeManagerSubsystem::TryPurchaseUpgrade(UPRUpgradeModuleData* InModule, FString& OutFailReason)
 {
 	if (!IsValid(InModule))
 	{
@@ -79,13 +102,33 @@ bool UPRUpgradeManagerComponent::TryPurchaseUpgrade(UPRUpgradeModuleData* InModu
 		return false;
 	}
 
+	// 구매 기록 추가/갱신
+	const int32 NewLevel = CurrentLevel + 1;
+	FPRUpgradePurchaseInfo* ExistingInfo = PurchasedModules.FindByPredicate(
+		[InModule](const FPRUpgradePurchaseInfo& Info)
+		{
+			return Info.Module.Get() == InModule;
+		});
+
+	if (ExistingInfo)
+	{
+		ExistingInfo->PurchasedLevel = NewLevel;
+	}
+	else
+	{
+		FPRUpgradePurchaseInfo NewInfo;
+		NewInfo.Module = InModule;
+		NewInfo.PurchasedLevel = NewLevel;
+		PurchasedModules.Add(NewInfo);
+	}
+
 	// 성공 이벤트 브로드캐스트
-	OnUpgradePurchased.Broadcast(InModule, CurrentLevel + 1);
+	OnUpgradePurchased.Broadcast(InModule, NewLevel);
 
 	return true;
 }
 
-bool UPRUpgradeManagerComponent::CanPurchaseUpgrade(UPRUpgradeModuleData* InModule) const
+bool UPRUpgradeManagerSubsystem::CanPurchaseUpgrade(UPRUpgradeModuleData* InModule) const
 {
 	if (!IsValid(InModule))
 	{
@@ -113,7 +156,7 @@ bool UPRUpgradeManagerComponent::CanPurchaseUpgrade(UPRUpgradeModuleData* InModu
 	return Currency >= Cost;
 }
 
-int32 UPRUpgradeManagerComponent::GetUpgradeLevel(UPRUpgradeModuleData* InModule) const
+int32 UPRUpgradeManagerSubsystem::GetUpgradeLevel(UPRUpgradeModuleData* InModule) const
 {
 	URogueliteSubsystem* Subsystem = GetRogueliteSubsystem();
 	if (!IsValid(Subsystem) || !IsValid(InModule))
@@ -130,7 +173,7 @@ int32 UPRUpgradeManagerComponent::GetUpgradeLevel(UPRUpgradeModuleData* InModule
 	return Subsystem->GetActionStacks(ActionData);
 }
 
-int32 UPRUpgradeManagerComponent::GetMaxLevel(UPRUpgradeModuleData* InModule) const
+int32 UPRUpgradeManagerSubsystem::GetMaxLevel(UPRUpgradeModuleData* InModule) const
 {
 	if (!IsValid(InModule))
 	{
@@ -139,7 +182,7 @@ int32 UPRUpgradeManagerComponent::GetMaxLevel(UPRUpgradeModuleData* InModule) co
 	return InModule->GetMaxStacks();
 }
 
-float UPRUpgradeManagerComponent::GetNextLevelCost(UPRUpgradeModuleData* InModule) const
+float UPRUpgradeManagerSubsystem::GetNextLevelCost(UPRUpgradeModuleData* InModule) const
 {
 	if (!IsValid(InModule))
 	{
@@ -150,7 +193,7 @@ float UPRUpgradeManagerComponent::GetNextLevelCost(UPRUpgradeModuleData* InModul
 	return InModule->GetCostForLevel(CurrentLevel + 1);
 }
 
-float UPRUpgradeManagerComponent::GetCurrency(FGameplayTag CurrencyTag) const
+float UPRUpgradeManagerSubsystem::GetCurrency(FGameplayTag CurrencyTag) const
 {
 	URogueliteSubsystem* Subsystem = GetRogueliteSubsystem();
 	if (!IsValid(Subsystem))
@@ -160,9 +203,14 @@ float UPRUpgradeManagerComponent::GetCurrency(FGameplayTag CurrencyTag) const
 	return Subsystem->GetRunStateValue(CurrencyTag);
 }
 
-void UPRUpgradeManagerComponent::BindToRogueliteSubsystem()
+const TArray<FPRUpgradePurchaseInfo>& UPRUpgradeManagerSubsystem::GetPurchasedModules() const
 {
-	URogueliteSubsystem* Subsystem = URogueliteSubsystem::Get(this);
+	return PurchasedModules;
+}
+
+void UPRUpgradeManagerSubsystem::BindToRogueliteSubsystem()
+{
+	URogueliteSubsystem* Subsystem = GetRogueliteSubsystem();
 	if (!IsValid(Subsystem))
 	{
 		return;
@@ -172,14 +220,14 @@ void UPRUpgradeManagerComponent::BindToRogueliteSubsystem()
 	bIsBoundToSubsystem = true;
 }
 
-void UPRUpgradeManagerComponent::UnbindFromRogueliteSubsystem()
+void UPRUpgradeManagerSubsystem::UnbindFromRogueliteSubsystem()
 {
 	if (!bIsBoundToSubsystem)
 	{
 		return;
 	}
 
-	URogueliteSubsystem* Subsystem = URogueliteSubsystem::Get(this);
+	URogueliteSubsystem* Subsystem = GetRogueliteSubsystem();
 	if (!IsValid(Subsystem))
 	{
 		return;
@@ -189,12 +237,12 @@ void UPRUpgradeManagerComponent::UnbindFromRogueliteSubsystem()
 	bIsBoundToSubsystem = false;
 }
 
-URogueliteSubsystem* UPRUpgradeManagerComponent::GetRogueliteSubsystem() const
+URogueliteSubsystem* UPRUpgradeManagerSubsystem::GetRogueliteSubsystem() const
 {
 	return URogueliteSubsystem::Get(this);
 }
 
-void UPRUpgradeManagerComponent::HandleRunStateValueChanged(FGameplayTag Key, float OldValue, float NewValue)
+void UPRUpgradeManagerSubsystem::HandleRunStateValueChanged(FGameplayTag Key, float OldValue, float NewValue)
 {
 	// Currency 태그인지 확인하고 이벤트 브로드캐스트
 	if (Key.MatchesTag(TAG_Currency))

@@ -7,7 +7,7 @@
 #include "ProjectReboot/UI/ViewModel/PRViewModelBase.h"
 #include "PRUpgradeViewModel.generated.h"
 
-class UPRUpgradeManagerComponent;
+class UPRUpgradeManagerSubsystem;
 class UPRUpgradeModuleData;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnUpgradeViewModelUpdated);
@@ -30,14 +30,6 @@ public:
 	virtual void Deinitialize() override;
 
 	/*~ Initialization ~*/
-
-	// UpgradeManager 바인딩
-	UFUNCTION(BlueprintCallable, Category = "Upgrade|ViewModel")
-	void BindToManager(UPRUpgradeManagerComponent* InManager);
-
-	// UpgradeManager 바인딩 해제
-	UFUNCTION(BlueprintCallable, Category = "Upgrade|ViewModel")
-	void UnbindFromManager();
 
 	// 표시할 업그레이드 목록 설정
 	UFUNCTION(BlueprintCallable, Category = "Upgrade|ViewModel")
@@ -123,6 +115,13 @@ public:
 	FOnUpgradeCurrencyUpdated OnCurrencyUpdated;
 
 private:
+	// Subsystem 바인딩
+	void BindToSubsystem();
+	void UnbindFromSubsystem();
+
+	// Subsystem 헬퍼
+	UPRUpgradeManagerSubsystem* GetUpgradeSubsystem() const;
+
 	// 선택된 업그레이드 정보 갱신
 	void RefreshSelectedUpgradeInfo();
 
@@ -138,9 +137,6 @@ private:
 
 private:
 	UPROPERTY()
-	TWeakObjectPtr<UPRUpgradeManagerComponent> BoundManager;
-
-	UPROPERTY()
 	TArray<UPRUpgradeModuleData*> AvailableUpgrades;
 
 	UPROPERTY()
@@ -151,4 +147,5 @@ private:
 	float NextLevelCost = 0.0f;
 	bool bCanPurchase = false;
 	float CurrentCurrency = 0.0f;
+	bool bIsBoundToSubsystem = false;
 };

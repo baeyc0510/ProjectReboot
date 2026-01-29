@@ -1,53 +1,23 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PRUpgradeViewModel.h"
-#include "ProjectReboot/Upgrade/PRUpgradeManagerComponent.h"
+#include "ProjectReboot/Upgrade/PRUpgradeManagerSubsystem.h"
 #include "ProjectReboot/Upgrade/PRUpgradeModuleData.h"
 
 void UPRUpgradeViewModel::InitializeForPlayer(ULocalPlayer* InLocalPlayer)
 {
 	Super::InitializeForPlayer(InLocalPlayer);
+
+	BindToSubsystem();
 }
 
 void UPRUpgradeViewModel::Deinitialize()
 {
-	UnbindFromManager();
+	UnbindFromSubsystem();
 	AvailableUpgrades.Empty();
 	SelectedUpgrade = nullptr;
 
 	Super::Deinitialize();
-}
-
-void UPRUpgradeViewModel::BindToManager(UPRUpgradeManagerComponent* InManager)
-{
-	if (!IsValid(InManager))
-	{
-		return;
-	}
-
-	// 기존 바인딩 해제
-	UnbindFromManager();
-
-	BoundManager = InManager;
-
-	// 이벤트 구독
-	BoundManager->OnUpgradePurchased.AddDynamic(this, &ThisClass::HandleUpgradePurchased);
-	BoundManager->OnCurrencyChanged.AddDynamic(this, &ThisClass::HandleCurrencyChanged);
-
-	// 초기 화폐 정보 갱신
-	RefreshCurrency();
-}
-
-void UPRUpgradeViewModel::UnbindFromManager()
-{
-	if (!BoundManager.IsValid())
-	{
-		return;
-	}
-
-	BoundManager->OnUpgradePurchased.RemoveDynamic(this, &ThisClass::HandleUpgradePurchased);
-	BoundManager->OnCurrencyChanged.RemoveDynamic(this, &ThisClass::HandleCurrencyChanged);
-	BoundManager.Reset();
 }
 
 void UPRUpgradeViewModel::SetAvailableUpgrades(const TArray<UPRUpgradeModuleData*>& InUpgrades)
@@ -81,60 +51,105 @@ void UPRUpgradeViewModel::SelectUpgrade(UPRUpgradeModuleData* InModule)
 
 void UPRUpgradeViewModel::RequestPurchase()
 {
-	if (!BoundManager.IsValid() || !IsValid(SelectedUpgrade))
+	UPRUpgradeManagerSubsystem* Subsystem = GetUpgradeSubsystem();
+	if (!IsValid(Subsystem) || !IsValid(SelectedUpgrade))
 	{
 		OnPurchaseResult.Broadcast(false, TEXT("No upgrade selected"));
 		return;
 	}
 
 	FString FailReason;
-	bool bSuccess = BoundManager->TryPurchaseUpgrade(SelectedUpgrade, FailReason);
+	bool bSuccess = Subsystem->TryPurchaseUpgrade(SelectedUpgrade, FailReason);
 	OnPurchaseResult.Broadcast(bSuccess, bSuccess ? TEXT("Success") : FailReason);
 }
 
 int32 UPRUpgradeViewModel::GetModuleCurrentLevel(UPRUpgradeModuleData* InModule) const
 {
-	if (!BoundManager.IsValid() || !IsValid(InModule))
+	UPRUpgradeManagerSubsystem* Subsystem = GetUpgradeSubsystem();
+	if (!IsValid(Subsystem) || !IsValid(InModule))
 	{
 		return 0;
 	}
 
-	return BoundManager->GetUpgradeLevel(InModule);
+	return Subsystem->GetUpgradeLevel(InModule);
 }
 
 int32 UPRUpgradeViewModel::GetModuleMaxLevel(UPRUpgradeModuleData* InModule) const
 {
-	if (!BoundManager.IsValid() || !IsValid(InModule))
+	UPRUpgradeManagerSubsystem* Subsystem = GetUpgradeSubsystem();
+	if (!IsValid(Subsystem) || !IsValid(InModule))
 	{
 		return 0;
 	}
 
-	return BoundManager->GetMaxLevel(InModule);
+	return Subsystem->GetMaxLevel(InModule);
 }
 
 float UPRUpgradeViewModel::GetModuleNextLevelCost(UPRUpgradeModuleData* InModule) const
 {
-	if (!BoundManager.IsValid() || !IsValid(InModule))
+	UPRUpgradeManagerSubsystem* Subsystem = GetUpgradeSubsystem();
+	if (!IsValid(Subsystem) || !IsValid(InModule))
 	{
 		return 0.0f;
 	}
 
-	return BoundManager->GetNextLevelCost(InModule);
+	return Subsystem->GetNextLevelCost(InModule);
 }
 
 bool UPRUpgradeViewModel::CanPurchaseModule(UPRUpgradeModuleData* InModule) const
 {
-	if (!BoundManager.IsValid() || !IsValid(InModule))
+	UPRUpgradeManagerSubsystem* Subsystem = GetUpgradeSubsystem();
+	if (!IsValid(Subsystem) || !IsValid(InModule))
 	{
 		return false;
 	}
 
-	return BoundManager->CanPurchaseUpgrade(InModule);
+	return Subsystem->CanPurchaseUpgrade(InModule);
+}
+
+void UPRUpgradeViewModel::BindToSubsystem()
+{
+	UPRUpgradeManagerSubsystem* Subsystem = GetUpgradeSubsystem();
+	if (!IsValid(Subsystem))
+	{
+		return;
+	}
+
+	Subsystem->OnUpgradePurchased.AddDynamic(this, &ThisClass::HandleUpgradePurchased);
+	Subsystem->OnCurrencyChanged.AddDynamic(this, &ThisClass::HandleCurrencyChanged);
+	bIsBoundToSubsystem = true;
+
+	// 초기 화폐 정보 갱신
+	RefreshCurrency();
+}
+
+void UPRUpgradeViewModel::UnbindFromSubsystem()
+{
+	if (!bIsBoundToSubsystem)
+	{
+		return;
+	}
+
+	UPRUpgradeManagerSubsystem* Subsystem = GetUpgradeSubsystem();
+	if (!IsValid(Subsystem))
+	{
+		return;
+	}
+
+	Subsystem->OnUpgradePurchased.RemoveDynamic(this, &ThisClass::HandleUpgradePurchased);
+	Subsystem->OnCurrencyChanged.RemoveDynamic(this, &ThisClass::HandleCurrencyChanged);
+	bIsBoundToSubsystem = false;
+}
+
+UPRUpgradeManagerSubsystem* UPRUpgradeViewModel::GetUpgradeSubsystem() const
+{
+	return UPRUpgradeManagerSubsystem::Get(this);
 }
 
 void UPRUpgradeViewModel::RefreshSelectedUpgradeInfo()
 {
-	if (!IsValid(SelectedUpgrade) || !BoundManager.IsValid())
+	UPRUpgradeManagerSubsystem* Subsystem = GetUpgradeSubsystem();
+	if (!IsValid(SelectedUpgrade) || !IsValid(Subsystem))
 	{
 		CurrentLevel = 0;
 		MaxLevel = 0;
@@ -143,22 +158,23 @@ void UPRUpgradeViewModel::RefreshSelectedUpgradeInfo()
 		return;
 	}
 
-	CurrentLevel = BoundManager->GetUpgradeLevel(SelectedUpgrade);
-	MaxLevel = BoundManager->GetMaxLevel(SelectedUpgrade);
-	NextLevelCost = BoundManager->GetNextLevelCost(SelectedUpgrade);
-	bCanPurchase = BoundManager->CanPurchaseUpgrade(SelectedUpgrade);
+	CurrentLevel = Subsystem->GetUpgradeLevel(SelectedUpgrade);
+	MaxLevel = Subsystem->GetMaxLevel(SelectedUpgrade);
+	NextLevelCost = Subsystem->GetNextLevelCost(SelectedUpgrade);
+	bCanPurchase = Subsystem->CanPurchaseUpgrade(SelectedUpgrade);
 
 	RefreshCurrency();
 }
 
 void UPRUpgradeViewModel::RefreshCurrency()
 {
-	if (!BoundManager.IsValid() || !IsValid(SelectedUpgrade))
+	UPRUpgradeManagerSubsystem* Subsystem = GetUpgradeSubsystem();
+	if (!IsValid(Subsystem) || !IsValid(SelectedUpgrade))
 	{
 		return;
 	}
 
-	float NewCurrency = BoundManager->GetCurrency(SelectedUpgrade->CurrencyTag);
+	float NewCurrency = Subsystem->GetCurrency(SelectedUpgrade->CurrencyTag);
 	if (CurrentCurrency != NewCurrency)
 	{
 		CurrentCurrency = NewCurrency;
@@ -177,11 +193,13 @@ void UPRUpgradeViewModel::HandleUpgradePurchased(UPRUpgradeModuleData* InModule,
 
 void UPRUpgradeViewModel::HandleCurrencyChanged(FGameplayTag CurrencyTag, float OldValue, float NewValue)
 {
+	UPRUpgradeManagerSubsystem* Subsystem = GetUpgradeSubsystem();
+
 	// 현재 선택된 업그레이드의 화폐 태그와 일치하면 갱신
 	if (IsValid(SelectedUpgrade) && SelectedUpgrade->CurrencyTag == CurrencyTag)
 	{
 		CurrentCurrency = NewValue;
-		bCanPurchase = BoundManager.IsValid() && BoundManager->CanPurchaseUpgrade(SelectedUpgrade);
+		bCanPurchase = IsValid(Subsystem) && Subsystem->CanPurchaseUpgrade(SelectedUpgrade);
 
 		OnCurrencyUpdated.Broadcast(CurrentCurrency);
 		OnViewModelUpdated.Broadcast();

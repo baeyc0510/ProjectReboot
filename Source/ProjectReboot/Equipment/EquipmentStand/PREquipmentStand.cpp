@@ -3,9 +3,8 @@
 #include "PREquipmentStand.h"
 #include "PREquipmentStandManager.h"
 #include "ProjectReboot/Equipment/PREquipmentActionSet.h"
-#include "ProjectReboot/Equipment/PREquipActionData.h"
-#include "ProjectReboot/Equipment/EquipmentInstance.h"
 #include "ProjectReboot/Interaction/PRBillboardWidgetComponent.h"
+#include "ProjectReboot/UI/Equipment/PREquipmentInfoWidget.h"
 
 APREquipmentStand::APREquipmentStand()
 {
@@ -14,30 +13,20 @@ APREquipmentStand::APREquipmentStand()
 	RootSceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootSceneComponent"));
 	SetRootComponent(RootSceneComponent);
 
-	PreviewAttachComponent = CreateDefaultSubobject<USceneComponent>(TEXT("PreviewAttachComponent"));
-	PreviewAttachComponent->SetupAttachment(RootSceneComponent);
-
 	InteractionPromptWidget = CreateDefaultSubobject<UPRBillboardWidgetComponent>(TEXT("InteractionPromptWidget"));
 	InteractionPromptWidget->SetupAttachment(RootSceneComponent);
-	InteractionPromptWidget->SetVisibility(false);
 }
 
 void APREquipmentStand::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-
-	InitializePreviewVisuals();
+	InitializeInfoWidget();
 }
 
-void APREquipmentStand::EndPlay(const EEndPlayReason::Type EndPlayReason)
+void APREquipmentStand::BeginPlay()
 {
-	if (IsValid(PreviewInstance))
-	{
-		PreviewInstance->Uninitialize();
-		PreviewInstance = nullptr;
-	}
-
-	Super::EndPlay(EndPlayReason);
+	Super::BeginPlay();
+	InteractionPromptWidget->SetVisibility(false);
 }
 
 bool APREquipmentStand::CanInteract(APawn* Interactor) const
@@ -95,35 +84,29 @@ void APREquipmentStand::SetOwningManager(APREquipmentStandManager* Manager)
 	OwningManager = Manager;
 }
 
-void APREquipmentStand::InitializePreviewVisuals()
+void APREquipmentStand::InitializeInfoWidget()
 {
-	if (!IsValid(EquipmentActionSet) || !IsValid(EquipmentActionSet->PrimaryAction))
+	if (!IsValidChecked(InteractionPromptWidget) || !IsValidChecked(InfoWidgetClass))
 	{
 		return;
 	}
 
-	UPREquipActionData* PrimaryAction = EquipmentActionSet->PrimaryAction;
-
-	// EquipmentInstanceType이 설정되어 있으면 해당 클래스 사용, 없으면 기본 클래스
-	TSubclassOf<UEquipmentInstance> InstanceClass = PrimaryAction->EquipmentInstanceType;
-	if (!InstanceClass)
+	if (UPREquipmentInfoWidget* PrevWidget =  Cast<UPREquipmentInfoWidget>(InteractionPromptWidget->GetWidget()))
 	{
-		InstanceClass = UEquipmentInstance::StaticClass();
+		PrevWidget->SetEquipmentInfo(EquipmentActionSet);
+		return;
 	}
 
-	// PreviewInstance 생성 및 초기화
-	PreviewInstance = NewObject<UEquipmentInstance>(this, InstanceClass);
-	PreviewInstance->Initialize(PreviewAttachComponent, PrimaryAction);
+	// 위젯 클래스 설정
+	InteractionPromptWidget->SetWidgetClass(InfoWidgetClass);
 
-	// 파트 부착
-	for (UPREquipActionData* PartAction : EquipmentActionSet->PartActions)
+	// 위젯 강제 생성 (visibility가 false일 때 지연 생성 방지)
+	InteractionPromptWidget->InitWidget();
+
+	// 위젯 인스턴스 가져와서 정보 설정
+	UPREquipmentInfoWidget* InfoWidget = Cast<UPREquipmentInfoWidget>(InteractionPromptWidget->GetWidget());
+	if (IsValid(InfoWidget) && IsValid(EquipmentActionSet))
 	{
-		if (IsValid(PartAction))
-		{
-			PreviewInstance->AttachPart(PartAction);
-		}
+		InfoWidget->SetEquipmentInfo(EquipmentActionSet);
 	}
-
-	// 비주얼 새로고침
-	PreviewInstance->RefreshVisuals();
 }

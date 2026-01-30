@@ -8,10 +8,9 @@
 #include "PREquipmentStand.generated.h"
 
 class UPREquipmentActionSet;
-class UPREquipActionData;
-class UEquipmentInstance;
 class APREquipmentStandManager;
 class UPRBillboardWidgetComponent;
+class UPREquipmentInfoWidget;
 
 /**
  * 상호작용 가능한 장비 거치대 액터
@@ -27,8 +26,7 @@ public:
 protected:
 	/*~ AActor Interface ~*/
 	virtual void PostInitializeComponents() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
+	virtual void BeginPlay() override;
 public:
 	/*~ IPRInteractableInterface ~*/
 	virtual bool CanInteract(APawn* Interactor) const override;
@@ -51,12 +49,12 @@ public:
 	// 소속 매니저 설정
 	void SetOwningManager(APREquipmentStandManager* Manager);
 
-private:
-	// 장비 프리뷰 시각화 초기화
-	void InitializePreviewVisuals();
+	// 장비 정보 위젯 초기화
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	void InitializeInfoWidget();
 
 public:
-	// 거치대가 보유한 장비 부품 목록 (장착 순서대로)
+	// 거치대가 보유한 장비 세트
 	UPROPERTY(EditAnywhere, Category = "Equipment")
 	TObjectPtr<UPREquipmentActionSet> EquipmentActionSet;
 
@@ -73,17 +71,13 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<USceneComponent> RootSceneComponent;
 
-	// 장비 프리뷰용 부착 대상 컴포넌트
-	UPROPERTY(VisibleAnywhere, Category = "Components")
-	TObjectPtr<USceneComponent> PreviewAttachComponent;
-
 	// 상호작용 프롬프트 빌보드 위젯
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<UPRBillboardWidgetComponent> InteractionPromptWidget;
 
-	// 장비 프리뷰 인스턴스 (시각적 표현 담당)
-	UPROPERTY(Transient)
-	TObjectPtr<UEquipmentInstance> PreviewInstance;
+	// 장비 정보 위젯 클래스
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UPREquipmentInfoWidget> InfoWidgetClass;
 
 	// 소속 매니저 (자동 설정)
 	UPROPERTY(Transient)

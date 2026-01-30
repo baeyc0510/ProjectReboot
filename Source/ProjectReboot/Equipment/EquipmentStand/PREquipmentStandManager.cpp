@@ -2,6 +2,7 @@
 
 #include "PREquipmentStandManager.h"
 #include "PREquipmentStand.h"
+#include "PREquipmentPreviewActor.h"
 #include "RogueliteBlueprintLibrary.h"
 #include "ProjectReboot/Equipment/PREquipmentActionSet.h"
 #include "ProjectReboot/Equipment/PREquipmentBlueprintLibrary.h"
@@ -26,16 +27,31 @@ void APREquipmentStandManager::SelectStand(APREquipmentStand* Stand, APawn* Play
 	}
 
 	// 이미 선택된 거치대인지 확인
-	if (CurrentSelectedStand == Stand)
+	if (CurrentSelectedStandInfo.EquipmentStand == Stand)
 	{
 		return;
 	}
 
 	// 기존 선택된 거치대가 있으면 해제
-	if (IsValid(CurrentSelectedStand))
+	if (IsValid(CurrentSelectedStandInfo.EquipmentStand))
 	{
-		CurrentSelectedStand->Deselect();
-		UnequipFromActor(PlayerPawn, CurrentSelectedStand->GetEquipmentActionSet());
+		CurrentSelectedStandInfo.EquipmentStand->Deselect();
+		UnequipFromActor(PlayerPawn, CurrentSelectedStandInfo.EquipmentStand->GetEquipmentActionSet());
+
+		// 기존 PreviewActor 다시 표시
+		if (IsValid(CurrentSelectedStandInfo.PreviewActor))
+		{
+			CurrentSelectedStandInfo.PreviewActor->SetActorHiddenInGame(false);
+		}
+	}
+
+	// 새 거치대의 Info 찾기
+	FPREquipmentStandInfo* NewStandInfo = ManagedStandInfoList.FindByPredicate(
+		[Stand](const FPREquipmentStandInfo& Info) { return Info.EquipmentStand == Stand; });
+
+	if (!NewStandInfo)
+	{
+		return;
 	}
 
 	// 새 장비 장착
@@ -43,27 +59,40 @@ void APREquipmentStandManager::SelectStand(APREquipmentStand* Stand, APawn* Play
 
 	// 새 거치대 선택
 	Stand->Select();
-	CurrentSelectedStand = Stand;
+	CurrentSelectedStandInfo = *NewStandInfo;
+
+	// 새 PreviewActor 숨김
+	if (IsValid(CurrentSelectedStandInfo.PreviewActor))
+	{
+		CurrentSelectedStandInfo.PreviewActor->SetActorHiddenInGame(true);
+	}
 }
 
 void APREquipmentStandManager::DeselectCurrentStand()
 {
-	if (!IsValid(CurrentSelectedStand))
+	if (!IsValid(CurrentSelectedStandInfo.EquipmentStand))
 	{
 		return;
 	}
 
-	CurrentSelectedStand->Deselect();
-	CurrentSelectedStand = nullptr;
+	CurrentSelectedStandInfo.EquipmentStand->Deselect();
+
+	// PreviewActor 다시 표시
+	if (IsValid(CurrentSelectedStandInfo.PreviewActor))
+	{
+		CurrentSelectedStandInfo.PreviewActor->SetActorHiddenInGame(false);
+	}
+
+	CurrentSelectedStandInfo = FPREquipmentStandInfo();
 }
 
 void APREquipmentStandManager::InitializeStands()
 {
-	for (APREquipmentStand* Stand : ManagedStands)
+	for (const FPREquipmentStandInfo& StandInfo : ManagedStandInfoList)
 	{
-		if (IsValid(Stand))
+		if (IsValid(StandInfo.EquipmentStand))
 		{
-			Stand->SetOwningManager(this);
+			StandInfo.EquipmentStand->SetOwningManager(this);
 		}
 	}
 }

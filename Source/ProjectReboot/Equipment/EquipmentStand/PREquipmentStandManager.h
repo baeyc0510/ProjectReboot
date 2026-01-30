@@ -7,9 +7,23 @@
 #include "GameFramework/Actor.h"
 #include "PREquipmentStandManager.generated.h"
 
+class APREquipmentPreviewActor;
 class UPREquipmentActionSet;
 class APREquipmentStand;
 class UPREquipActionData;
+
+
+USTRUCT(BlueprintType)
+struct FPREquipmentStandInfo
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(EditAnywhere, Category = "Equipment Stands")
+	TObjectPtr<APREquipmentStand> EquipmentStand;
+	
+	UPROPERTY(EditAnywhere, Category = "Equipment Stands")
+	TObjectPtr<APREquipmentPreviewActor> PreviewActor;
+};
 
 /**
  * 여러 장비 거치대를 그룹으로 관리하는 매니저 액터
@@ -49,9 +63,9 @@ private:
 public:
 	// 관리하는 거치대 목록 (레벨 디자이너가 설정)
 	UPROPERTY(EditAnywhere, Category = "Equipment Stands")
-	TArray<TObjectPtr<APREquipmentStand>> ManagedStands;
+	TArray<FPREquipmentStandInfo> ManagedStandInfoList;
 	
 	// 현재 선택된 거치대 (하나만 선택 가능)
 	UPROPERTY(BlueprintReadOnly, Category = "State")
-	TObjectPtr<APREquipmentStand> CurrentSelectedStand;
+	FPREquipmentStandInfo CurrentSelectedStandInfo;
 };

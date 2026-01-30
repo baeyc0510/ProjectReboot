@@ -18,6 +18,7 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Weapon_Type);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Weapon_Type_Bullet);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Weapon_Type_Beam);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Weapon_Type_Missile);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Weapon_Type_Preview);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Weapon);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Weapon_Primary);

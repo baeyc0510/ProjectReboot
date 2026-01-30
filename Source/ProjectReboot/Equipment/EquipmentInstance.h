@@ -9,6 +9,7 @@
 #include "EquipmentInstance.generated.h"
 
 class UPREquipActionData;
+class UMeshComponent;
 
 USTRUCT()
 struct FSpawnedVisualEntry
@@ -58,6 +59,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	virtual void DestroyAllVisuals();
 
+	// 태그 추가
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	void AddDynamicTag(FGameplayTag TagToAdd);
+	
 	// 태그 조회
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	const FGameplayTagContainer& GetGrantedTags() const { return EquipmentTags.GetTags(); }
@@ -86,6 +91,7 @@ protected:
 	FEquipmentMeshSpawnInfo SelectSpawnInfo(const FEquipmentVisualSettings& VisualSettings) const;
 	USceneComponent* CreateMeshComponent(const FEquipmentMeshSpawnInfo& SpawnInfo, bool bIsPrimaryMesh);
 	void ApplyAttachment(USceneComponent* Component, const FEquipmentAttachmentInfo& AttachInfo, bool bIsChild);
+	void ApplyMaterialOverrides(UMeshComponent* MeshComponent, const TMap<int32, UMaterialInterface*>& MaterialOverrides);
 
 protected:
 	UPROPERTY()

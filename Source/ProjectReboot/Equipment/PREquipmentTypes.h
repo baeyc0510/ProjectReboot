@@ -8,6 +8,7 @@
 /*~ 전방 선언 ~*/
 class UStaticMesh;
 class USkeletalMesh;
+class UMaterialInterface;
 
 // 장비 부착 소켓 정보
 USTRUCT(BlueprintType)
@@ -61,9 +62,9 @@ struct FEquipmentMeshSpawnInfo
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
 	FEquipmentAttachmentInfo AttachmentInfo;
 
-	// TODO: 머티리얼 오버라이드 (인덱스별)
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
-	// TMap<int32, TObjectPtr<UMaterialInterface>> MaterialOverrides;
+	// 머티리얼 오버라이드 (슬롯 인덱스 -> 머티리얼)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
+	TMap<int32, UMaterialInterface*> MaterialOverrides;
 	
 public:
 	bool IsValid() const

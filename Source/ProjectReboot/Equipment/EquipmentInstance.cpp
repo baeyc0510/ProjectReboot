@@ -2,6 +2,7 @@
 
 
 #include "EquipmentInstance.h"
+#include "Components/MeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "ProjectReboot/Equipment/PREquipActionData.h"
@@ -115,7 +116,7 @@ void UEquipmentInstance::RefreshVisuals()
 
         FEquipmentMeshSpawnInfo NewSpawnInfo = SelectSpawnInfo(Data->EquipmentVisualSettings);
 
-        // 변경 여부 체크 (메시 포인터로 간단 비교)
+        // 변경 여부 체크
         bool bNeedsRefresh = false;
 
         if (NewSpawnInfo.MeshType != Entry.UsedSpawnInfo.MeshType)
@@ -129,6 +130,10 @@ void UEquipmentInstance::RefreshVisuals()
         }
         else if (NewSpawnInfo.MeshType == EEquipmentMeshType::SkeletalMesh &&
                  NewSpawnInfo.SkeletalMesh != Entry.UsedSpawnInfo.SkeletalMesh)
+        {
+            bNeedsRefresh = true;
+        }
+        else if (NewSpawnInfo.MaterialOverrides.OrderIndependentCompareEqual(Entry.UsedSpawnInfo.MaterialOverrides) == false)
         {
             bNeedsRefresh = true;
         }
@@ -166,6 +171,12 @@ void UEquipmentInstance::DestroyAllVisuals()
 
     SpawnedVisuals.Empty();
     EquipmentTags.Reset();
+}
+
+void UEquipmentInstance::AddDynamicTag(FGameplayTag TagToAdd)
+{
+    EquipmentTags.AddTag(TagToAdd);
+    OnEquipmentTagsChanged();
 }
 
 FEquipmentMeshSpawnInfo UEquipmentInstance::SelectSpawnInfo(const FEquipmentVisualSettings& VisualSettings) const
@@ -211,6 +222,7 @@ USceneComponent* UEquipmentInstance::CreateMeshComponent(const FEquipmentMeshSpa
         {
             UStaticMeshComponent* StaticMeshComp = NewObject<UStaticMeshComponent>(Owner);
             StaticMeshComp->SetStaticMesh(SpawnInfo.StaticMesh);
+            ApplyMaterialOverrides(StaticMeshComp, SpawnInfo.MaterialOverrides);
             NewComponent = StaticMeshComp;
         }
         break;
@@ -220,6 +232,7 @@ USceneComponent* UEquipmentInstance::CreateMeshComponent(const FEquipmentMeshSpa
         {
             USkeletalMeshComponent* SkelMeshComp = NewObject<USkeletalMeshComponent>(Owner);
             SkelMeshComp->SetSkeletalMesh(SpawnInfo.SkeletalMesh);
+            ApplyMaterialOverrides(SkelMeshComp, SpawnInfo.MaterialOverrides);
             NewComponent = SkelMeshComp;
         }
         break;
@@ -295,4 +308,20 @@ bool UEquipmentInstance::HasVisual(UPREquipActionData* InActionData) const
 void UEquipmentInstance::OnEquipmentTagsChanged()
 {
     // 하위 클래스에서 override하여 태그 변경에 따른 처리 수행
+}
+
+void UEquipmentInstance::ApplyMaterialOverrides(UMeshComponent* MeshComponent, const TMap<int32, UMaterialInterface*>& MaterialOverrides)
+{
+    if (!IsValid(MeshComponent))
+    {
+        return;
+    }
+
+    for (const auto& Pair : MaterialOverrides)
+    {
+        if (IsValid(Pair.Value))
+        {
+            MeshComponent->SetMaterial(Pair.Key, Pair.Value);
+        }
+    }
 }

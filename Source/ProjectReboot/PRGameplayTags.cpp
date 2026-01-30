@@ -15,6 +15,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type, "Equipment.Weapon.Type");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type_Bullet, "Equipment.Weapon.Type.Bullet");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type_Beam, "Equipment.Weapon.Type.Beam");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type_Missile, "Equipment.Weapon.Type.Missile");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type_Preview, "Equipment.Weapon.Type.Preview");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot_Weapon, "Equipment.Slot.Weapon");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot_Weapon_Primary, "Equipment.Slot.Weapon.Primary");

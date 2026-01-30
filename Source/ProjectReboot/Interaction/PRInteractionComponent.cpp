@@ -4,6 +4,7 @@
 
 #include "Engine/World.h"
 #include "Engine/EngineTypes.h"
+#include "Engine/OverlapResult.h"
 #include "GameFramework/Actor.h"
 #include "ProjectReboot/Character/PRPlayerCharacter.h"
 #include "ProjectReboot/Interaction/PRInteractableInterface.h"
@@ -104,28 +105,36 @@ void UPRInteractionComponent::UpdateInteractable()
 		return;
 	}
 
-	const FVector Start = OwnerActor->GetActorLocation();
-	const FVector End = Start + OwnerActor->GetActorForwardVector() * InteractionDistance;
+	const FVector PlayerLocation = OwnerActor->GetActorLocation();
 
+	// Sphere Overlap으로 범위 내 모든 대상 검출
 	FCollisionQueryParams Params(SCENE_QUERY_STAT(PRInteractionComponent), false, OwnerActor);
-	FHitResult HitResult;
-	const bool bHit = World->SweepSingleByChannel(
-		HitResult,
-		Start,
-		End,
+	TArray<FOverlapResult> OverlapResults;
+	World->OverlapMultiByChannel(
+		OverlapResults,
+		PlayerLocation,
 		FQuat::Identity,
 		ECC_Visibility,
-		FCollisionShape::MakeSphere(InteractionRadius),
+		FCollisionShape::MakeSphere(InteractionDistance),
 		Params);
 
-	// 포커스 대상 탐지 (인터페이스 구현 여부만 확인)
+	// 범위 내에서 가장 가까운 상호작용 대상 찾기, TODO: 별도 Interaction 채널 사용?
 	AActor* NewFocusedActor = nullptr;
-	if (bHit)
+	float ClosestDistanceSq = FLT_MAX;
+
+	for (const FOverlapResult& Result : OverlapResults)
 	{
-		AActor* HitActor = HitResult.GetActor();
-		if (IsValid(HitActor) && HitActor->Implements<UPRInteractableInterface>())
+		AActor* OverlapActor = Result.GetActor();
+		if (!IsValid(OverlapActor) || !OverlapActor->Implements<UPRInteractableInterface>())
 		{
-			NewFocusedActor = HitActor;
+			continue;
+		}
+
+		const float DistanceSq = FVector::DistSquared(PlayerLocation, OverlapActor->GetActorLocation());
+		if (DistanceSq < ClosestDistanceSq)
+		{
+			ClosestDistanceSq = DistanceSq;
+			NewFocusedActor = OverlapActor;
 		}
 	}
 

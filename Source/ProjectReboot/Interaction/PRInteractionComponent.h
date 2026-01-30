@@ -38,6 +38,18 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Interaction")
 	AActor* GetCurrentInteractable() const;
 
+	// 현재 포커스된 대상 반환 (CanInteract 여부와 무관)
+	UFUNCTION(BlueprintPure, Category = "Interaction")
+	AActor* GetCurrentFocusedActor() const;
+
+	// 현재 대상의 프롬프트 텍스트 반환
+	UFUNCTION(BlueprintPure, Category = "Interaction")
+	FText GetCurrentInteractionText() const;
+
+	// 현재 상호작용 가능 여부 (포커스된 대상이 있고 CanInteract == true)
+	UFUNCTION(BlueprintPure, Category = "Interaction")
+	bool CanCurrentlyInteract() const;
+
 	// 상호작용 대상 변경 이벤트
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FOnInteractableChanged OnInteractableChanged;
@@ -61,6 +73,12 @@ protected:
 	float InteractionRadius = 50.0f;
 
 private:
-	// 현재 상호작용 대상
+	// 포커스 대상 변경 처리
+	void SetFocusedActor(AActor* NewActor);
+
+	// 현재 포커스된 대상 (CanInteract 여부와 무관)
+	TWeakObjectPtr<AActor> CurrentFocusedActor;
+
+	// 현재 상호작용 가능 대상 (CanInteract == true인 경우만)
 	TWeakObjectPtr<AActor> CurrentInteractable;
 };

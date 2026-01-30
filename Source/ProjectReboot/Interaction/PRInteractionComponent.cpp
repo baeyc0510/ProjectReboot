@@ -54,6 +54,28 @@ AActor* UPRInteractionComponent::GetCurrentInteractable() const
 	return CurrentInteractable.Get();
 }
 
+AActor* UPRInteractionComponent::GetCurrentFocusedActor() const
+{
+	return CurrentFocusedActor.Get();
+}
+
+FText UPRInteractionComponent::GetCurrentInteractionText() const
+{
+	if (AActor* Actor = CurrentFocusedActor.Get())
+	{
+		if (IPRInteractableInterface* Interface = Cast<IPRInteractableInterface>(Actor))
+		{
+			return Interface->GetInteractionText();
+		}
+	}
+	return FText::GetEmpty();
+}
+
+bool UPRInteractionComponent::CanCurrentlyInteract() const
+{
+	return CurrentInteractable.IsValid();
+}
+
 void UPRInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	FActorComponentTickFunction* ThisTickFunction)
 {
@@ -96,17 +118,31 @@ void UPRInteractionComponent::UpdateInteractable()
 		FCollisionShape::MakeSphere(InteractionRadius),
 		Params);
 
-	AActor* NewInteractable = nullptr;
+	// 포커스 대상 탐지 (인터페이스 구현 여부만 확인)
+	AActor* NewFocusedActor = nullptr;
 	if (bHit)
 	{
 		AActor* HitActor = HitResult.GetActor();
 		if (IsValid(HitActor) && HitActor->Implements<UPRInteractableInterface>())
 		{
-			IPRInteractableInterface* InteractableInterface = Cast<IPRInteractableInterface>(HitActor);
-			if (InteractableInterface && InteractableInterface->CanInteract(Player))
-			{
-				NewInteractable = HitActor;
-			}
+			NewFocusedActor = HitActor;
+		}
+	}
+
+	// 포커스 대상 변경 시 이벤트 호출
+	if (CurrentFocusedActor.Get() != NewFocusedActor)
+	{
+		SetFocusedActor(NewFocusedActor);
+	}
+
+	// 상호작용 가능 대상 (CanInteract 체크)
+	AActor* NewInteractable = nullptr;
+	if (NewFocusedActor)
+	{
+		IPRInteractableInterface* InteractableInterface = Cast<IPRInteractableInterface>(NewFocusedActor);
+		if (InteractableInterface && InteractableInterface->CanInteract(Player))
+		{
+			NewInteractable = NewFocusedActor;
 		}
 	}
 
@@ -114,5 +150,30 @@ void UPRInteractionComponent::UpdateInteractable()
 	{
 		CurrentInteractable = NewInteractable;
 		OnInteractableChanged.Broadcast(NewInteractable);
+	}
+}
+
+void UPRInteractionComponent::SetFocusedActor(AActor* NewActor)
+{
+	APawn* OwnerPawn = Cast<APawn>(GetOwner());
+
+	// 이전 대상에게 포커스 상실 알림
+	if (AActor* OldActor = CurrentFocusedActor.Get())
+	{
+		if (IPRInteractableInterface* Interface = Cast<IPRInteractableInterface>(OldActor))
+		{
+			Interface->OnLoseInteractFocus(OwnerPawn);
+		}
+	}
+
+	CurrentFocusedActor = NewActor;
+
+	// 새 대상에게 포커스 획득 알림
+	if (NewActor)
+	{
+		if (IPRInteractableInterface* Interface = Cast<IPRInteractableInterface>(NewActor))
+		{
+			Interface->OnGainInteractFocus(OwnerPawn);
+		}
 	}
 }

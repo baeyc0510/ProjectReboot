@@ -452,27 +452,33 @@ void UPREquipmentManagerComponent::Unequip_Internal(FGameplayTag SlotTag, bool b
 	UPREquipActionData* ActionData = Entry->ActionData;
 
 	// 애니메이션 언링크
-	if (USkeletalMeshComponent* SkeletalMeshComp = Cast<USkeletalMeshComponent>(GetAttachTarget()))
+	if (ActionData)
 	{
-		TArray<TSubclassOf<UAnimInstance>>& AnimLayersToLink = ActionData->EquipmentVisualSettings.AnimLayersToLink;
-		for (auto& Link : AnimLayersToLink)
+		if (USkeletalMeshComponent* SkeletalMeshComp = Cast<USkeletalMeshComponent>(GetAttachTarget()))
 		{
-			SkeletalMeshComp->UnlinkAnimClassLayers(Link);
+			TArray<TSubclassOf<UAnimInstance>>& AnimLayersToLink = ActionData->EquipmentVisualSettings.AnimLayersToLink;
+			for (auto& Link : AnimLayersToLink)
+			{
+				SkeletalMeshComp->UnlinkAnimClassLayers(Link);
+			}
 		}
 	}
 	
-	if (IsParentEquipmentSlot(SlotTag))
+	if (Instance)
 	{
-		Instance->Uninitialize();
-	}
-	else
-	{
-		Instance->DetachPart(ActionData);
-		if (bRefreshVisuals)
+		if (IsParentEquipmentSlot(SlotTag))
 		{
-			Instance->RefreshVisuals();	
+			Instance->Uninitialize();
 		}
-		Entry->Instance = nullptr;
+		else
+		{
+			Instance->DetachPart(ActionData);
+			if (bRefreshVisuals)
+			{
+				Instance->RefreshVisuals();	
+			}
+			Entry->Instance = nullptr;
+		}
 	}
 	
 	Slots.Remove(SlotTag);

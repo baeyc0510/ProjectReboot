@@ -5,6 +5,7 @@
 #include "EquipmentInstance.h"
 #include "PREquipmentInterface.h"
 #include "PREquipmentManagerComponent.h"
+#include "RogueliteBlueprintLibrary.h"
 #include "ProjectReboot/Equipment/PREquipActionData.h"
 
 
@@ -151,5 +152,32 @@ void UPREquipmentBlueprintLibrary::UnequipSlot(AActor* Target, FGameplayTag& Slo
 	}
 	
 	EquipmentManager->Unequip(SlotTag);
+}
+
+void UPREquipmentBlueprintLibrary::RemoveEquipmentInstance(AActor* Target, FGameplayTag SlotTag)
+{
+	if (!IsValid(Target) || !SlotTag.IsValid())
+	{
+		return;
+	}
+	
+	UPREquipmentManagerComponent* EquipmentManager = GetEquipmentManager(Target);
+	if (!EquipmentManager)
+	{
+		return;
+	}
+	
+	UEquipmentInstance* EquipmentInstance = EquipmentManager->GetEquipmentInstance(SlotTag);
+	if (!EquipmentInstance)
+	{
+		return;
+	}
+	
+	TArray<UPREquipActionData*> AllParts = EquipmentInstance->GetAllAttachedActions();
+	
+	for (UPREquipActionData* PartAction : AllParts)
+	{
+		URogueliteBlueprintLibrary::RemoveAction(Target, PartAction);
+	}
 }
 

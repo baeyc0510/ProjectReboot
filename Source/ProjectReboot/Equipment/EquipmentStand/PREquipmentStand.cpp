@@ -46,7 +46,14 @@ void APREquipmentStand::Interact(APawn* Interactor)
 
 FText APREquipmentStand::GetInteractionText() const
 {
-	return NSLOCTEXT("Interaction", "SelectEquipment", "장비 선택");
+	return InteractionDisplayText;
+}
+
+void APREquipmentStand::GetInteractionInfo(APawn* Interactor, FPRInteractionInfo& OutInfo) const
+{
+	OutInfo = FPRInteractionInfo();
+	OutInfo.DisplayText = GetInteractionText();
+	OutInfo.bIsEnabled = CanInteract(Interactor);
 }
 
 void APREquipmentStand::OnGainInteractFocus(APawn* Interactor)

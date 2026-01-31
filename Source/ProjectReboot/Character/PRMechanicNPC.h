@@ -30,6 +30,9 @@ public:
 	// 상호작용 UI 텍스트 반환
 	virtual FText GetInteractionText() const override;
 
+	// 상호작용 UI 정보 반환
+	virtual void GetInteractionInfo(APawn* Interactor, FPRInteractionInfo& OutInfo) const override;
+
 protected:
 	// 업그레이드 UI 열기
 	void OpenUpgradeUI(const APawn* Interactor);

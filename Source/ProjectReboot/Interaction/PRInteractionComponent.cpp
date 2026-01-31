@@ -6,13 +6,26 @@
 #include "Engine/EngineTypes.h"
 #include "Engine/OverlapResult.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/PlayerController.h"
 #include "ProjectReboot/Character/PRPlayerCharacter.h"
 #include "ProjectReboot/Interaction/PRInteractableInterface.h"
+#include "ProjectReboot/UI/Interaction/PRInteractionViewModel.h"
+#include "ProjectReboot/UI/ViewModel/PRViewModelSubsystem.h"
 
 UPRInteractionComponent::UPRInteractionComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.TickInterval = 0.1f;
+}
+
+void UPRInteractionComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// 상호작용 UI ViewModel 초기화
+	APawn* OwnerPawn = Cast<APawn>(GetOwner());
+	InitializeInteractionViewModel(OwnerPawn);
+	UpdateInteractionViewModel(OwnerPawn);
 }
 
 void UPRInteractionComponent::InitializeSettings(float InDistance, float InRadius)
@@ -106,8 +119,24 @@ void UPRInteractionComponent::UpdateInteractable()
 	}
 
 	const FVector PlayerLocation = OwnerActor->GetActorLocation();
+	APlayerController* PlayerController = Cast<APlayerController>(Player->GetController());
+	if (!IsValid(PlayerController))
+	{
+		return;
+	}
 
-	// Sphere Overlap으로 범위 내 모든 대상 검출
+	// 카메라 정보
+	FVector ViewLocation;
+	FRotator ViewRotation;
+	PlayerController->GetPlayerViewPoint(ViewLocation, ViewRotation);
+	const FVector ViewForward = ViewRotation.Vector();
+
+	// 화면 크기
+	int32 ViewportX = 0;
+	int32 ViewportY = 0;
+	PlayerController->GetViewportSize(ViewportX, ViewportY);
+
+	// Sphere Overlap으로 범위 내 모든 대상 검출, TODO: Interaction 채널 사용
 	FCollisionQueryParams Params(SCENE_QUERY_STAT(PRInteractionComponent), false, OwnerActor);
 	TArray<FOverlapResult> OverlapResults;
 	World->OverlapMultiByChannel(
@@ -118,9 +147,11 @@ void UPRInteractionComponent::UpdateInteractable()
 		FCollisionShape::MakeSphere(InteractionDistance),
 		Params);
 
-	// 범위 내에서 가장 가까운 상호작용 대상 찾기, TODO: 별도 Interaction 채널 사용?
+	// 범위 내에서 화면 중심에 가까운 상호작용 대상 찾기 (동일하면 거리 우선)
 	AActor* NewFocusedActor = nullptr;
 	float ClosestDistanceSq = FLT_MAX;
+	float ClosestScreenDistSq = FLT_MAX;
+	const FVector2D ScreenCenter(ViewportX * 0.5f, ViewportY * 0.5f);
 
 	for (const FOverlapResult& Result : OverlapResults)
 	{
@@ -130,10 +161,36 @@ void UPRInteractionComponent::UpdateInteractable()
 			continue;
 		}
 
+		// 카메라 전방에 있는 액터만 처리
+		const FVector ToTarget = OverlapActor->GetActorLocation() - ViewLocation;
+		if (FVector::DotProduct(ViewForward, ToTarget.GetSafeNormal()) <= 0.0f)
+		{
+			continue;
+		}
+
+		// 화면 내 여부 확인
+		FVector2D ScreenPos;
+		if (!PlayerController->ProjectWorldLocationToScreen(OverlapActor->GetActorLocation(), ScreenPos, true))
+		{
+			continue;
+		}
+
+		if (ScreenPos.X < 0.0f || ScreenPos.Y < 0.0f ||
+			ScreenPos.X > ViewportX || ScreenPos.Y > ViewportY)
+		{
+			continue;
+		}
+
+		// 화면 중심 거리 및 실제 거리 계산
 		const float DistanceSq = FVector::DistSquared(PlayerLocation, OverlapActor->GetActorLocation());
-		if (DistanceSq < ClosestDistanceSq)
+		const float ScreenDistSq = FVector2D::DistSquared(ScreenPos, ScreenCenter);
+
+		// 화면 중심 우선, 동일하면 거리 우선
+		if (ScreenDistSq < ClosestScreenDistSq ||
+			(FMath::IsNearlyEqual(ScreenDistSq, ClosestScreenDistSq) && DistanceSq < ClosestDistanceSq))
 		{
 			ClosestDistanceSq = DistanceSq;
+			ClosestScreenDistSq = ScreenDistSq;
 			NewFocusedActor = OverlapActor;
 		}
 	}
@@ -160,6 +217,9 @@ void UPRInteractionComponent::UpdateInteractable()
 		CurrentInteractable = NewInteractable;
 		OnInteractableChanged.Broadcast(NewInteractable);
 	}
+
+	// UI 바인딩용 ViewModel 갱신
+	UpdateInteractionViewModel(Player);
 }
 
 void UPRInteractionComponent::SetFocusedActor(AActor* NewActor)
@@ -185,4 +245,66 @@ void UPRInteractionComponent::SetFocusedActor(AActor* NewActor)
 			Interface->OnGainInteractFocus(OwnerPawn);
 		}
 	}
+}
+
+void UPRInteractionComponent::UpdateInteractionViewModel(APawn* Interactor)
+{
+	if (!InteractionViewModel)
+	{
+		InitializeInteractionViewModel(Interactor);
+	}
+
+	if (!InteractionViewModel)
+	{
+		return;
+	}
+
+	// 포커스 대상 없음 -> UI 숨김 처리
+	AActor* FocusedActor = CurrentFocusedActor.Get();
+	if (!IsValid(FocusedActor))
+	{
+		InteractionViewModel->ClearInteractionInfo();
+		return;
+	}
+
+	IPRInteractableInterface* Interface = Cast<IPRInteractableInterface>(FocusedActor);
+	if (!Interface)
+	{
+		InteractionViewModel->ClearInteractionInfo();
+		return;
+	}
+
+	// 상호작용 정보 수집 후 UI 노출
+	FPRInteractionInfo Info;
+	Interface->GetInteractionInfo(Interactor, Info);
+	InteractionViewModel->SetInteractionInfo(Info, true);
+}
+
+void UPRInteractionComponent::InitializeInteractionViewModel(APawn* Interactor)
+{
+	if (InteractionViewModel || !IsValid(Interactor))
+	{
+		return;
+	}
+
+	APlayerController* PlayerController = Cast<APlayerController>(Interactor->GetController());
+	if (!IsValid(PlayerController))
+	{
+		return;
+	}
+
+	ULocalPlayer* LocalPlayer = PlayerController->GetLocalPlayer();
+	if (!IsValid(LocalPlayer))
+	{
+		return;
+	}
+
+	UPRViewModelSubsystem* ViewModelSubsystem = LocalPlayer->GetSubsystem<UPRViewModelSubsystem>();
+	if (!IsValid(ViewModelSubsystem))
+	{
+		return;
+	}
+
+	InteractionViewModel = Cast<UPRInteractionViewModel>(
+		ViewModelSubsystem->GetOrCreateGlobalViewModel(UPRInteractionViewModel::StaticClass()));
 }

@@ -30,6 +30,13 @@ FText APRMechanicNPC::GetInteractionText() const
 	return InteractionDisplayText;
 }
 
+void APRMechanicNPC::GetInteractionInfo(APawn* Interactor, FPRInteractionInfo& OutInfo) const
+{
+	OutInfo = FPRInteractionInfo();
+	OutInfo.DisplayText = GetInteractionText();
+	OutInfo.bIsEnabled = CanInteract(Interactor);
+}
+
 void APRMechanicNPC::OpenUpgradeUI(const APawn* Interactor)
 {
 	if (!IsValid(Interactor))

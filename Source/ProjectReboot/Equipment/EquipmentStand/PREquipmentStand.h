@@ -32,6 +32,7 @@ public:
 	virtual bool CanInteract(APawn* Interactor) const override;
 	virtual void Interact(APawn* Interactor) override;
 	virtual FText GetInteractionText() const override;
+	virtual void GetInteractionInfo(APawn* Interactor, FPRInteractionInfo& OutInfo) const override;
 	virtual void OnGainInteractFocus(APawn* Interactor) override;
 	virtual void OnLoseInteractFocus(APawn* Interactor) override;
 
@@ -57,6 +58,10 @@ public:
 	// 거치대가 보유한 장비 세트
 	UPROPERTY(EditAnywhere, Category = "Equipment")
 	TObjectPtr<UPREquipmentActionSet> EquipmentActionSet;
+
+	// 상호작용 텍스트
+	UPROPERTY(EditDefaultsOnly, Category = "Interaction")
+	FText InteractionDisplayText = NSLOCTEXT("Interaction", "SelectEquipment", "장비 선택");
 
 	// 상호작용 가능 여부
 	UPROPERTY(BlueprintReadOnly, Category = "State")

@@ -40,8 +40,8 @@ APRPlayerCharacter::APRPlayerCharacter()
 	bUseControllerRotationRoll = false;
 
 	// Configure character movement
-	GetCharacterMovement()->bOrientRotationToMovement = false; // Character moves in the direction of input...	
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f); // ...at this rotation rate
+	GetCharacterMovement()->bOrientRotationToMovement = false;	
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f);
 	GetCharacterMovement()->JumpZVelocity = 700.f;
 	GetCharacterMovement()->AirControl = 0.35f;
 	GetCharacterMovement()->MaxWalkSpeed = 500.f;
@@ -270,11 +270,22 @@ void APRPlayerCharacter::HandleStateTagChanged(const FGameplayTag Tag, int32 New
 	{
 		if (NewCount > 0)
 		{
-			GetCharacterMovement()->RotationRate.Yaw = 660.f;
+			GetCharacterMovement()->RotationRate.Yaw = 600.f;
 		}
 		else
 		{
-			GetCharacterMovement()->RotationRate.Yaw = 540.f;
+			GetCharacterMovement()->RotationRate.Yaw = 500.f;
+		}
+	}
+	if (Tag.MatchesTag(TAG_State_Sprint))
+	{
+		if (NewCount > 0)
+		{
+			GetCharacterMovement()->bOrientRotationToMovement = true;
+		}
+		else
+		{
+			GetCharacterMovement()->bOrientRotationToMovement = false;
 		}
 	}
 }

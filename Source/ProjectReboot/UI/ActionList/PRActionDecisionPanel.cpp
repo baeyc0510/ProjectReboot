@@ -2,16 +2,11 @@
 
 #include "PRActionDecisionPanel.h"
 
-#include "AbilitySystemBlueprintLibrary.h"
-#include "AbilitySystemComponent.h"
 #include "PRActionListItemWidget.h"
 #include "RogueliteBlueprintLibrary.h"
 #include "Components/Button.h"
 #include "Components/VerticalBox.h"
-#include "Camera/CameraActor.h"
-#include "GameFramework/Character.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "ProjectReboot/PRGameplayTags.h"
+#include "ProjectReboot/Camera/PRCameraBlueprintLibrary.h"
 #include "ProjectReboot/Equipment/PREquipmentBlueprintLibrary.h"
 #include "ProjectReboot/Equipment/PREquipActionData.h"
 #include "ProjectReboot/Equipment/PREquipmentManagerComponent.h"
@@ -30,11 +25,13 @@ void UPRActionDecisionPanel::NativeConstruct()
 
 void UPRActionDecisionPanel::NativeDestruct()
 {
-	RestoreCamera();
-	CleanupPreviewCamera();
+	// 포커스 해제
+	if (UPRCameraBlueprintLibrary::IsFocusing(GetOwningPlayer()))
+	{
+		UPRCameraBlueprintLibrary::RestoreFocus(GetOwningPlayer());	
+	}
+
 	RestoreOriginalEquipment();
-	UnlockPlayerState();
-	HandleOtherUIVisibility(true);
 
 	Super::NativeDestruct();
 }
@@ -46,15 +43,8 @@ void UPRActionDecisionPanel::SetSourceActor(AActor* InActor)
 	// 원래 장비 상태 저장
 	SaveOriginalEquipmentState();
 
-	// 카메라 설정 및 활성화
-	SetupPreviewCamera();
-	ActivatePreviewCamera();
-
-	// 플레이어 상태 잠금 (회전 고정 + 카메라 향해 회전)
-	LockPlayerState();
-	
-	// 크로스 헤어 등 UI 감춤
-	HandleOtherUIVisibility(false);
+	// 액터 포커스 활성화
+	UPRCameraBlueprintLibrary::FocusOnActor(GetOwningPlayer(), SourceActor, FocusParams);
 }
 
 void UPRActionDecisionPanel::SetDecisionList(const TArray<URogueliteActionData*>& ActionList)
@@ -228,90 +218,6 @@ void UPRActionDecisionPanel::UpdateConfirmButtonState()
 	}
 }
 
-/*~ 카메라 관리 ~*/
-
-void UPRActionDecisionPanel::SetupPreviewCamera()
-{
-	UWorld* World = GetWorld();
-	if (!World || !IsValid(SourceActor))
-	{
-		return;
-	}
-
-	// 카메라 액터 스폰
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	PreviewCameraActor = World->SpawnActor<ACameraActor>(ACameraActor::StaticClass(), SpawnParams);
-	if (!PreviewCameraActor)
-	{
-		return;
-	}
-
-	// 플레이어 정면 + 측면 오프셋 위치에 카메라 배치
-	FVector PlayerLocation = SourceActor->GetActorLocation();
-	FRotator PlayerRotation = SourceActor->GetActorRotation();
-
-	// 카메라 방향: 플레이어 정면 + Yaw 오프셋
-	FRotator CameraDirection = PlayerRotation;
-	CameraDirection.Yaw += CameraYawOffset;
-
-	FVector CameraOffset = CameraDirection.Vector() * CameraDistance;
-	CameraOffset.Z = CameraHeightOffset;
-
-	FVector CameraLocation = PlayerLocation + CameraOffset;
-
-	// 화면 좌우 오프셋 적용
-	const FVector ScreenOffset = PlayerRotation.Quaternion().GetRightVector() * ScreenHorizontalOffset;
-	const FVector LookAtTarget = PlayerLocation + FVector(0, 0, CameraHeightOffset * 0.5f) + ScreenOffset;
-	FRotator CameraRotation = (LookAtTarget - CameraLocation).Rotation();
-
-	PreviewCameraActor->SetActorLocationAndRotation(CameraLocation, CameraRotation);
-}
-
-void UPRActionDecisionPanel::ActivatePreviewCamera()
-{
-	APlayerController* PC = GetOwningPlayer();
-	if (!PC || !PreviewCameraActor)
-	{
-		return;
-	}
-
-	OriginalViewTarget = PC->GetViewTarget();
-	PC->SetViewTargetWithBlend(PreviewCameraActor, BlendTime, EViewTargetBlendFunction::VTBlend_Cubic, 2.0f);
-}
-
-void UPRActionDecisionPanel::RestoreCamera()
-{
-	APlayerController* PC = GetOwningPlayer();
-	if (!PC)
-	{
-		return;
-	}
-
-	if (OriginalViewTarget.IsValid())
-	{
-		PC->SetViewTargetWithBlend(OriginalViewTarget.Get(), BlendTime, EViewTargetBlendFunction::VTBlend_Cubic, 2.0f);
-	}
-}
-
-void UPRActionDecisionPanel::CleanupPreviewCamera(bool bImmediate)
-{
-	if (!IsValid(PreviewCameraActor))
-	{
-		return;
-	}
-
-	if (!bImmediate && BlendTime > 0.0f)
-	{
-		PreviewCameraActor->SetLifeSpan(BlendTime);
-		PreviewCameraActor = nullptr;
-		return;
-	}
-
-	PreviewCameraActor->Destroy();
-	PreviewCameraActor = nullptr;
-}
-
 /*~ 장비 관리 ~*/
 
 void UPRActionDecisionPanel::SaveOriginalEquipmentState()
@@ -378,70 +284,6 @@ void UPRActionDecisionPanel::RestoreSlotToOriginal(FGameplayTag SlotTag)
 	// 현재 슬롯의 장비 해제
 	else
 	{
-		EquipmentManager->Unequip(SlotTag);	
-	}
-}
-
-/*~ 플레이어 상태 관리 ~*/
-
-void UPRActionDecisionPanel::LockPlayerState()
-{
-	if (!IsValid(SourceActor))
-	{
-		return;
-	}
-
-	OriginalActorRotation = SourceActor->GetActorRotation();
-
-	if (ACharacter* Character = Cast<ACharacter>(SourceActor))
-	{
-		if (UCharacterMovementComponent* MovementComp = Character->GetCharacterMovement())
-		{
-			bOriginalOrientRotationToMovement = MovementComp->bOrientRotationToMovement;
-			MovementComp->bOrientRotationToMovement = false;
-		}
-	}
-
-	// 카메라를 향해 캐릭터 회전
-	if (PreviewCameraActor)
-	{
-		FVector ToCamera = PreviewCameraActor->GetActorLocation() - SourceActor->GetActorLocation();
-		ToCamera.Z = 0;
-		FRotator LookAtRotation = ToCamera.Rotation();
-		SourceActor->SetActorRotation(LookAtRotation);
-	}
-}
-
-void UPRActionDecisionPanel::UnlockPlayerState()
-{
-	if (!IsValid(SourceActor))
-	{
-		return;
-	}
-
-	if (ACharacter* Character = Cast<ACharacter>(SourceActor))
-	{
-		if (UCharacterMovementComponent* MovementComp = Character->GetCharacterMovement())
-		{
-			MovementComp->bOrientRotationToMovement = bOriginalOrientRotationToMovement;
-		}
-	}
-}
-
-void UPRActionDecisionPanel::HandleOtherUIVisibility(bool bIsVisible)
-{
-	UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(SourceActor);
-	if (!ASC)
-	{
-		return;
-	}
-	
-	if (bIsVisible)
-	{
-		ASC->RemoveLooseGameplayTag(TAG_State_UI_HideCrosshair);
-	}
-	else
-	{
-		ASC->AddLooseGameplayTag(TAG_State_UI_HideCrosshair);
+		EquipmentManager->Unequip(SlotTag);
 	}
 }

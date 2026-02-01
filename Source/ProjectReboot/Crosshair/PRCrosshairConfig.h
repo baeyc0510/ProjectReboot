@@ -57,7 +57,7 @@ class PROJECTREBOOT_API UPRCrosshairConfig : public UDataAsset
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Crosshairs", Meta = (TitleProperty = "Key"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Crosshairs")
 	TMap<FGameplayTag, FPRCrosshairSetting> CrosshairSettings;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Crosshairs")

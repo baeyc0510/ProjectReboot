@@ -16,6 +16,9 @@ void UEquipmentInstance::Initialize(USceneComponent* InAttachTarget, UPREquipAct
     {
         AttachPart(PrimaryActionData);
     }
+
+    // 초기 가시성 적용
+    SetVisualsVisible(bVisualsVisible);
 }
 
 void UEquipmentInstance::Uninitialize()
@@ -23,6 +26,7 @@ void UEquipmentInstance::Uninitialize()
     DestroyAllVisuals();
     AttachTarget.Reset();
     PrimaryActionData = nullptr;
+    AttachedActions.Reset();
 }
 
 void UEquipmentInstance::AttachPart(UPREquipActionData* InActionData)
@@ -32,9 +36,9 @@ void UEquipmentInstance::AttachPart(UPREquipActionData* InActionData)
         return;
     }
 
-    if (SpawnedVisuals.Contains(InActionData))
+    if (!AttachedActions.Contains(InActionData))
     {
-        return;
+        AttachedActions.Add(InActionData);
     }
 
     // 태그 추가
@@ -60,6 +64,12 @@ void UEquipmentInstance::AttachPart(UPREquipActionData* InActionData)
     Entry.UsedSpawnInfo = SpawnInfo;
 
     SpawnedVisuals.Add(InActionData, Entry);
+
+    // 현재 가시성 상태 적용
+    if (Entry.SpawnedComponent)
+    {
+        Entry.SpawnedComponent->SetVisibility(bVisualsVisible, true);
+    }
 }
 
 void UEquipmentInstance::DetachPart(UPREquipActionData* InActionData)
@@ -69,19 +79,18 @@ void UEquipmentInstance::DetachPart(UPREquipActionData* InActionData)
         return;
     }
 
-    FSpawnedVisualEntry* Entry = SpawnedVisuals.Find(InActionData);
-    if (!Entry)
-    {
-        return;
-    }
+    AttachedActions.Remove(InActionData);
 
-    // 컴포넌트 제거
-    if (Entry->SpawnedComponent)
+    if (FSpawnedVisualEntry* Entry = SpawnedVisuals.Find(InActionData))
     {
-        Entry->SpawnedComponent->DestroyComponent();
-    }
+        // 컴포넌트 제거
+        if (Entry->SpawnedComponent)
+        {
+            Entry->SpawnedComponent->DestroyComponent();
+        }
 
-    SpawnedVisuals.Remove(InActionData);
+        SpawnedVisuals.Remove(InActionData);
+    }
 
     // 태그 제거
     EquipmentTags.RemoveTags(InActionData->EquipmentTags);
@@ -91,8 +100,15 @@ void UEquipmentInstance::DetachPart(UPREquipActionData* InActionData)
 TArray<UPREquipActionData*> UEquipmentInstance::GetAllAttachedActions() const
 {
     TArray<UPREquipActionData*> Result;
-    SpawnedVisuals.GetKeys(Result);
-    return Result; 
+    Result.Reserve(AttachedActions.Num());
+    for (const TObjectPtr<UPREquipActionData>& ActionData : AttachedActions)
+    {
+        if (ActionData)
+        {
+            Result.Add(ActionData);
+        }
+    }
+    return Result;
 }
 
 TArray<UPREquipActionData*> UEquipmentInstance::GetChildPartActions() const
@@ -155,6 +171,26 @@ void UEquipmentInstance::RefreshVisuals()
             }
 
             Entry.UsedSpawnInfo = NewSpawnInfo;
+        }
+    }
+}
+
+void UEquipmentInstance::RespawnVisuals()
+{
+    if (!AttachTarget.IsValid())
+    {
+        return;
+    }
+
+    TArray<TObjectPtr<UPREquipActionData>> ActionsToRespawn = AttachedActions;
+
+    DestroyAllVisuals();
+
+    for (const TObjectPtr<UPREquipActionData>& ActionData : ActionsToRespawn)
+    {
+        if (ActionData)
+        {
+            AttachPart(ActionData);
         }
     }
 }
@@ -303,6 +339,19 @@ USceneComponent* UEquipmentInstance::GetPrimaryComponent() const
 bool UEquipmentInstance::HasVisual(UPREquipActionData* InActionData) const
 {
     return SpawnedVisuals.Contains(InActionData);
+}
+
+void UEquipmentInstance::SetVisualsVisible(bool bVisible)
+{
+    bVisualsVisible = bVisible;
+
+    for (auto& Pair : SpawnedVisuals)
+    {
+        if (Pair.Value.SpawnedComponent)
+        {
+            Pair.Value.SpawnedComponent->SetVisibility(bVisualsVisible, true);
+        }
+    }
 }
 
 void UEquipmentInstance::OnEquipmentTagsChanged()

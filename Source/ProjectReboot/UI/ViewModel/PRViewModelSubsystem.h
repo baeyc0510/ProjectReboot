@@ -2,6 +2,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Subsystems/LocalPlayerSubsystem.h"
 #include "PRViewModelSubsystem.generated.h"
 
@@ -28,6 +29,16 @@ struct FActorViewModelKey
     {
         return HashCombine(GetTypeHash(Key.Actor), GetTypeHash(Key.ViewModelClass));
     }
+};
+
+USTRUCT()
+struct FViewModelTagList
+{
+	GENERATED_BODY()
+
+	// ViewModel 목록
+	UPROPERTY()
+	TArray<TWeakObjectPtr<UPRViewModelBase>> ViewModels;
 };
 
 /**
@@ -116,10 +127,38 @@ public:
         return Cast<T>(FindActorViewModel(TargetActor, T::StaticClass()));
     }
 
+    /*~ ViewModel Tag ~*/
+
+    // Tag로 Global ViewModel 조회
+    UFUNCTION(BlueprintCallable, Category = "ViewModel|Tag")
+    UPRViewModelBase* FindGlobalViewModelByTag(FGameplayTag ViewModelTag) const;
+
+    // Tag로 Actor-Bound ViewModel 목록 조회
+    UFUNCTION(BlueprintCallable, Category = "ViewModel|Tag")
+    void FindActorViewModelsByTag(FGameplayTag ViewModelTag, TArray<UPRViewModelBase*>& OutViewModels) const;
+
+    // Tag로 가시성 설정
+    UFUNCTION(BlueprintCallable, Category = "ViewModel|Tag")
+    bool SetVisibilityByTag(FGameplayTag ViewModelTag, bool bNewVisible, bool bAffectActorBound = true);
+
+    // Tag로 가시성 조회
+    UFUNCTION(BlueprintPure, Category = "ViewModel|Tag")
+    bool GetVisibilityByTag(FGameplayTag ViewModelTag, bool bDefaultVisible = false) const;
+
+    // Tag로 가시성 복원 (오버라이드 해제)
+    UFUNCTION(BlueprintCallable, Category = "ViewModel|Tag")
+    void RestoreVisibilityByTag(FGameplayTag ViewModelTag, bool bVisible, bool bAffectActorBound = true);
+
 private:
     // Actor 파괴 시 자동 정리
     UFUNCTION()
     void HandleActorDestroyed(AActor* DestroyedActor);
+
+    // TagMap 등록
+    void RegisterViewModelTag(UPRViewModelBase* ViewModel, bool bIsGlobal);
+
+    // TagMap 해제
+    void UnregisterViewModelTag(UPRViewModelBase* ViewModel);
 
 private:
     // Global ViewModel 저장소
@@ -129,6 +168,14 @@ private:
     // Actor-Bound ViewModel 저장소
     UPROPERTY()
     TMap<FActorViewModelKey, TObjectPtr<UPRViewModelBase>> ActorViewModelMap;
+
+    // Global ViewModel TagMap
+    UPROPERTY()
+    TMap<FGameplayTag, TWeakObjectPtr<UPRViewModelBase>> GlobalViewModelTagMap;
+
+    // Actor-Bound ViewModel TagMap
+    UPROPERTY()
+    TMap<FGameplayTag, FViewModelTagList> ActorViewModelTagMap;
 
     // 이미 OnDestroyed에 바인딩된 Actor 추적 (중복 바인딩 방지)
     TSet<TWeakObjectPtr<AActor>> BoundActors;

@@ -3,10 +3,32 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Subsystems/LocalPlayerSubsystem.h"
 #include "PRActorFocusSubsystem.generated.h"
 
 class ACameraActor;
+
+/**
+ * 액터 포커스 파라미터
+ */
+USTRUCT(BlueprintType)
+struct FActorFocusViewModelVisibility
+{
+	GENERATED_BODY()
+
+	// ViewModel Tag
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	FGameplayTag ViewModelTag;
+
+	// 가시성 설정
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	bool bVisible = false;
+
+	// Actor-Bound ViewModel에도 적용 여부
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	bool bAffectActorBound = true;
+};
 
 /**
  * 액터 포커스 파라미터
@@ -38,15 +60,33 @@ struct FActorFocusParams
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 	float ScreenHorizontalOffset = -100.0f;
 
-	/*~ 플레이어 상태 파라미터 ~*/
+	/*~ 타겟 액터 상태 파라미터 ~*/
 
-	// 플레이어 회전을 카메라 방향으로 잠금할지 여부
+	// 대상 액터 회전을 카메라 방향으로 잠금할지 여부
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
-	bool bLockPlayerRotation = true;
+	bool bLockTargetRotation = true;
 
-	// 크로스헤어 숨김 여부
+	// ViewModel 가시성 설정 목록
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
-	bool bHideCrosshair = true;
+	TArray<FActorFocusViewModelVisibility> ViewModelVisibilityOverrides;
+};
+
+/**
+ * 포커스 상태 저장 (복원용)
+ */
+USTRUCT()
+struct FActorFocusViewModelVisibilityState
+{
+	GENERATED_BODY()
+
+	// ViewModel Tag
+	FGameplayTag ViewModelTag;
+
+	// 원래 가시성
+	bool bWasVisible = true;
+
+	// Actor-Bound ViewModel에도 적용 여부
+	bool bAffectActorBound = true;
 };
 
 /**
@@ -73,11 +113,11 @@ struct FActorFocusState
 	// 원래 OrientRotationToMovement 설정
 	bool bOriginalOrientRotationToMovement = false;
 
-	// 크로스헤어 숨김 적용 여부
-	bool bCrosshairHidden = false;
-
 	// 사용된 파라미터 (복원 시 BlendTime 등 사용)
 	FActorFocusParams UsedParams;
+
+	// ViewModel 가시성 복원 정보
+	TArray<FActorFocusViewModelVisibilityState> ViewModelVisibilityStates;
 };
 
 /**
@@ -123,14 +163,11 @@ protected:
 	// 포커스 카메라 정리
 	void CleanupFocusCamera(bool bImmediate = false);
 
-	// 플레이어 상태 잠금 (회전 고정 + 카메라 향해 회전)
-	void LockPlayerState(AActor* TargetActor, const FActorFocusParams& Params);
+	// 타겟 상태 잠금 (회전 고정 + 카메라 향해 회전)
+	void LockTargetState(AActor* TargetActor, const FActorFocusParams& Params);
 
-	// 플레이어 상태 잠금 해제
-	void UnlockPlayerState();
-
-	// 크로스헤어 등 UI 가시성 제어
-	void SetCrosshairVisibility(AActor* TargetActor, bool bVisible);
+	// 타겟 상태 잠금 해제
+	void UnlockTargetState();
 
 private:
 	// 현재 포커스 상태

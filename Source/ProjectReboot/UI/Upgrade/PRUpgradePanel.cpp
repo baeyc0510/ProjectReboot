@@ -59,6 +59,9 @@ void UPRUpgradePanel::BindToViewModel()
 
 	BoundViewModel = ViewModel;
 	BoundViewModel->OnViewModelUpdated.AddDynamic(this, &ThisClass::HandleViewModelUpdated);
+	BoundViewModel->OnVisibilityChanged.AddDynamic(this, &ThisClass::HandleVisibilityChanged);
+	// 바인딩 직후 상태 반영
+	HandleVisibilityChanged(BoundViewModel->IsVisible());
 }
 
 void UPRUpgradePanel::UnbindFromViewModel()
@@ -66,6 +69,7 @@ void UPRUpgradePanel::UnbindFromViewModel()
 	if (BoundViewModel.IsValid())
 	{
 		BoundViewModel->OnViewModelUpdated.RemoveDynamic(this, &ThisClass::HandleViewModelUpdated);
+		BoundViewModel->OnVisibilityChanged.RemoveDynamic(this, &ThisClass::HandleVisibilityChanged);
 	}
 
 	BoundViewModel.Reset();
@@ -128,6 +132,12 @@ void UPRUpgradePanel::HandleViewModelUpdated()
 	}
 
 	UpdateUpgradeListDisplay();
+}
+
+void UPRUpgradePanel::HandleVisibilityChanged(bool bVisible)
+{
+	// 패널 가시성 적용
+	SetVisibility(bVisible ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 }
 
 void UPRUpgradePanel::RefreshUpgradeList()

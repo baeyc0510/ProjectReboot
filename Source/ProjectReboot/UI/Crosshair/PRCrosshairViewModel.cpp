@@ -8,9 +8,18 @@
 #include "ProjectReboot/Character/PRCharacterBase.h"
 #include "ProjectReboot/Crosshair/PRCrosshairConfig.h"
 
+UPRCrosshairViewModel::UPRCrosshairViewModel()
+{
+	// ViewModel Tag 설정
+	ViewModelTag = TAG_UI_ViewModel_Crosshair;
+}
+
 void UPRCrosshairViewModel::InitializeForPlayer(ULocalPlayer* InLocalPlayer)
 {
 	Super::InitializeForPlayer(InLocalPlayer);
+
+	// 기본 가시성은 표시 상태로 설정
+	SetVisible(true);
 
 	TickHandle = FTSTicker::GetCoreTicker().AddTicker(
 		FTickerDelegate::CreateUObject(this, &UPRCrosshairViewModel::Tick)
@@ -140,15 +149,6 @@ void UPRCrosshairViewModel::SetCanFire(bool bNewCanFire)
 	}
 }
 
-void UPRCrosshairViewModel::SetVisible(bool bNewVisible)
-{
-	if (bIsVisible != bNewVisible)
-	{
-		bIsVisible = bNewVisible;
-		OnVisibilityChanged.Broadcast(bIsVisible);
-	}
-}
-
 void UPRCrosshairViewModel::SetTargetingEnemy(bool bNewTargeting)
 {
 	if (bIsTargetingEnemy != bNewTargeting)
@@ -239,29 +239,34 @@ void UPRCrosshairViewModel::HandleCrosshairTagChanged(const FGameplayTag Tag, in
 	
 	FGameplayTag CrosshairTag = Tag;
 	
-	// Crosshair 태그 자체인 경우 가장 구체적인 태그를 찾기
-	if (CrosshairTag.MatchesTagExact(TAG_State_Weapon_Crosshair))
+	// 새로운 크로스 헤어 적용
+	if (NewCount > 0 && !CrosshairTag.MatchesTagExact(TAG_State_Weapon_Crosshair))
 	{
-		FGameplayTagContainer OwnedTags;
-		BoundASC->GetOwnedGameplayTags(OwnedTags);
+		SetCrosshairTag(CrosshairTag);
+		return;
+	}
+	
+	// 크로스 헤어 제거 혹은 기본 크로스헤어 태그가 추가된 경우
+	// 가장 구체적인 태그를 찾기
+	FGameplayTagContainer OwnedTags;
+	BoundASC->GetOwnedGameplayTags(OwnedTags);
 
-		// 깊이가 가장 깊은 태그 찾기
-		CrosshairTag = TAG_State_Weapon_Crosshair;
-		int32 MaxDepth = 0;
+	// 깊이가 가장 깊은 태그 찾기
+	CrosshairTag = TAG_State_Weapon_Crosshair;
+	int32 MaxDepth = 0;
 
-		for (const FGameplayTag& OwnedTag : OwnedTags)
+	for (const FGameplayTag& OwnedTag : OwnedTags)
+	{
+		if (!OwnedTag.MatchesTag(TAG_State_Weapon_Crosshair))
 		{
-			if (!OwnedTag.MatchesTag(TAG_State_Weapon_Crosshair))
-			{
-				continue;
-			}
+			continue;
+		}
 			
-			const int32 Depth = OwnedTag.GetGameplayTagParents().Num();
-			if (Depth > MaxDepth)
-			{
-				MaxDepth = Depth;
-				CrosshairTag = OwnedTag;
-			}
+		const int32 Depth = OwnedTag.GetGameplayTagParents().Num();
+		if (Depth > MaxDepth)
+		{
+			MaxDepth = Depth;
+			CrosshairTag = OwnedTag;
 		}
 	}
 

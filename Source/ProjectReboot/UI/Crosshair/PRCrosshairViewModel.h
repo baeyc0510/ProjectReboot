@@ -16,7 +16,6 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCrosshairSpreadChanged, float, Ne
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCrosshairADSStateChanged, bool, bIsADS);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCrosshairADSAlphaChanged, float, NewAlpha);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCrosshairCanFireChanged, bool, bCanFire);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCrosshairVisibilityChanged, bool, bVisible);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCrosshairTargetingEnemyChanged, bool, bTargeting);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCrosshairTagChanged, const FGameplayTag&, NewTag);
 
@@ -29,6 +28,9 @@ class PROJECTREBOOT_API UPRCrosshairViewModel : public UPRViewModelBase
     GENERATED_BODY()
 
 public:
+    // 생성자
+    UPRCrosshairViewModel();
+
     /*~ UPRViewModelBase Interface ~*/
     virtual void InitializeForPlayer(ULocalPlayer* InLocalPlayer) override;
     virtual void Deinitialize() override;
@@ -68,9 +70,6 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Crosshair|Input")
     void SetCanFire(bool bNewCanFire);
 
-    // 가시성 설정
-    UFUNCTION(BlueprintCallable, Category = "Crosshair|Input")
-    void SetVisible(bool bNewVisible);
 
     // 적 타겟팅 상태 설정
     UFUNCTION(BlueprintCallable, Category = "Crosshair|Input")
@@ -96,9 +95,6 @@ public:
     UFUNCTION(BlueprintPure, Category = "Crosshair|State")
     bool CanFire() const { return bCanFire; }
 
-    // 가시성 반환
-    UFUNCTION(BlueprintPure, Category = "Crosshair|State")
-    bool IsVisible() const { return bIsVisible; }
 
     // 적 타겟팅 여부 반환
     UFUNCTION(BlueprintPure, Category = "Crosshair|State")
@@ -128,9 +124,6 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category = "Crosshair|Events")
     FOnCrosshairCanFireChanged OnCanFireChanged;
-
-    UPROPERTY(BlueprintAssignable, Category = "Crosshair|Events")
-    FOnCrosshairVisibilityChanged OnVisibilityChanged;
 
     UPROPERTY(BlueprintAssignable, Category = "Crosshair|Events")
     FOnCrosshairTargetingEnemyChanged OnTargetingEnemyChanged;
@@ -182,7 +175,6 @@ private:
 
     bool bCanFire = true;
 
-    bool bIsVisible = true;
     bool bIsTargetingEnemy = false;
 
     FTSTicker::FDelegateHandle TickHandle;

@@ -27,6 +27,7 @@ void UPREnemyStatusWidget::BindViewModel(UPREnemyStatusViewModel* TargetViewMode
 
 	ViewModel->OnHealthChanged.AddDynamic(this, &UPREnemyStatusWidget::HandleHealthChanged);
 	ViewModel->OnShieldChanged.AddDynamic(this, &UPREnemyStatusWidget::HandleShieldChanged);
+	ViewModel->OnVisibilityChanged.AddDynamic(this, &UPREnemyStatusWidget::HandleVisibilityChanged);
 
 	ApplyInitialState();
 }
@@ -40,6 +41,7 @@ void UPREnemyStatusWidget::UnbindViewModel()
 
 	ViewModel->OnHealthChanged.RemoveDynamic(this, &UPREnemyStatusWidget::HandleHealthChanged);
 	ViewModel->OnShieldChanged.RemoveDynamic(this, &UPREnemyStatusWidget::HandleShieldChanged);
+	ViewModel->OnVisibilityChanged.RemoveDynamic(this, &UPREnemyStatusWidget::HandleVisibilityChanged);
 
 	ViewModel = nullptr;
 }
@@ -51,8 +53,16 @@ void UPREnemyStatusWidget::ApplyInitialState()
 		return;
 	}
 
+	// 초기 상태 동기화
 	HandleHealthChanged(ViewModel->GetCurrentHealth(), ViewModel->GetMaxHealth());
 	HandleShieldChanged(ViewModel->GetCurrentShield(), ViewModel->GetMaxShield());
+	HandleVisibilityChanged(ViewModel->IsVisible());
+}
+
+void UPREnemyStatusWidget::HandleVisibilityChanged(bool bVisible)
+{
+	// 위젯 가시성 적용
+	SetVisibility(bVisible ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 }
 
 void UPREnemyStatusWidget::HandleHealthChanged(float Current, float Max)

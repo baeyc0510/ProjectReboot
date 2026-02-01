@@ -2,23 +2,25 @@
 
 #include "PRInteractionViewModel.h"
 
+#include "ProjectReboot/PRGameplayTags.h"
+
+UPRInteractionViewModel::UPRInteractionViewModel()
+{
+	// ViewModel Tag 설정
+	ViewModelTag = TAG_UI_ViewModel_Interaction;
+}
+
 void UPRInteractionViewModel::SetInteractionInfo(const FPRInteractionInfo& InInfo, bool bVisible)
 {
 	// 변경 전 상태 보관
-	const bool bPrevVisible = bIsVisible;
 	const bool bPrevEnabled = bIsEnabled;
 	const FText PrevText = DisplayText;
 	UTexture2D* PrevIcon = Icon;
 
-	bIsVisible = bVisible;
+	SetVisible(bVisible);
 	DisplayText = InInfo.DisplayText;
 	Icon = InInfo.Icon;
 	bIsEnabled = InInfo.bIsEnabled;
-
-	if (bPrevVisible != bIsVisible)
-	{
-		OnVisibilityChanged.Broadcast(bIsVisible);
-	}
 
 	if (bPrevEnabled != bIsEnabled)
 	{
@@ -36,20 +38,14 @@ void UPRInteractionViewModel::SetInteractionInfo(const FPRInteractionInfo& InInf
 void UPRInteractionViewModel::ClearInteractionInfo()
 {
 	// 변경 전 상태 보관
-	const bool bPrevVisible = bIsVisible;
 	const bool bPrevEnabled = bIsEnabled;
 	const FText PrevText = DisplayText;
 	UTexture2D* PrevIcon = Icon;
 
-	bIsVisible = false;
+	SetVisible(false);
 	DisplayText = FText::GetEmpty();
 	Icon = nullptr;
 	bIsEnabled = false;
-
-	if (bPrevVisible != bIsVisible)
-	{
-		OnVisibilityChanged.Broadcast(bIsVisible);
-	}
 
 	if (bPrevEnabled != bIsEnabled)
 	{

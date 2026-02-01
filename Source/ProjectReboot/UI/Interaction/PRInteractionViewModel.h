@@ -9,8 +9,6 @@
 
 // ViewModel 변경 이벤트
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInteractionViewModelUpdated);
-// 표시 여부 변경 이벤트
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractionVisibilityChanged, bool, bVisible);
 // 활성 여부 변경 이벤트
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractionEnabledChanged, bool, bEnabled);
 // 텍스트/아이콘 변경 이벤트
@@ -25,6 +23,9 @@ class PROJECTREBOOT_API UPRInteractionViewModel : public UPRViewModelBase
 	GENERATED_BODY()
 
 public:
+	// 생성자
+	UPRInteractionViewModel();
+
 	/*~ 상호작용 상태 ~*/
 
 	// 상호작용 정보 갱신
@@ -36,10 +37,6 @@ public:
 	void ClearInteractionInfo();
 
 	/*~ Getter ~*/
-
-	// 표시 여부 반환
-	UFUNCTION(BlueprintPure, Category = "Interaction")
-	bool IsVisible() const { return bIsVisible; }
 
 	// 표시 텍스트 반환
 	UFUNCTION(BlueprintPure, Category = "Interaction")
@@ -60,10 +57,6 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
 	FOnInteractionViewModelUpdated OnViewModelUpdated;
 
-	// 표시 여부 변경 이벤트
-	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
-	FOnInteractionVisibilityChanged OnVisibilityChanged;
-
 	// 활성 여부 변경 이벤트
 	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
 	FOnInteractionEnabledChanged OnEnabledChanged;
@@ -71,10 +64,6 @@ public:
 	// 텍스트/아이콘 변경 이벤트
 	UPROPERTY(BlueprintAssignable, Category = "Interaction|Events")
 	FOnInteractionContentChanged OnContentChanged;
-
-	// 표시 여부
-	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
-	bool bIsVisible = false;
 
 	// 표시 텍스트
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction")

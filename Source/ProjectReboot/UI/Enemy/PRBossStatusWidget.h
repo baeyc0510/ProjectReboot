@@ -33,6 +33,10 @@ public:
 
 protected:
 	/*~ ViewModel Event Handlers ~*/
+	// 가시성 변경 처리
+	UFUNCTION()
+	void HandleVisibilityChanged(bool bVisible);
+
 	UFUNCTION()
 	void HandleEnemyDisplayNameChanged(const FText& DisplayName);
 

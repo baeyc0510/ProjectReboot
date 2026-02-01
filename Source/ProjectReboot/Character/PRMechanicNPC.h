@@ -4,11 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "ProjectReboot/Camera/PRActorFocusSubsystem.h"
 #include "ProjectReboot/Interaction/PRInteractableInterface.h"
 #include "PRMechanicNPC.generated.h"
 
 class APRPlayerCharacter;
 class UPRUpgradeModuleData;
+class UPRUpgradePanel;
 class UUserWidget;
 
 /**
@@ -20,6 +22,8 @@ class PROJECTREBOOT_API APRMechanicNPC : public ACharacter, public IPRInteractab
 	GENERATED_BODY()
 
 public:
+	APRMechanicNPC(const FObjectInitializer& ObjectInitializer);
+	
 	/*~ IPRInteractableInterface ~*/
 	// 상호작용 가능 여부
 	virtual bool CanInteract(APawn* Interactor) const override;
@@ -37,10 +41,17 @@ protected:
 	// 업그레이드 UI 열기
 	void OpenUpgradeUI(const APawn* Interactor);
 
+	// 업그레이드 UI 닫힘 처리
+	void HandleUpgradePanelDestruct(UUserWidget* DestructedWidget);
+
 protected:
 	// 상호작용 텍스트
 	UPROPERTY(EditDefaultsOnly, Category = "Interaction")
 	FText InteractionDisplayText = NSLOCTEXT("Interaction", "Mechanic", "정비");
+
+	// 정비 UI 포커스 파라미터
+	UPROPERTY(EditDefaultsOnly, Category = "Interaction|Focus")
+	FActorFocusParams FocusParams;
 
 	// 판매 업그레이드 목록
 	UPROPERTY(EditDefaultsOnly, Category = "Interaction")
@@ -48,5 +59,8 @@ protected:
 
 	// 업그레이드 UI 위젯 클래스
 	UPROPERTY(EditDefaultsOnly, Category = "Interaction")
-	TSubclassOf<UUserWidget> UpgradePanelClass;
+	TSubclassOf<UPRUpgradePanel> UpgradePanelClass;
+	
+private:
+	TWeakObjectPtr<const APawn> InteractorPawn;
 };

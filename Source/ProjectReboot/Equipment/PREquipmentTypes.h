@@ -105,8 +105,5 @@ struct FEquipmentVisualSettings
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	TArray<TSubclassOf<UAnimInstance>> AnimLayersToLink;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
-	TObjectPtr<UAnimMontage> EquipMontage;
 	// TODO: 장착 VFX?
 };

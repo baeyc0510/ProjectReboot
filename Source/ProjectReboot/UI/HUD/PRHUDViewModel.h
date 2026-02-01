@@ -24,6 +24,9 @@ class PROJECTREBOOT_API UPRHUDViewModel : public UPRViewModelBase
 	GENERATED_BODY()
 
 public:
+	// 생성자
+	UPRHUDViewModel();
+
 	virtual void InitializeForPlayer(ULocalPlayer* InLocalPlayer) override;
 	virtual void Deinitialize() override;
 

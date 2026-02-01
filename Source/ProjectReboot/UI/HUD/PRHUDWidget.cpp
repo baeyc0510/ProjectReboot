@@ -42,6 +42,7 @@ void UPRHUDWidget::BindViewModel()
 	ViewModel->OnWeaponTypeChanged.AddDynamic(this, &UPRHUDWidget::HandleWeaponTypeChanged);
 	ViewModel->OnHealthChanged.AddDynamic(this, &UPRHUDWidget::HandleHealthChanged);
 	ViewModel->OnShieldChanged.AddDynamic(this, &UPRHUDWidget::HandleShieldChanged);
+	ViewModel->OnVisibilityChanged.AddDynamic(this, &UPRHUDWidget::HandleVisibilityChanged);
 
 	ApplyInitialState();
 }
@@ -58,6 +59,7 @@ void UPRHUDWidget::UnbindViewModel()
 	ViewModel->OnWeaponTypeChanged.RemoveDynamic(this, &UPRHUDWidget::HandleWeaponTypeChanged);
 	ViewModel->OnHealthChanged.RemoveDynamic(this, &UPRHUDWidget::HandleHealthChanged);
 	ViewModel->OnShieldChanged.RemoveDynamic(this, &UPRHUDWidget::HandleShieldChanged);
+	ViewModel->OnVisibilityChanged.RemoveDynamic(this, &UPRHUDWidget::HandleVisibilityChanged);
 
 	ViewModel = nullptr;
 }
@@ -69,11 +71,19 @@ void UPRHUDWidget::ApplyInitialState()
 		return;
 	}
 
+	// 초기 상태 동기화
 	HandleAmmoChanged(ViewModel->GetCurrentAmmo(), ViewModel->GetMaxAmmo());
 	HandleReserveAmmoChanged(ViewModel->GetCurrentReserveAmmo(), ViewModel->GetMaxReserveAmmo());
 	HandleWeaponTypeChanged(ViewModel->GetWeaponTypeTag());
 	HandleHealthChanged(ViewModel->GetCurrentHealth(), ViewModel->GetMaxHealth());
 	HandleShieldChanged(ViewModel->GetCurrentShield(), ViewModel->GetMaxShield());
+	HandleVisibilityChanged(ViewModel->IsVisible());
+}
+
+void UPRHUDWidget::HandleVisibilityChanged(bool bVisible)
+{
+	// HUD 전체 가시성 적용
+	SetVisibility(bVisible ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 }
 
 void UPRHUDWidget::HandleAmmoChanged(int32 Current, int32 Max)

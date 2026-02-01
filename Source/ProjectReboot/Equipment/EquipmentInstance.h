@@ -54,6 +54,10 @@ public:
 	// 외형 새로고침
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	void RefreshVisuals();
+
+	// 외형 재생성
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	void RespawnVisuals();
 	
 	// 모든 외형 파괴
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
@@ -83,6 +87,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	bool HasVisual(UPREquipActionData* ActionData) const;
 
+	// 장비 외형 가시성 설정
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	void SetVisualsVisible(bool bVisible);
+
+	// 장비 외형 가시성 반환
+	UFUNCTION(BlueprintPure, Category = "Equipment")
+	bool IsVisualsVisible() const { return bVisualsVisible; }
+
 protected:
 	// 장비 태그 변경 시 호출되는 가상 함수
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
@@ -103,6 +115,13 @@ protected:
 	UPROPERTY()
 	FRogueliteTagCountContainer EquipmentTags;
 
+	// 부착된 액션 목록
+	UPROPERTY()
+	TArray<TObjectPtr<UPREquipActionData>> AttachedActions;
+
 	UPROPERTY()
 	TMap<UPREquipActionData*, FSpawnedVisualEntry> SpawnedVisuals;
+
+	// 외형 가시성 상태
+	bool bVisualsVisible = true;
 };

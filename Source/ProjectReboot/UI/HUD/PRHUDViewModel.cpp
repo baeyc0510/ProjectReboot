@@ -4,11 +4,19 @@
 #include "ProjectReboot/AbilitySystem/PRCommonAttributeSet.h"
 #include "ProjectReboot/AbilitySystem/PRWeaponAttributeSet.h"
 
+UPRHUDViewModel::UPRHUDViewModel()
+{
+	// ViewModel Tag 설정
+	ViewModelTag = TAG_UI_ViewModel_HUD;
+}
+
 // 무기 타입 태그 정의
 
 void UPRHUDViewModel::InitializeForPlayer(ULocalPlayer* InLocalPlayer)
 {
 	Super::InitializeForPlayer(InLocalPlayer);
+	// HUD는 기본적으로 표시
+	SetVisible(true);
 }
 
 void UPRHUDViewModel::Deinitialize()

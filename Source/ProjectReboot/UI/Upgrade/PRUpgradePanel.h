@@ -59,6 +59,10 @@ protected:
 	UFUNCTION()
 	void HandleViewModelUpdated();
 
+	// 가시성 변경 처리
+	UFUNCTION()
+	void HandleVisibilityChanged(bool bVisible);
+
 protected:
 	// 닫기 버튼
 	UPROPERTY(meta = (BindWidget))

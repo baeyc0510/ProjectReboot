@@ -26,6 +26,8 @@ class PROJECTREBOOT_API UPRActionDecisionPanel : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	UPRActionDecisionPanel(const FObjectInitializer& ObjectInitializer);
+	
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
 

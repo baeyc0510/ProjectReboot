@@ -156,6 +156,29 @@ void UPREquipmentManagerComponent::RefreshAllVisuals()
 	}
 }
 
+void UPREquipmentManagerComponent::SetEquipmentVisibility(FGameplayTag SlotTag, bool bVisible)
+{
+	UEquipmentInstance* Instance = GetEquipmentInstance(SlotTag);
+	if (!IsValid(Instance))
+	{
+		return;
+	}
+
+	Instance->SetVisualsVisible(bVisible);
+}
+
+void UPREquipmentManagerComponent::SetAllEquipmentVisibility(bool bVisible)
+{
+	TArray<UEquipmentInstance*> AllInstances = GetAllEquipmentInstances();
+	for (UEquipmentInstance* Instance : AllInstances)
+	{
+		if (IsValid(Instance))
+		{
+			Instance->SetVisualsVisible(bVisible);
+		}
+	}
+}
+
 UEquipmentInstance* UPREquipmentManagerComponent::CreateInstance(UPREquipActionData* ActionData)
 {
 	TSubclassOf<UEquipmentInstance> InstanceClass = ActionData->EquipmentInstanceType;

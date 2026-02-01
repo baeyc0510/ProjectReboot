@@ -5,10 +5,19 @@
 #include "AbilitySystemGlobals.h"
 #include "ProjectReboot/AbilitySystem/PRCommonAttributeSet.h"
 #include "ProjectReboot/Character/PREnemyCharacter.h"
+#include "ProjectReboot/PRGameplayTags.h"
+
+UPREnemyStatusViewModel::UPREnemyStatusViewModel()
+{
+	// ViewModel Tag 설정
+	ViewModelTag = TAG_UI_ViewModel_EnemyStatus;
+}
 
 void UPREnemyStatusViewModel::InitializeForActor(AActor* InTargetActor, ULocalPlayer* InLocalPlayer)
 {
 	Super::InitializeForActor(InTargetActor, InLocalPlayer);
+	// 적 상태 UI 기본 표시
+	SetVisible(true);
 
 	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(InTargetActor))
 	{

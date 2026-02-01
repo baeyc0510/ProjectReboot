@@ -603,6 +603,21 @@ void URogueliteAbilityHandlerComponent::SetupActionGAS(URogueliteGASActionData* 
 		// 패시브: 즉시 Effect 적용
 		ApplyEffectsInternal(Action, Stacks, nullptr, Handles);
 	}
+	
+	// GameplayEvent 트리거
+	if (CachedASC.IsValid() && IsValid(Action))
+	{
+		for (auto& EventTag : Action->GameplayEventTags)
+		{
+			FGameplayEventData EventData;
+			EventData.EventTag = EventTag;
+			EventData.Instigator = GetOwner();
+			EventData.Target = GetOwner();
+			EventData.OptionalObject = Action;
+			
+			CachedASC->HandleGameplayEvent(EventTag, &EventData);	
+		}
+	}
 }
 
 void URogueliteAbilityHandlerComponent::RefreshForStackChange(URogueliteGASActionData* Action, int32 NewStacks, FRogueliteGASHandles& Handles)

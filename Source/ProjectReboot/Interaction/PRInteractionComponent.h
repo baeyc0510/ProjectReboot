@@ -8,6 +8,7 @@
 
 class AActor;
 class APRPlayerCharacter;
+class UPRInteractionViewModel;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractableChanged, AActor*, NewInteractable);
 
@@ -56,12 +57,21 @@ public:
 
 protected:
 	/*~ UActorComponent Interface ~*/
+	// 시작 시 ViewModel 준비
+	virtual void BeginPlay() override;
+
 	// 매 프레임 상호작용 대상 갱신
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 		FActorComponentTickFunction* ThisTickFunction) override;
 
 	// 전방 Sphere Trace로 대상 탐지
 	void UpdateInteractable();
+
+	// 상호작용 ViewModel 갱신
+	void UpdateInteractionViewModel(APawn* Interactor);
+
+	// 상호작용 ViewModel 확보
+	void InitializeInteractionViewModel(APawn* Interactor);
 
 protected:
 	// 상호작용 거리
@@ -81,4 +91,8 @@ private:
 
 	// 현재 상호작용 가능 대상 (CanInteract == true인 경우만)
 	TWeakObjectPtr<AActor> CurrentInteractable;
+
+	// 상호작용 UI ViewModel
+	UPROPERTY()
+	TObjectPtr<UPRInteractionViewModel> InteractionViewModel;
 };

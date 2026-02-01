@@ -30,6 +30,7 @@ void UPRBossStatusWidget::BindViewModel(UPREnemyStatusViewModel* TargetViewModel
 	ViewModel->OnHealthChanged.AddDynamic(this, &UPRBossStatusWidget::HandleHealthChanged);
 	ViewModel->OnShieldChanged.AddDynamic(this, &UPRBossStatusWidget::HandleShieldChanged);
 	ViewModel->OnDestructStatus.AddDynamic(this, &UPRBossStatusWidget::HandleDestructStatus);
+	ViewModel->OnVisibilityChanged.AddDynamic(this, &UPRBossStatusWidget::HandleVisibilityChanged);
 
 	ApplyInitialState();
 }
@@ -45,6 +46,7 @@ void UPRBossStatusWidget::UnbindViewModel()
 	ViewModel->OnHealthChanged.RemoveDynamic(this, &UPRBossStatusWidget::HandleHealthChanged);
 	ViewModel->OnShieldChanged.RemoveDynamic(this, &UPRBossStatusWidget::HandleShieldChanged);
 	ViewModel->OnDestructStatus.RemoveDynamic(this, &UPRBossStatusWidget::HandleDestructStatus);
+	ViewModel->OnVisibilityChanged.RemoveDynamic(this, &UPRBossStatusWidget::HandleVisibilityChanged);
 
 	ViewModel = nullptr;
 }
@@ -56,9 +58,17 @@ void UPRBossStatusWidget::ApplyInitialState()
 		return;
 	}
 
+	// 초기 상태 동기화
 	HandleEnemyDisplayNameChanged(ViewModel->GetEnemyDisplayName());
 	HandleHealthChanged(ViewModel->GetCurrentHealth(), ViewModel->GetMaxHealth());
 	HandleShieldChanged(ViewModel->GetCurrentShield(), ViewModel->GetMaxShield());
+	HandleVisibilityChanged(ViewModel->IsVisible());
+}
+
+void UPRBossStatusWidget::HandleVisibilityChanged(bool bVisible)
+{
+	// 위젯 가시성 적용
+	SetVisibility(bVisible ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 }
 
 void UPRBossStatusWidget::HandleEnemyDisplayNameChanged(const FText& DisplayName)

@@ -2,10 +2,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "UObject/NoExportTypes.h"
 #include "PRViewModelBase.generated.h"
 
 class ULocalPlayer;
+
+// ViewModel 가시성 변경 이벤트
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnViewModelVisibilityChanged, bool, bIsVisible);
 
 /**
  * ViewModel 기본 클래스
@@ -25,6 +29,32 @@ public:
 
 	// ViewModel 정리
 	virtual void Deinitialize();
+
+	/*~ ViewModel Tag ~*/
+
+	// ViewModel Tag 반환
+	UFUNCTION(BlueprintPure, Category = "ViewModel")
+	FGameplayTag GetViewModelTag() const { return ViewModelTag; }
+
+	/*~ ViewModel Visibility ~*/
+
+	// 가시성 설정
+	UFUNCTION(BlueprintCallable, Category = "ViewModel|Visibility")
+	void SetVisible(bool bNewVisible);
+
+	// 가시성 오버라이드 설정
+	void SetVisibilityOverride(bool bOverrideVisible);
+
+	// 가시성 오버라이드 해제
+	void ClearVisibilityOverride();
+
+	// 가시성 반환
+	UFUNCTION(BlueprintPure, Category = "ViewModel|Visibility")
+	bool IsVisible() const { return bVisibilityOverrideActive ? bVisibilityOverrideValue : bDesiredVisible; }
+
+	// 가시성 변경 이벤트
+	UPROPERTY(BlueprintAssignable, Category = "ViewModel|Events")
+	FOnViewModelVisibilityChanged OnVisibilityChanged;
 
 	// 소유 LocalPlayer 반환
 	UFUNCTION(BlueprintPure, Category = "ViewModel")
@@ -57,6 +87,23 @@ public:
 	}
 
 protected:
+	// ViewModel Tag
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ViewModel")
+	FGameplayTag ViewModelTag;
+
+	// 가시성 여부
+	UPROPERTY(BlueprintReadOnly, Category = "ViewModel|Visibility")
+	bool bIsVisible = false;
+
+	// 가시성 기본값
+	bool bDesiredVisible = false;
+
+	// 가시성 오버라이드 여부
+	bool bVisibilityOverrideActive = false;
+
+	// 가시성 오버라이드 값
+	bool bVisibilityOverrideValue = false;
+
 	TWeakObjectPtr<ULocalPlayer> LocalPlayer;
 	TWeakObjectPtr<AActor> TargetActor;
 };

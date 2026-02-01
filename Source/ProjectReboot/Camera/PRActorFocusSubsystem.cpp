@@ -1,13 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PRActorFocusSubsystem.h"
-
 #include "AbilitySystemBlueprintLibrary.h"
-#include "AbilitySystemComponent.h"
 #include "Camera/CameraActor.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "ProjectReboot/PRGameplayTags.h"
+#include "ProjectReboot/UI/ViewModel/PRViewModelSubsystem.h"
 
 void UPRActorFocusSubsystem::Deinitialize()
 {
@@ -43,17 +41,46 @@ bool UPRActorFocusSubsystem::FocusOnActor(AActor* TargetActor, const FActorFocus
 	SetupFocusCamera(TargetActor, Params);
 	ActivateFocusCamera(Params);
 
-	// 플레이어 상태 잠금
-	if (Params.bLockPlayerRotation)
+	// 타겟 상태 잠금
+	if (Params.bLockTargetRotation)
 	{
-		LockPlayerState(TargetActor, Params);
+		LockTargetState(TargetActor, Params);
 	}
 
-	// 크로스헤어 숨김
-	if (Params.bHideCrosshair)
+	// ViewModel 가시성 설정
+	if (Params.ViewModelVisibilityOverrides.Num() > 0)
 	{
-		SetCrosshairVisibility(TargetActor, false);
-		CurrentFocusState.bCrosshairHidden = true;
+		ULocalPlayer* LocalPlayer = GetLocalPlayer();
+		UPRViewModelSubsystem* ViewModelSubsystem = LocalPlayer ? LocalPlayer->GetSubsystem<UPRViewModelSubsystem>() : nullptr;
+		if (IsValid(ViewModelSubsystem))
+		{
+			for (const FActorFocusViewModelVisibility& Override : Params.ViewModelVisibilityOverrides)
+			{
+				if (!Override.ViewModelTag.IsValid())
+				{
+					continue;
+				}
+
+				// 포커스 전 가시성 저장
+				const bool bAlreadySaved = CurrentFocusState.ViewModelVisibilityStates.ContainsByPredicate(
+					[&Override](const FActorFocusViewModelVisibilityState& State)
+					{
+						return State.ViewModelTag == Override.ViewModelTag;
+					});
+
+				if (!bAlreadySaved)
+				{
+					FActorFocusViewModelVisibilityState NewState;
+					NewState.ViewModelTag = Override.ViewModelTag;
+					NewState.bWasVisible = ViewModelSubsystem->GetVisibilityByTag(Override.ViewModelTag, false);
+					NewState.bAffectActorBound = Override.bAffectActorBound;
+					CurrentFocusState.ViewModelVisibilityStates.Add(NewState);
+				}
+
+				// 포커스 중 가시성 적용
+				ViewModelSubsystem->SetVisibilityByTag(Override.ViewModelTag, Override.bVisible, Override.bAffectActorBound);
+			}
+		}
 	}
 
 	return true;
@@ -65,15 +92,30 @@ void UPRActorFocusSubsystem::RestoreFocus()
 	{
 		return;
 	}
-
+	
+	
 	// UI 상태 복원
-	if (CurrentFocusState.bCrosshairHidden && CurrentFocusState.TargetActor.IsValid())
+	if (CurrentFocusState.ViewModelVisibilityStates.Num() > 0)
 	{
-		SetCrosshairVisibility(CurrentFocusState.TargetActor.Get(), true);
+		ULocalPlayer* LocalPlayer = GetLocalPlayer();
+		UPRViewModelSubsystem* ViewModelSubsystem = LocalPlayer ? LocalPlayer->GetSubsystem<UPRViewModelSubsystem>() : nullptr;
+		if (IsValid(ViewModelSubsystem))
+		{
+			for (const FActorFocusViewModelVisibilityState& State : CurrentFocusState.ViewModelVisibilityStates)
+			{
+				if (!State.ViewModelTag.IsValid())
+				{
+					continue;
+				}
+
+				// 포커스 전 가시성 복원
+				ViewModelSubsystem->RestoreVisibilityByTag(State.ViewModelTag, State.bWasVisible, State.bAffectActorBound);
+			}
+		}
 	}
 
-	// 플레이어 상태 복원
-	UnlockPlayerState();
+	// 타겟 상태 복원
+	UnlockTargetState();
 
 	// 카메라 복원
 	RestoreCamera();
@@ -188,7 +230,7 @@ void UPRActorFocusSubsystem::CleanupFocusCamera(bool bImmediate)
 	CurrentFocusState.FocusCameraActor = nullptr;
 }
 
-void UPRActorFocusSubsystem::LockPlayerState(AActor* TargetActor, const FActorFocusParams& Params)
+void UPRActorFocusSubsystem::LockTargetState(AActor* TargetActor, const FActorFocusParams& Params)
 {
 	if (!IsValid(TargetActor))
 	{
@@ -216,7 +258,7 @@ void UPRActorFocusSubsystem::LockPlayerState(AActor* TargetActor, const FActorFo
 	}
 }
 
-void UPRActorFocusSubsystem::UnlockPlayerState()
+void UPRActorFocusSubsystem::UnlockTargetState()
 {
 	if (!CurrentFocusState.TargetActor.IsValid())
 	{
@@ -231,23 +273,5 @@ void UPRActorFocusSubsystem::UnlockPlayerState()
 		{
 			MovementComp->bOrientRotationToMovement = CurrentFocusState.bOriginalOrientRotationToMovement;
 		}
-	}
-}
-
-void UPRActorFocusSubsystem::SetCrosshairVisibility(AActor* TargetActor, bool bVisible)
-{
-	UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetActor);
-	if (!ASC)
-	{
-		return;
-	}
-
-	if (bVisible)
-	{
-		ASC->RemoveLooseGameplayTag(TAG_State_UI_HideCrosshair);
-	}
-	else
-	{
-		ASC->AddLooseGameplayTag(TAG_State_UI_HideCrosshair);
 	}
 }

@@ -1,6 +1,14 @@
 // PRLockOnViewModel.cpp
 #include "PRLockOnViewModel.h"
 
+#include "ProjectReboot/PRGameplayTags.h"
+
+UPRLockOnViewModel::UPRLockOnViewModel()
+{
+	// ViewModel Tag 설정
+	ViewModelTag = TAG_UI_ViewModel_LockOn;
+}
+
 void UPRLockOnViewModel::InitializeForActor(AActor* InTargetActor, ULocalPlayer* InLocalPlayer)
 {
 	Super::InitializeForActor(InTargetActor, InLocalPlayer);
@@ -18,15 +26,6 @@ void UPRLockOnViewModel::Deinitialize()
 	bIsLocked = false;
 
 	Super::Deinitialize();
-}
-
-void UPRLockOnViewModel::SetVisible(bool bNewVisible)
-{
-	if (bIsVisible != bNewVisible)
-	{
-		bIsVisible = bNewVisible;
-		OnVisibilityChanged.Broadcast(bIsVisible);
-	}
 }
 
 void UPRLockOnViewModel::SetProgress(float NewProgress)

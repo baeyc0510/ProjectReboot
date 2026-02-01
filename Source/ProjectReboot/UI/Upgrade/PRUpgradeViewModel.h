@@ -25,6 +25,9 @@ class PROJECTREBOOT_API UPRUpgradeViewModel : public UPRViewModelBase
 	GENERATED_BODY()
 
 public:
+	// 생성자
+	UPRUpgradeViewModel();
+
 	/*~ UPRViewModelBase Interface ~*/
 	virtual void InitializeForPlayer(ULocalPlayer* InLocalPlayer) override;
 	virtual void Deinitialize() override;

@@ -78,6 +78,14 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Equipment")
     void RefreshAllVisuals();
+
+    // 특정 슬롯 장비 외형 가시성 설정
+    UFUNCTION(BlueprintCallable, Category = "Equipment")
+    void SetEquipmentVisibility(FGameplayTag SlotTag, bool bVisible);
+
+    // 모든 장비 외형 가시성 설정
+    UFUNCTION(BlueprintCallable, Category = "Equipment")
+    void SetAllEquipmentVisibility(bool bVisible);
 public:
     /*~ Delegates ~*/
     UPROPERTY(BlueprintAssignable, Category = "Equipment")

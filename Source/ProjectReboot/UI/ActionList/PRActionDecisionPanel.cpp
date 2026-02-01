@@ -6,16 +6,25 @@
 #include "RogueliteBlueprintLibrary.h"
 #include "Components/Button.h"
 #include "Components/VerticalBox.h"
+#include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/Camera/PRCameraBlueprintLibrary.h"
 #include "ProjectReboot/Equipment/PREquipmentBlueprintLibrary.h"
 #include "ProjectReboot/Equipment/PREquipActionData.h"
 #include "ProjectReboot/Equipment/PREquipmentManagerComponent.h"
 #include "ProjectReboot/UI/PRUIBlueprintLibrary.h"
 
+
+UPRActionDecisionPanel::UPRActionDecisionPanel(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+{
+	// 크로스헤어 및 상호작용 UI 감춤
+	FocusParams.ViewModelVisibilityOverrides.Add({TAG_UI_ViewModel_Crosshair,false});
+	FocusParams.ViewModelVisibilityOverrides.Add({TAG_UI_ViewModel_Interaction,false});
+}
+
 void UPRActionDecisionPanel::NativeConstruct()
 {
 	Super::NativeConstruct();
-
+	
 	if (ConfirmButton)
 	{
 		ConfirmButton->OnClicked.AddDynamic(this, &UPRActionDecisionPanel::HandleConfirmButtonClicked);

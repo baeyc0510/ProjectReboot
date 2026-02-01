@@ -37,5 +37,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	static void UnequipSlot(AActor* Target, FGameplayTag& SlotTag);
 	
-	
+	// EquipmentInstance의 모든 Attached Actions를 Roguelite RunState에서 제거
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	static void RemoveEquipmentInstance(AActor* Target, FGameplayTag SlotTag);
 };

@@ -16,10 +16,10 @@ UPRGA_Dash::UPRGA_Dash()
 	ActivationBlockedTags.AddTag(TAG_State_Dead);
 
 	// 대시 중에는 재발동 방지
-	ActivationBlockedTags.AddTag(TAG_Ability_Dash);
+	ActivationBlockedTags.AddTag(TAG_Ability_Active_Dash);
 
 	// 어빌리티 태그 설정
-	AbilityTags.AddTag(TAG_Ability_Dash);
+	AbilityTags.AddTag(TAG_Ability_Active_Dash);
 
 	// 입력 기반 발동
 	ActivationPolicy = EPRAbilityActivationPolicy::OnInputTriggered;

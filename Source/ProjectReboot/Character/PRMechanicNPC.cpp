@@ -5,10 +5,20 @@
 #include "Blueprint/UserWidget.h"
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/PlayerController.h"
+#include "ProjectReboot/PRGameplayTags.h"
+#include "ProjectReboot/Camera/PRCameraBlueprintLibrary.h"
 #include "ProjectReboot/UI/PRUIBlueprintLibrary.h"
 #include "ProjectReboot/UI/Upgrade/PRUpgradeViewModel.h"
+#include "ProjectReboot/UI/Upgrade/PRUpgradePanel.h"
 #include "ProjectReboot/UI/PRUIManagerSubsystem.h"
 #include "ProjectReboot/UI/ViewModel/PRViewModelSubsystem.h"
+
+APRMechanicNPC::APRMechanicNPC(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+{
+	// 크로스헤어 및 상호작용 UI 감춤
+	FocusParams.ViewModelVisibilityOverrides.Add({TAG_UI_ViewModel_Crosshair,false});
+	FocusParams.ViewModelVisibilityOverrides.Add({TAG_UI_ViewModel_Interaction,false});
+}
 
 bool APRMechanicNPC::CanInteract(APawn* Interactor) const
 {
@@ -30,13 +40,21 @@ FText APRMechanicNPC::GetInteractionText() const
 	return InteractionDisplayText;
 }
 
+void APRMechanicNPC::GetInteractionInfo(APawn* Interactor, FPRInteractionInfo& OutInfo) const
+{
+	OutInfo = FPRInteractionInfo();
+	OutInfo.DisplayText = GetInteractionText();
+	OutInfo.bIsEnabled = CanInteract(Interactor);
+}
+
 void APRMechanicNPC::OpenUpgradeUI(const APawn* Interactor)
 {
 	if (!IsValid(Interactor))
 	{
 		return;
 	}
-
+	
+	InteractorPawn = Interactor;
 	APlayerController* PlayerController = Interactor->GetController<APlayerController>();
 	if (!IsValid(PlayerController))
 	{
@@ -64,5 +82,27 @@ void APRMechanicNPC::OpenUpgradeUI(const APawn* Interactor)
 		return;
 	}
 
-	UIManager->PushUI(UpgradePanelClass);
+	UUserWidget* PanelWidget = UIManager->PushUI(UpgradePanelClass);
+	if (IsValid(PanelWidget))
+	{
+		UPRCameraBlueprintLibrary::FocusOnActor(PlayerController, this, FocusParams);
+		PanelWidget->OnNativeDestruct.AddUObject(this, &ThisClass::HandleUpgradePanelDestruct);
+	}
+}
+
+void APRMechanicNPC::HandleUpgradePanelDestruct(UUserWidget* DestructedWidget)
+{
+	if (!InteractorPawn.IsValid())
+	{
+		return;
+	}
+	
+	APlayerController* PlayerController = InteractorPawn->GetController<APlayerController>();
+	if (!IsValid(PlayerController))
+	{
+		return;
+	}
+
+	UPRCameraBlueprintLibrary::RestoreFocus(PlayerController);
+	InteractorPawn.Reset();
 }

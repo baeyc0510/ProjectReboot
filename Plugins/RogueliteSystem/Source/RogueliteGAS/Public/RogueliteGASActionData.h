@@ -57,6 +57,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
 	TArray<FRogueliteEffectEntry> Effects;
 	
+	// 액션 획득시 ASC에 Trigger할 이벤트 태그들 (Generic Event)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
+	TArray<FGameplayTag> GameplayEventTags;
+	
 	// TagsToGrant의 태그들을 AbilitySystemComponent에 적용할지 여부
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
 	bool bGrantTagsToAbilitySystem;

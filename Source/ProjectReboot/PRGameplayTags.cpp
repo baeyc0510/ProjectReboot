@@ -15,6 +15,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type, "Equipment.Weapon.Type");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type_Bullet, "Equipment.Weapon.Type.Bullet");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type_Beam, "Equipment.Weapon.Type.Beam");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type_Missile, "Equipment.Weapon.Type.Missile");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type_Preview, "Equipment.Weapon.Type.Preview");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot_Weapon, "Equipment.Slot.Weapon");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot_Weapon_Primary, "Equipment.Slot.Weapon.Primary");
@@ -47,7 +48,8 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_State_BlockMovementInput, "State.BlockMovementInput")
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_CannotFire, "State.Weapon.CannotFire");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_Crosshair, "State.Weapon.Crosshair");
-UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_Crosshair_Rifle, "State.Weapon.Crosshair.Rifle");
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_Crosshair_Bullet, "State.Weapon.Crosshair.Bullet");
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_Crosshair_Missile, "State.Weapon.Crosshair.Missile");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_UI, "State.UI");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_UI_HideCrosshair,"State.UI.HideCrosshair");
@@ -71,6 +73,9 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Kill_Common,"Event.Kill.Common");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Kill_Elite,"Event.Kill.Elite");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Kill_Boss,"Event.Kill.Boss");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Equip_Weapon, "Event.Equip.Weapon");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_ShowEquipment, "Event.ShowEquipment");
+
 /*~ Montage Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage, "Montage");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Attack, "Montage.Attack");
@@ -91,6 +96,8 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Reload_Bullet, "Montage.Reload.Bullet");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Reload_Beam, "Montage.Reload.Beam");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Reload_Missile, "Montage.Reload.Missile");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Equip_Weapon, "Montage.Equip.Weapon");
+
 /*~ Montage Tags - Dash ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Dash, "Montage.Dash");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Dash_Front, "Montage.Dash.Front");
@@ -100,13 +107,13 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Dash_Left, "Montage.Dash.Left");
 
 /*~ Ability Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability, "Ability");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Attack, "Ability.Attack");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Die, "Ability.Die");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Reload, "Ability.Reload");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Dash, "Ability.Dash");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_JustDodge, "Ability.JustDodge");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_SlowMotion, "Ability.SlowMotion");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Active, "Ability.Active");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Active_Reload, "Ability.Active.Reload");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Active_Attack, "Ability.Active.Attack");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Active_Dash, "Ability.Active.Dash");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Active_Aim, "Ability.Active.Aim");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cooldown_WeaponFire, "Cooldown.WeaponFire");
@@ -157,3 +164,12 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Upgrade_Module, "Upgrade.Module");
 /*~ Currency Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Currency, "Currency");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Currency_Core, "Currency.Core");
+
+/*~ UI ViewModel Tags ~*/
+UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel, "UI.ViewModel");
+UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_Crosshair, "UI.ViewModel.Crosshair");
+UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_HUD, "UI.ViewModel.HUD");
+UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_Interaction, "UI.ViewModel.Interaction");
+UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_LockOn, "UI.ViewModel.LockOn");
+UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_Upgrade, "UI.ViewModel.Upgrade");
+UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_EnemyStatus, "UI.ViewModel.EnemyStatus");

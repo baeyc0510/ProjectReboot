@@ -21,6 +21,9 @@ class PROJECTREBOOT_API UPREnemyStatusViewModel : public UPRViewModelBase
 	GENERATED_BODY()
 
 public:
+	// 생성자
+	UPREnemyStatusViewModel();
+
 	/*~ UPRViewModelBase Interface ~*/
 	// Actor-Bound ViewModel 초기화
 	virtual void InitializeForActor(AActor* InTargetActor, ULocalPlayer* InLocalPlayer) override;

@@ -3,10 +3,19 @@
 #include "PRUpgradeViewModel.h"
 #include "ProjectReboot/Upgrade/PRUpgradeManagerSubsystem.h"
 #include "ProjectReboot/Upgrade/PRUpgradeModuleData.h"
+#include "ProjectReboot/PRGameplayTags.h"
+
+UPRUpgradeViewModel::UPRUpgradeViewModel()
+{
+	// ViewModel Tag 설정
+	ViewModelTag = TAG_UI_ViewModel_Upgrade;
+}
 
 void UPRUpgradeViewModel::InitializeForPlayer(ULocalPlayer* InLocalPlayer)
 {
 	Super::InitializeForPlayer(InLocalPlayer);
+	// 업그레이드 패널 기본 표시
+	SetVisible(true);
 
 	BindToSubsystem();
 }

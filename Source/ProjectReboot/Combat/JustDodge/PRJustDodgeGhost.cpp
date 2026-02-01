@@ -31,7 +31,7 @@ void APRJustDodgeGhost::InitCapsuleSize(UCapsuleComponent* InOriginalCapsule)
 	{
 		return;
 	}
-	CapsuleComponent->SetCapsuleSize(InOriginalCapsule->GetScaledCapsuleRadius(), InOriginalCapsule->GetScaledCapsuleHalfHeight());
+	CapsuleComponent->SetCapsuleSize(InOriginalCapsule->GetScaledCapsuleRadius() * GhostScale, InOriginalCapsule->GetScaledCapsuleHalfHeight() * GhostScale);
 }
 
 UCapsuleComponent* APRJustDodgeGhost::GetCombatCapsuleComponent() const

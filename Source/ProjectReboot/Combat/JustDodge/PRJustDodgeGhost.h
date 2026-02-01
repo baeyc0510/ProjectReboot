@@ -30,6 +30,10 @@ public:
 	virtual void Die(const FGameplayEffectContextHandle& EffectContext) override;
 	virtual void FinishDie() override;
 	virtual void OnHit(const FHitResult& HitResult) override;
+
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "Combat")
+	float GhostScale = 1.5f;
 	
 private:
 	UPROPERTY()

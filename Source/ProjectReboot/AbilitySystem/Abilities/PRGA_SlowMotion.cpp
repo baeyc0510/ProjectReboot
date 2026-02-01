@@ -3,6 +3,7 @@
 
 #include "AbilitySystemComponent.h"
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
+#include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "ProjectReboot/PRGameplayTags.h"
 
@@ -42,6 +43,9 @@ void UPRGA_SlowMotion::EndAbility(const FGameplayAbilitySpecHandle Handle, const
 	// 시간 복원
 	RestoreNormalTime();
 
+	// 포스트 프로세스 복원
+	RestoreSlowMotionPostProcess();
+
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
@@ -72,6 +76,8 @@ void UPRGA_SlowMotion::ApplySlowMotion()
 		float CompensatedDilation = PlayerTimeDilationMultiplier / GlobalTimeDilation;
 		AvatarActor->CustomTimeDilation = CompensatedDilation;
 	}
+
+	ApplySlowMotionPostProcess();
 }
 
 void UPRGA_SlowMotion::RestoreNormalTime()
@@ -91,6 +97,58 @@ void UPRGA_SlowMotion::RestoreNormalTime()
 	{
 		AvatarActor->CustomTimeDilation = OriginalPlayerTimeDilation;
 	}
+}
+
+void UPRGA_SlowMotion::ApplySlowMotionPostProcess()
+{
+	if (!SlowMotionLUT)
+	{
+		return;
+	}
+
+	AActor* AvatarActor = GetAvatarActorFromActorInfo();
+	if (!IsValid(AvatarActor))
+	{
+		return;
+	}
+
+	UCameraComponent* CameraComp = AvatarActor->FindComponentByClass<UCameraComponent>();
+	if (!IsValid(CameraComp))
+	{
+		return;
+	}
+
+	CachedCameraComponent = CameraComp;
+	OriginalPostProcessSettings = CameraComp->PostProcessSettings;
+	OriginalPostProcessBlendWeight = CameraComp->PostProcessBlendWeight;
+
+	CameraComp->PostProcessBlendWeight = 1.0f;
+	CameraComp->PostProcessSettings.bOverride_ColorGradingLUT = true;
+	CameraComp->PostProcessSettings.bOverride_ColorGradingIntensity = true;
+	CameraComp->PostProcessSettings.ColorGradingLUT = SlowMotionLUT;
+	CameraComp->PostProcessSettings.ColorGradingIntensity = SlowMotionLUTIntensity;
+
+	bPostProcessApplied = true;
+}
+
+void UPRGA_SlowMotion::RestoreSlowMotionPostProcess()
+{
+	if (!bPostProcessApplied)
+	{
+		return;
+	}
+
+	UCameraComponent* CameraComp = CachedCameraComponent.Get();
+	if (!IsValid(CameraComp))
+	{
+		return;
+	}
+
+	CameraComp->PostProcessSettings = OriginalPostProcessSettings;
+	CameraComp->PostProcessBlendWeight = OriginalPostProcessBlendWeight;
+
+	bPostProcessApplied = false;
+	CachedCameraComponent.Reset();
 }
 
 void UPRGA_SlowMotion::OnSlowMotionDurationExpired()

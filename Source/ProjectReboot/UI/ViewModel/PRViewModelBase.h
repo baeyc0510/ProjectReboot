@@ -3,7 +3,6 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "UObject/NoExportTypes.h"
 #include "PRViewModelBase.generated.h"
 
 class ULocalPlayer;

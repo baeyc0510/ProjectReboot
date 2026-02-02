@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "GenericTeamAgentInterface.h"
 #include "PRCharacterBase.h"
 #include "ProjectReboot/AbilitySystem/PRAbilitySet.h"
 #include "ProjectReboot/Equipment/PREquipmentInterface.h"
@@ -25,12 +26,15 @@ class UInputAction;
 struct FInputActionValue;
 
 UCLASS()
-class PROJECTREBOOT_API APRPlayerCharacter : public APRCharacterBase, public IPREquipmentInterface
+class PROJECTREBOOT_API APRPlayerCharacter : public APRCharacterBase, public IPREquipmentInterface, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
 public:
 	APRPlayerCharacter();
+
+	/*~ IGenericTeamAgentInterface ~*/
+	virtual FGenericTeamId GetGenericTeamId() const override;
 
 	/*~ APRPlayerCharacter Interfaces ~*/
 	UFUNCTION(BlueprintCallable, Category = "Camera")

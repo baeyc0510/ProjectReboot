@@ -9,11 +9,10 @@
 
 class APRAIController;
 class APREnemyCharacter;
-class UAIPerceptionComponent;
 
 /**
  * 전투 데이터 Evaluator
- * Perception 상태 폴링 및 전투 상태 계산
+ * Controller의 전투 상태를 읽어 StateTree에 제공
  */
 
 // Instance Data: 상태 저장용
@@ -47,9 +46,6 @@ struct FPRStateTreeEvaluator_CombatInstanceData
 
 	UPROPERTY()
 	TWeakObjectPtr<APREnemyCharacter> CachedPawn;
-
-	UPROPERTY()
-	TWeakObjectPtr<UAIPerceptionComponent> CachedPerceptionComponent;
 };
 
 // Evaluator 구조체
@@ -73,7 +69,4 @@ struct PROJECTREBOOT_API FPRStateTreeEvaluator_Combat : public FStateTreeEvaluat
 private:
 	// 거리 계산
 	float CalculateDistanceToTarget(const FInstanceDataType& Data) const;
-
-	// Perception 기반 타겟 업데이트
-	void UpdateTargetFromPerception(FInstanceDataType& Data) const;
 };

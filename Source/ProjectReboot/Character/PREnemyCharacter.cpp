@@ -20,15 +20,18 @@ APREnemyCharacter::APREnemyCharacter()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	bUseControllerRotationYaw = false;
-	
+
+	// AI Sight가 동료 Enemy를 통과하도록 Visibility 채널 Ignore
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Ignore);
+
 	StatusWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("StatusWidgetComponent"));
 	StatusWidgetComponent->SetupAttachment(RootComponent);
-	
+
 	LockOnWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("LockOnWidgetComponent"));
 	LockOnWidgetComponent->SetupAttachment(RootComponent);
 
 	MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarpingComponent"));
-	
+
 	DefaultAbilitySystemTags.AddTag(TAG_Target_Lockable);
 }
 

@@ -7,6 +7,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "RogueliteAbilityHandlerComponent.h"
+#include "ProjectReboot/AI/PRAIController.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -68,6 +69,11 @@ APRPlayerCharacter::APRPlayerCharacter()
 		StimuliSourceComponent->RegisterForSense(UAISense_Sight::StaticClass());
 		StimuliSourceComponent->RegisterForSense(UAISense_Hearing::StaticClass());
 	}
+}
+
+FGenericTeamId APRPlayerCharacter::GetGenericTeamId() const
+{
+	return FGenericTeamId(PRTeamId::Player);
 }
 
 UCameraComponent* APRPlayerCharacter::DetachCamera()

@@ -4,6 +4,8 @@
 #include "StateTreeExecutionContext.h"
 #include "ProjectReboot/AI/PRAIController.h"
 #include "ProjectReboot/Character/PREnemyCharacter.h"
+#include "ProjectReboot/AbilitySystem/PRAbilitySystemComponent.h"
+#include "ProjectReboot/AbilitySystem/PRCommonAttributeSet.h"
 
 void FPRStateTreeEvaluator_Combat::TreeStart(FStateTreeExecutionContext& Context) const
 {
@@ -20,6 +22,11 @@ void FPRStateTreeEvaluator_Combat::TreeStart(FStateTreeExecutionContext& Context
 		}
 
 		InstanceData.CachedPawn = Cast<APREnemyCharacter>(InstanceData.CachedController->GetPawn());
+
+		if (IsValid(InstanceData.CachedPawn.Get()))
+		{
+			InstanceData.CachedASC = Cast<UPRAbilitySystemComponent>(InstanceData.CachedPawn->GetAbilitySystemComponent());
+		}
 	}
 }
 
@@ -34,6 +41,7 @@ void FPRStateTreeEvaluator_Combat::TreeStop(FStateTreeExecutionContext& Context)
 
 	InstanceData.CachedController.Reset();
 	InstanceData.CachedPawn.Reset();
+	InstanceData.CachedASC.Reset();
 }
 
 void FPRStateTreeEvaluator_Combat::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
@@ -54,25 +62,47 @@ void FPRStateTreeEvaluator_Combat::Tick(FStateTreeExecutionContext& Context, con
 
 	if (InstanceData.bHasValidTarget)
 	{
-		InstanceData.DistanceToTarget = CalculateDistanceToTarget(InstanceData);
+		CalculateDistanceToTarget(InstanceData);
 	}
 	else
 	{
 		InstanceData.DistanceToTarget = MAX_FLT;
+		InstanceData.DistanceToTarget2D = MAX_FLT;
 	}
+
+	// 체력 비율 업데이트
+	if (IsValid(InstanceData.CachedASC.Get()))
+	{
+		const float Health = InstanceData.CachedASC->GetNumericAttribute(UPRCommonAttributeSet::GetHealthAttribute());
+		const float MaxHealth = InstanceData.CachedASC->GetNumericAttribute(UPRCommonAttributeSet::GetMaxHealthAttribute());
+		InstanceData.HealthPercent = (MaxHealth > 0.f) ? (Health / MaxHealth) : 0.f;
+	}
+	else
+	{
+		InstanceData.HealthPercent = 1.f;
+	}
+
+	// 사망 상태 업데이트
+	InstanceData.bIsDead = IsValid(InstanceData.CachedPawn.Get()) && InstanceData.CachedPawn->IsDead();
 }
 
-float FPRStateTreeEvaluator_Combat::CalculateDistanceToTarget(const FInstanceDataType& Data) const
+void FPRStateTreeEvaluator_Combat::CalculateDistanceToTarget(FInstanceDataType& OutData) const
 {
-	if (!IsValid(Data.CachedPawn.Get()) || !IsValid(Data.CachedController.Get()))
+	if (!IsValid(OutData.CachedPawn.Get()) || !IsValid(OutData.CachedController.Get()))
 	{
-		return MAX_FLT;
+		OutData.DistanceToTarget =  MAX_FLT;
+		OutData.DistanceToTarget2D =  MAX_FLT;
 	}
 
-	if (!IsValid(Data.TargetActor))
+	if (!IsValid(OutData.TargetActor))
 	{
-		return MAX_FLT;
+		OutData.DistanceToTarget =  MAX_FLT;
+		OutData.DistanceToTarget2D =  MAX_FLT;
 	}
-
-	return FVector::Dist(Data.CachedPawn->GetActorLocation(), Data.TargetActor->GetActorLocation());
+	
+	const FVector OwnerLocation = OutData.CachedPawn->GetActorLocation();
+	const FVector TargetLocation = OutData.TargetActor->GetActorLocation();
+	
+	OutData.DistanceToTarget = FVector::Dist(OwnerLocation, TargetLocation);
+	OutData.DistanceToTarget2D = FVector::Dist2D(OwnerLocation,TargetLocation);
 }

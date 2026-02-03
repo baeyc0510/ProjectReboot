@@ -119,6 +119,16 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Active_Reload);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Active_Dash);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Active_Aim);
 
+/*~ Ability Tags - Leviathan ~*/
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Leviathan);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Leviathan_Shoot);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Leviathan_PlasmaWave);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Leviathan_OrbitalRain);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Leviathan_TailSweep);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Leviathan_HeadCharge);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Leviathan_Bite);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Leviathan_DoubleBite);
+
 /*~ Ability Cooldown Tags ~*/
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Cooldown_WeaponFire);
 

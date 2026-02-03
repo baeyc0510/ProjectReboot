@@ -9,6 +9,7 @@
 
 class APRAIController;
 class APREnemyCharacter;
+class UPRAbilitySystemComponent;
 
 /**
  * 전투 데이터 Evaluator
@@ -30,6 +31,11 @@ struct FPRStateTreeEvaluator_CombatInstanceData
 	// 타겟까지 거리
 	UPROPERTY(EditAnywhere, Category = "Output")
 	float DistanceToTarget = 0.f;
+	
+	// 타겟까지 거리 (2D)
+	UPROPERTY(EditAnywhere, Category = "Output")
+	float DistanceToTarget2D = 0.f;
+
 
 	// 유효한 타겟 존재 여부
 	UPROPERTY(EditAnywhere, Category = "Output")
@@ -39,6 +45,14 @@ struct FPRStateTreeEvaluator_CombatInstanceData
 	UPROPERTY(EditAnywhere, Category = "Output")
 	TObjectPtr<AActor> TargetActor;
 
+	// 나의 체력 비율 (0.0 ~ 1.0)
+	UPROPERTY(EditAnywhere, Category = "Output")
+	float HealthPercent = 1.f;
+
+	// 사망 여부
+	UPROPERTY(EditAnywhere, Category = "Output")
+	bool bIsDead = false;
+
 	/*~ Cached References (상태) ~*/
 
 	UPROPERTY()
@@ -46,6 +60,9 @@ struct FPRStateTreeEvaluator_CombatInstanceData
 
 	UPROPERTY()
 	TWeakObjectPtr<APREnemyCharacter> CachedPawn;
+
+	UPROPERTY()
+	TWeakObjectPtr<UPRAbilitySystemComponent> CachedASC;
 };
 
 // Evaluator 구조체
@@ -68,5 +85,5 @@ struct PROJECTREBOOT_API FPRStateTreeEvaluator_Combat : public FStateTreeEvaluat
 
 private:
 	// 거리 계산
-	float CalculateDistanceToTarget(const FInstanceDataType& Data) const;
+	void CalculateDistanceToTarget(FInstanceDataType& OutData) const;
 };

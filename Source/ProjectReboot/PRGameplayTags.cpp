@@ -116,6 +116,16 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Active_Attack, "Ability.Active.Attack");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Active_Dash, "Ability.Active.Dash");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Active_Aim, "Ability.Active.Aim");
 
+/*~ Ability Tags - Leviathan ~*/
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Leviathan, "Ability.Leviathan");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Leviathan_Shoot, "Ability.Leviathan.Shoot");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Leviathan_PlasmaWave, "Ability.Leviathan.PlasmaWave");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Leviathan_OrbitalRain, "Ability.Leviathan.OrbitalRain");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Leviathan_TailSweep, "Ability.Leviathan.TailSweep");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Leviathan_HeadCharge, "Ability.Leviathan.HeadCharge");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Leviathan_Bite, "Ability.Leviathan.Bite");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Leviathan_DoubleBite, "Ability.Leviathan.DoubleBite");
+
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cooldown_WeaponFire, "Cooldown.WeaponFire");
 
 /*~ SetByCaller Tags - Weapon Attributes ~*/

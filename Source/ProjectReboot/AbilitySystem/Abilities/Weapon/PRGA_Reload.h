@@ -2,7 +2,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ProjectReboot/AbilitySystem/Abilities/PRGameplayAbility_WeaponFire.h"
+#include "ProjectReboot/AbilitySystem/PRGameplayAbility.h"
 #include "PRGA_Reload.generated.h"
 
 class UAbilityTask_PlayMontageAndWait;

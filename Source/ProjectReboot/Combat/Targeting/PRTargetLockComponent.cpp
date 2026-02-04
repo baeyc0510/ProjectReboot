@@ -400,14 +400,16 @@ TArray<FVector> UPRTargetLockComponent::GetTargetCheckLocations(AActor* Target) 
 	
 	if (Capsule)
 	{
-		float HalfHeight = Capsule->GetScaledCapsuleHalfHeight();
-
+		const FVector CapsuleLocation = Capsule->GetComponentLocation();
+		const float HalfHeight = Capsule->GetScaledCapsuleHalfHeight();
+		const FVector UpVector = Capsule->GetUpVector();
+		
 		// 머리 (상단)
-		Locations.Add(ActorLocation + FVector(0, 0, HalfHeight * 0.8f));
+		Locations.Add(CapsuleLocation + UpVector * FVector(0, 0, HalfHeight * 0.8f));
 		// 몸통 (중앙)
-		Locations.Add(ActorLocation + FVector(0, 0, HalfHeight * 0.3f));
+		Locations.Add(CapsuleLocation + UpVector * FVector(0, 0, HalfHeight * 0.3f));
 		// 하체 (하단)
-		Locations.Add(ActorLocation - FVector(0, 0, HalfHeight * 0.3f));
+		Locations.Add(CapsuleLocation - UpVector * FVector(0, 0, HalfHeight * 0.3f));
 
 		return Locations;
 	}

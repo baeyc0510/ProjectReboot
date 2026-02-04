@@ -8,6 +8,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
 #include "Components/CapsuleComponent.h"
+#include "GameFramework/Character.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/AbilitySystem/PRWeaponAttributeSet.h"
@@ -95,12 +96,12 @@ void APRMissileProjectile::SetHomingTarget(AActor* Target)
 	// 비례항법 유도 활성화
 	USceneComponent* TargetComponent = nullptr;
 
-	// 기본 CombatCapsule 사용
-	if (IPRCombatInterface* CombatInterface = Cast<IPRCombatInterface>(Target))
+	// 기본 MeshComponent 사용
+	if (ACharacter* Character = Cast<ACharacter>(Target))
 	{
-		if (UCapsuleComponent* CombatCapsule = CombatInterface->GetCombatCapsuleComponent())
+		if (USkeletalMeshComponent* TargetMeshComponent =Character->GetMesh())
 		{
-			TargetComponent = CombatCapsule;
+			TargetComponent = TargetMeshComponent;
 		}
 	}
 

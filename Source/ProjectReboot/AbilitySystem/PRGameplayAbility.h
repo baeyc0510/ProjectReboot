@@ -4,7 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "GameplayTagContainer.h"
 #include "PRGameplayAbility.generated.h"
+
+class UAnimMontage;
 
 /**
  * 
@@ -24,6 +27,9 @@ class PROJECTREBOOT_API UPRGameplayAbility : public UGameplayAbility
 	GENERATED_BODY()
 	
 public:
+	// 태그로 몽타주 찾기 공통 헬퍼
+	UAnimMontage* FindMontageByGameplayTag(const FGameplayTag& MontageTag) const;
+
 	EPRAbilityActivationPolicy GetActivationPolicy() const {return ActivationPolicy;}
 	
 protected:

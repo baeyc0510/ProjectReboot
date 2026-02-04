@@ -4,7 +4,6 @@
 #include "AbilitySystemComponent.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "ProjectReboot/PRGameplayTags.h"
-#include "ProjectReboot/Animation/PRAnimRegistryInterface.h"
 #include "ProjectReboot/Combat/CombatBlueprintFunctionLibrary.h"
 #include "ProjectReboot/Combat/CombatTypes.h"
 
@@ -114,20 +113,14 @@ void UPRGA_HitReact::PlayHitMontage(UAnimMontage* MontageToPlay)
 
 UAnimMontage* UPRGA_HitReact::GetHitMontage(const FGameplayEventData* TriggerEventData) const
 {
-	AActor* AvatarActor = GetAvatarActorFromActorInfo();
-	if (!IsValid(AvatarActor))
-	{
-		return nullptr;
-	}
-
 	// 오버라이드 몽타주 우선
 	if (IsValid(HitMontageOverride))
 	{
 		return HitMontageOverride;
 	}
 
-	IPRAnimRegistryInterface* ARI = Cast<IPRAnimRegistryInterface>(AvatarActor);
-	if (!ARI)
+	AActor* AvatarActor = GetAvatarActorFromActorInfo();
+	if (!IsValid(AvatarActor))
 	{
 		return nullptr;
 	}
@@ -148,19 +141,19 @@ UAnimMontage* UPRGA_HitReact::GetHitMontage(const FGameplayEventData* TriggerEve
 
 	// 방향별 태그로 몽타주 검색
 	FGameplayTag DirectionalTag = GetHitMontageTagByDirection(HitDirection);
-	if (UAnimMontage* DirectionalMontage = ARI->FindMontageByGameplayTag(DirectionalTag))
+	if (UAnimMontage* DirectionalMontage = FindMontageByGameplayTag(DirectionalTag))
 	{
 		return DirectionalMontage;
 	}
 
 	// Fallback: BackHitMontage 태그
-	if (UAnimMontage* FrontHitMontage = ARI->FindMontageByGameplayTag(TAG_Montage_Hit_Back))
+	if (UAnimMontage* FrontHitMontage = FindMontageByGameplayTag(TAG_Montage_Hit_Back))
 	{
 		return FrontHitMontage;
 	}
 
 	// Fallback: 기본 HitMontage 태그
-	return ARI->FindMontageByGameplayTag(TAG_Montage_Hit);
+	return FindMontageByGameplayTag(TAG_Montage_Hit);
 }
 
 FGameplayTag UPRGA_HitReact::GetHitMontageTagByDirection(EPRHitDirection HitDirection) const

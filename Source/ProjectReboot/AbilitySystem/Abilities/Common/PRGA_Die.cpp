@@ -6,7 +6,6 @@
 #include "AbilitySystemComponent.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "ProjectReboot/PRGameplayTags.h"
-#include "ProjectReboot/Animation/PRAnimRegistryInterface.h"
 #include "ProjectReboot/Combat/CombatBlueprintFunctionLibrary.h"
 #include "ProjectReboot/Combat/CombatTypes.h"
 #include "ProjectReboot/Combat/PRCombatInterface.h"
@@ -88,20 +87,14 @@ void UPRGA_Die::ApplyDeathState(const FGameplayEventData* TriggerEventData)
 
 UAnimMontage* UPRGA_Die::GetDeathMontage(const FGameplayEventData* TriggerEventData) const
 {
-	AActor* AvatarActor = GetAvatarActorFromActorInfo();
-	if (!IsValid(AvatarActor))
-	{
-		return nullptr;
-	}
-
 	// 오버라이드 몽타주 우선
 	if (IsValid(DeathMontageOverride))
 	{
 		return DeathMontageOverride;
 	}
 
-	IPRAnimRegistryInterface* ARI = Cast<IPRAnimRegistryInterface>(AvatarActor);
-	if (!ARI)
+	AActor* AvatarActor = GetAvatarActorFromActorInfo();
+	if (!IsValid(AvatarActor))
 	{
 		return nullptr;
 	}
@@ -122,19 +115,19 @@ UAnimMontage* UPRGA_Die::GetDeathMontage(const FGameplayEventData* TriggerEventD
 
 	// 방향별 태그로 몽타주 검색
 	FGameplayTag DirectionalTag = GetDeathMontageTagByDirection(HitDirection);
-	if (UAnimMontage* DirectionalMontage = ARI->FindMontageByGameplayTag(DirectionalTag))
+	if (UAnimMontage* DirectionalMontage = FindMontageByGameplayTag(DirectionalTag))
 	{
 		return DirectionalMontage;
 	}
 
 	// Fallback: BackDeathMontage 태그
-	if (UAnimMontage* FrontDeathMontage = ARI->FindMontageByGameplayTag(TAG_Montage_Death_Back))
+	if (UAnimMontage* FrontDeathMontage = FindMontageByGameplayTag(TAG_Montage_Death_Back))
 	{
 		return FrontDeathMontage;
 	}
 	
 	// Fallback: 기본 DeathMontage 태그
-	return ARI->FindMontageByGameplayTag(TAG_Montage_Death);
+	return FindMontageByGameplayTag(TAG_Montage_Death);
 }
 
 FGameplayTag UPRGA_Die::GetDeathMontageTagByDirection(EPRHitDirection HitDirection) const

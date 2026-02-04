@@ -6,7 +6,6 @@
 #include "Abilities/Tasks/AbilityTask_ApplyRootMotionConstantForce.h"
 #include "GameFramework/Character.h"
 #include "ProjectReboot/PRGameplayTags.h"
-#include "ProjectReboot/Animation/PRAnimRegistryInterface.h"
 
 UPRGA_Dash::UPRGA_Dash()
 {
@@ -182,30 +181,18 @@ UAnimMontage* UPRGA_Dash::GetDashMontage() const
 		return DashMontageOverride;
 	}
 
-	AActor* AvatarActor = GetAvatarActorFromActorInfo();
-	if (!IsValid(AvatarActor))
-	{
-		return nullptr;
-	}
-
-	IPRAnimRegistryInterface* ARI = Cast<IPRAnimRegistryInterface>(AvatarActor);
-	if (!ARI)
-	{
-		return nullptr;
-	}
-
 	// 방향 계산 및 해당 방향 몽타주 검색
 	const FVector LocalDir = GetDashDirection();
 	const FGameplayTag DirectionTag = GetDashMontageTag(LocalDir);
 
-	UAnimMontage* DirectionalMontage = ARI->FindMontageByGameplayTag(DirectionTag);
+	UAnimMontage* DirectionalMontage = FindMontageByGameplayTag(DirectionTag);
 	if (IsValid(DirectionalMontage))
 	{
 		return DirectionalMontage;
 	}
 
 	// 방향별 몽타주 없으면 기본 대시 몽타주로 폴백
-	return ARI->FindMontageByGameplayTag(TAG_Montage_Dash);
+	return FindMontageByGameplayTag(TAG_Montage_Dash);
 }
 
 void UPRGA_Dash::ApplyDashMovement()

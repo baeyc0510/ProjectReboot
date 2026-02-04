@@ -6,7 +6,6 @@
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
 #include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/AbilitySystem/PRWeaponAttributeSet.h"
-#include "ProjectReboot/Animation/PRAnimRegistryInterface.h"
 #include "ProjectReboot/Equipment/PREquipmentBlueprintLibrary.h"
 #include "ProjectReboot/Equipment/PREquipmentManagerComponent.h"
 #include "ProjectReboot/Equipment/Weapon/WeaponInstance.h"
@@ -149,30 +148,18 @@ void UPRGA_Reload::PlayReloadMontage(UAnimMontage* MontageToPlay)
 
 UAnimMontage* UPRGA_Reload::GetReloadMontage() const
 {
-	AActor* AvatarActor = GetAvatarActorFromActorInfo();
-	if (!IsValid(AvatarActor))
-	{
-		return nullptr;
-	}
-
 	if (IsValid(ReloadMontageOverride))
 	{
 		return ReloadMontageOverride;
 	}
 
-	IPRAnimRegistryInterface* ARI = Cast<IPRAnimRegistryInterface>(AvatarActor);
-	if (!ARI)
-	{
-		return nullptr;
-	}
-
 	const FGameplayTag ReloadTag = GetReloadMontageTagByWeaponType();
-	if (UAnimMontage* ReloadMontage = ARI->FindMontageByGameplayTag(ReloadTag))
+	if (UAnimMontage* ReloadMontage = FindMontageByGameplayTag(ReloadTag))
 	{
 		return ReloadMontage;
 	}
 
-	return ARI->FindMontageByGameplayTag(TAG_Montage_Reload);
+	return FindMontageByGameplayTag(TAG_Montage_Reload);
 }
 
 FGameplayTag UPRGA_Reload::GetReloadMontageTagByWeaponType() const

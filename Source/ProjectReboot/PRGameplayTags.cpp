@@ -79,6 +79,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Event_ShowEquipment, "Event.ShowEquipment");
 /*~ Montage Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage, "Montage");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Attack, "Montage.Attack");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_SpecialAttack, "Montage.SpecialAttack");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Death, "Montage.Death");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Death_Front, "Montage.Death.Front");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Death_Right,"Montage.Death.Right");
@@ -115,6 +116,10 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Active_Reload, "Ability.Active.Reload");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Active_Attack, "Ability.Active.Attack");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Active_Dash, "Ability.Active.Dash");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Active_Aim, "Ability.Active.Aim");
+
+/*~ Ability Tags - CommonEnemy ~*/
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_CommonEnemy_Attack, "Ability.CommonEnemy.Attack");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_CommonEnemy_SpecialAttack, "Ability.CommonEnemy.SpecialAttack");
 
 /*~ Ability Tags - Leviathan ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Leviathan, "Ability.Leviathan");
@@ -161,7 +166,6 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Common_HitImmunity,"SetByCaller.Common.Hi
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Combat_Damage, "SetByCaller.Combat.Damage");
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Combat_PenetrationCount, "SetByCaller.Combat.PenetrationCount");
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Combat_Duration, "SetByCaller.Combat.Duration");
-UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Combat_Period, "SetByCaller.Combat.Period");
 
 /*~ Target Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Target, "Target");

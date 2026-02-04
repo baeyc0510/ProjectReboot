@@ -115,10 +115,10 @@ void UPRGA_Hound_MissileLaunch::SpawnAOEZone()
 		return;
 	}
 
-	// SetByCaller로 데미지/지속시간/간격 설정
+	// 데미지/지속시간/간격 설정
 	DamageSpec.Data->SetSetByCallerMagnitude(TAG_SetByCaller_Combat_Damage, BaseDamage);
 	DamageSpec.Data->SetSetByCallerMagnitude(TAG_SetByCaller_Combat_Duration, DamageDuration);
-	DamageSpec.Data->SetSetByCallerMagnitude(TAG_SetByCaller_Combat_Period, DamagePeriod);
+	DamageSpec.Data->Period = DamagePeriod;
 
 	// 타겟 위치 계산
 	FVector SpawnLocation = CalculateTargetLocation();
@@ -139,7 +139,7 @@ void UPRGA_Hound_MissileLaunch::SpawnAOEZone()
 
 	if (IsValid(Zone))
 	{
-		Zone->InitZone(DamageSpec, TelegraphColor, TelegraphDuration, StrikeRadius, DamageDuration);
+		Zone->InitZone(DamageSpec, TelegraphColor, TelegraphDuration, StrikeRadius, DamageDuration, TargetActorClass);
 	}
 }
 

@@ -97,7 +97,7 @@ protected:
 
 	// 트레이스 시작 오프셋 (소켓 로컬)
 	UPROPERTY(EditDefaultsOnly, Category = "Melee|Trace")
-	FVector TraceStartSocketOffset = FVector::ZeroVector;
+	FVector TraceStartOffset = FVector::ZeroVector;
 
 	// 트레이스 거리
 	UPROPERTY(EditDefaultsOnly, Category = "Melee|Trace")

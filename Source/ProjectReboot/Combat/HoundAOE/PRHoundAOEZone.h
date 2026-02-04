@@ -25,7 +25,7 @@ public:
 
 	// 초기화 및 시작 (Ability에서 DamageSpec 전달)
 	void InitZone(const FGameplayEffectSpecHandle& InDamageSpec, FLinearColor Color,
-		float TelegraphDuration, float Radius, float DamageDuration);
+		float TelegraphDuration, float Radius, float DamageDuration, TSubclassOf<AActor> InTargetActorClass);
 
 protected:
 	/*~ Phase Handlers ~*/
@@ -57,6 +57,9 @@ protected:
 	// 대상에서 데미지 GE 제거
 	void RemoveDamageEffectFromActor(AActor* TargetActor);
 
+	// 클래스 필터 포함 타겟 유효성 검사
+	bool IsValidTargetActor(AActor* TargetActor) const;
+
 	// 모든 적용된 GE 제거
 	void RemoveAllAppliedEffects();
 
@@ -75,6 +78,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<UNiagaraComponent> ImpactEffect;
 
+	// 데미지 영역 이펙트
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	TObjectPtr<UNiagaraComponent> DamageAreaEffect;
+
 	// 데미지 판정 영역
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<USphereComponent> DamageArea;
@@ -88,6 +95,10 @@ protected:
 	// VFX 잔여 후 파괴까지 대기 시간
 	UPROPERTY(EditDefaultsOnly, Category = "Config")
 	float CleanupLifeSpan = 2.0f;
+
+	// 데미지 대상 클래스 필터 (비어있으면 전체)
+	UPROPERTY(EditDefaultsOnly, Category = "Config")
+	TSubclassOf<AActor> TargetActorClass;
 
 	/*~ State ~*/
 

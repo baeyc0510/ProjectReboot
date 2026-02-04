@@ -33,14 +33,20 @@ APRHoundAOEZone::APRHoundAOEZone()
 	ImpactEffect->SetupAttachment(RootComponent);
 	ImpactEffect->bAutoActivate = false;
 
+	// 데미지 영역 이펙트 (에셋은 BP에서 설정)
+	DamageAreaEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("DamageAreaEffect"));
+	DamageAreaEffect->SetupAttachment(RootComponent);
+	DamageAreaEffect->bAutoActivate = false;
+
 }
 
 void APRHoundAOEZone::InitZone(const FGameplayEffectSpecHandle& InDamageSpec, FLinearColor Color,
-	float TelegraphDuration, float Radius, float DamageDuration)
+	float TelegraphDuration, float Radius, float DamageDuration, TSubclassOf<AActor> InTargetActorClass)
 {
 	DamageSpec = InDamageSpec;
 	CachedRadius = Radius;
 	CachedDamageDuration = DamageDuration;
+	TargetActorClass = InTargetActorClass;
 
 	// 데미지 영역 크기 설정
 	if (IsValid(DamageArea))
@@ -53,6 +59,20 @@ void APRHoundAOEZone::InitZone(const FGameplayEffectSpecHandle& InDamageSpec, FL
 	DamageArea->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnDamageAreaBeginOverlap);
 	DamageArea->OnComponentEndOverlap.AddDynamic(this, &ThisClass::OnDamageAreaEndOverlap);
 
+	// 이펙트 초기화
+	if (IsValid(TelegraphEffect))
+	{
+		TelegraphEffect->Deactivate();
+	}
+	if (IsValid(ImpactEffect))
+	{
+		ImpactEffect->Deactivate();
+	}
+	if (IsValid(DamageAreaEffect))
+	{
+		DamageAreaEffect->Deactivate();
+	}
+	
 	// Phase 1 시작
 	StartTelegraphPhase(Color, TelegraphDuration, Radius);
 
@@ -109,6 +129,12 @@ void APRHoundAOEZone::StartDamageZonePhase()
 		DamageArea->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	}
 
+	// 데미지 영역 이펙트 시작
+	if (IsValid(DamageAreaEffect))
+	{
+		DamageAreaEffect->Activate();
+	}
+
 	// 이미 영역 안에 있는 액터에 GE 적용
 	TArray<AActor*> OverlappingActors;
 	if (IsValid(DamageArea))
@@ -140,6 +166,12 @@ void APRHoundAOEZone::CleanupZone()
 	if (IsValid(DamageArea))
 	{
 		DamageArea->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+
+	// 데미지 영역 이펙트 종료
+	if (IsValid(DamageAreaEffect))
+	{
+		DamageAreaEffect->Deactivate();
 	}
 
 	// 모든 적용된 GE 제거
@@ -179,7 +211,7 @@ void APRHoundAOEZone::OnDamageAreaEndOverlap(UPrimitiveComponent* OverlappedComp
 
 void APRHoundAOEZone::ApplyDamageEffectToActor(AActor* TargetActor)
 {
-	if (!IsValid(TargetActor) || !DamageSpec.IsValid())
+	if (!IsValidTargetActor(TargetActor) || !DamageSpec.IsValid())
 	{
 		return;
 	}
@@ -211,6 +243,21 @@ void APRHoundAOEZone::ApplyDamageEffectToActor(AActor* TargetActor)
 	{
 		AppliedEffectHandles.Add(TargetActor, EffectHandle);
 	}
+}
+
+bool APRHoundAOEZone::IsValidTargetActor(AActor* TargetActor) const
+{
+	if (!IsValid(TargetActor))
+	{
+		return false;
+	}
+
+	if (IsValid(TargetActorClass) && !TargetActor->IsA(TargetActorClass))
+	{
+		return false;
+	}
+
+	return true;
 }
 
 void APRHoundAOEZone::RemoveDamageEffectFromActor(AActor* TargetActor)

@@ -8,6 +8,7 @@
 #include "PRGA_Hound_MissileLaunch.generated.h"
 
 class APRHoundAOEZone;
+class AActor;
 class UAbilityTask_PlayMontageAndWait;
 class UAbilityTask_WaitGameplayEvent;
 class UGameplayEffect;
@@ -76,6 +77,10 @@ protected:
 	// 틱 데미지 간격 (초)
 	UPROPERTY(EditDefaultsOnly, Category = "HoundMissile|Damage")
 	float DamagePeriod = 0.5f;
+
+	// 데미지 대상 클래스 필터 (비어있으면 전체)
+	UPROPERTY(EditDefaultsOnly, Category = "HoundMissile|Target")
+	TSubclassOf<AActor> TargetActorClass;
 
 	/*~ Config - Montage ~*/
 

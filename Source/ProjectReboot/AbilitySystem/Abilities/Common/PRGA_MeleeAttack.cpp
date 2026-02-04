@@ -162,12 +162,12 @@ void UPRGA_MeleeAttack::PerformAttackTrace()
 	if (!TraceStartSocketName.IsNone())
 	{
 		const FTransform StartSocketTransform = MeshComp->GetSocketTransform(TraceStartSocketName, RTS_World);
-		TraceStart = StartSocketTransform.TransformPosition(TraceStartSocketOffset);
+		TraceStart = StartSocketTransform.TransformPosition(TraceStartOffset);
 		TraceDirection = (TraceDirectionType == EPRMeleeTraceDirection::ActorForward) ? AvatarActor->GetActorForwardVector() : StartSocketTransform.GetRotation().GetForwardVector();
 	}
 	else
 	{
-		TraceStart = AvatarActor->GetActorLocation();
+		TraceStart = AvatarActor->GetActorLocation() + TraceStartOffset;
 		TraceDirection = AvatarActor->GetActorForwardVector();
 	}
 	

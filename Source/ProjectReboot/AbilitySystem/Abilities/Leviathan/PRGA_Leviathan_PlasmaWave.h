@@ -13,7 +13,7 @@ class UGameplayEffect;
 
 /**
  * 레비아탄 플라즈마 웨이브 어빌리티
- * 백덤블링 모션 후 꼬리에서 부채꼴 웨이브 3개 발사
+ * 백덤블링 모션 후 액터 아래 지면에서 부채꼴 웨이브 3개 발사
  */
 UCLASS()
 class PROJECTREBOOT_API UPRGA_Leviathan_PlasmaWave : public UPRGameplayAbility
@@ -74,10 +74,6 @@ protected:
 	// 몽타주 재생 속도
 	UPROPERTY(EditDefaultsOnly, Category = "PlasmaWave|Montage")
 	float MontagePlayRate = 1.0f;
-
-	// 웨이브 스폰 소켓 (꼬리)
-	UPROPERTY(EditDefaultsOnly, Category = "PlasmaWave|Spawn")
-	FName TailSocketName = TEXT("TailSocket");
 
 	// 부채꼴 각도 (좌/우 오프셋)
 	UPROPERTY(EditDefaultsOnly, Category = "PlasmaWave|Spawn")

@@ -8,7 +8,7 @@
 #include "PROrbitalStrike.generated.h"
 
 class UNiagaraComponent;
-class UNiagaraSystem;
+class UParticleSystemComponent;
 class USphereComponent;
 
 /**
@@ -51,21 +51,13 @@ protected:
 
 	// 낙하/폭발 이펙트
 	UPROPERTY(VisibleAnywhere, Category = "Components")
-	TObjectPtr<UNiagaraComponent> ImpactEffect;
+	TObjectPtr<UParticleSystemComponent> ImpactEffect;
 
 	// 데미지 판정 영역
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<USphereComponent> DamageArea;
 
 	/*~ Config ~*/
-
-	// 경고 이펙트 Niagara 시스템
-	UPROPERTY(EditDefaultsOnly, Category = "Config|VFX")
-	TObjectPtr<UNiagaraSystem> TelegraphNiagaraSystem;
-
-	// 낙하 이펙트 Niagara 시스템
-	UPROPERTY(EditDefaultsOnly, Category = "Config|VFX")
-	TObjectPtr<UNiagaraSystem> ImpactNiagaraSystem;
 
 	// Impact 연출 딜레이 (VFX 재생 후 데미지 판정까지 대기 시간)
 	UPROPERTY(EditDefaultsOnly, Category = "Config")

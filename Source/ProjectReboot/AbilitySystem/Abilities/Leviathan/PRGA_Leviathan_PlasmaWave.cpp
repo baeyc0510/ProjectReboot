@@ -4,7 +4,6 @@
 #include "AbilitySystemComponent.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
-#include "GameFramework/Character.h"
 #include "ProjectReboot/Combat/PlasmaWave/PRPlasmaWave.h"
 #include "ProjectReboot/PRGameplayTags.h"
 
@@ -108,34 +107,37 @@ void UPRGA_Leviathan_PlasmaWave::SpawnWaves()
 	// SetByCaller로 데미지 값 설정
 	DamageSpec.Data->SetSetByCallerMagnitude(TAG_SetByCaller_Combat_Damage, BaseDamage);
 
-	// 스폰 위치: 꼬리 소켓 또는 액터 위치
+	// 스폰 위치: 액터 아래 지면
 	FVector SpawnLocation = AvatarActor->GetActorLocation();
-	if (ACharacter* Character = Cast<ACharacter>(AvatarActor))
+	if (UWorld* World = GetWorld())
 	{
-		if (USkeletalMeshComponent* Mesh = Character->GetMesh())
+		const float GroundTraceHeight = 1000.f;
+		const FVector TraceStart = SpawnLocation + FVector(0.f, 0.f, GroundTraceHeight);
+		const FVector TraceEnd = SpawnLocation - FVector(0.f, 0.f, GroundTraceHeight);
+
+		FHitResult HitResult;
+		FCollisionQueryParams QueryParams;
+		QueryParams.AddIgnoredActor(AvatarActor);
+
+		if (World->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_WorldStatic, QueryParams))
 		{
-			if (Mesh->DoesSocketExist(TailSocketName))
-			{
-				SpawnLocation = Mesh->GetSocketLocation(TailSocketName);
-			}
+			SpawnLocation.Z = HitResult.Location.Z;
 		}
 	}
 
-	// 타겟 방향 계산 (후방에서 발사하므로 액터의 후방 벡터 사용)
-	const FVector ForwardDir = AvatarActor->GetActorForwardVector();
-	// 웨이브는 꼬리에서 후방으로 발사 → 액터의 뒤쪽 방향
-	const FVector BaseDirection = -ForwardDir;
+	// 타겟 방향 계산
+	const FVector Direction = AvatarActor->GetActorForwardVector();
 
 	// 부채꼴 3방향 스폰
 	// 중앙
-	SpawnSingleWave(SpawnLocation, BaseDirection, DamageSpec);
+	SpawnSingleWave(SpawnLocation, Direction, DamageSpec);
 
 	// 좌측 (+SpreadAngle)
-	const FVector LeftDirection = BaseDirection.RotateAngleAxis(-SpreadAngle, FVector::UpVector);
+	const FVector LeftDirection = Direction.RotateAngleAxis(-SpreadAngle, FVector::UpVector);
 	SpawnSingleWave(SpawnLocation, LeftDirection, DamageSpec);
 
 	// 우측 (-SpreadAngle)
-	const FVector RightDirection = BaseDirection.RotateAngleAxis(SpreadAngle, FVector::UpVector);
+	const FVector RightDirection = Direction.RotateAngleAxis(SpreadAngle, FVector::UpVector);
 	SpawnSingleWave(SpawnLocation, RightDirection, DamageSpec);
 }
 

@@ -56,6 +56,9 @@ void APRPlasmaWave::BeginPlay()
 			DamageBox->IgnoreActorWhenMoving(InstigatorActor, true);
 		}
 	}
+
+	// 시작 위치를 지면에 스냅
+	TraceGround(0.f);
 }
 
 void APRPlasmaWave::Tick(float DeltaTime)
@@ -171,8 +174,14 @@ void APRPlasmaWave::TraceGround(float DeltaTime)
 
 	if (World->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_WorldStatic, QueryParams))
 	{
+		float BottomOffsetZ = DamageBoxExtent.Z;
+		if (IsValid(DamageBox))
+		{
+			BottomOffsetZ = DamageBox->GetScaledBoxExtent().Z;
+		}
+
 		FVector SnappedLocation = CurrentLocation;
-		SnappedLocation.Z = HitResult.Location.Z;
+		SnappedLocation.Z = HitResult.Location.Z + BottomOffsetZ;
 		SetActorLocation(SnappedLocation);
 	}
 }

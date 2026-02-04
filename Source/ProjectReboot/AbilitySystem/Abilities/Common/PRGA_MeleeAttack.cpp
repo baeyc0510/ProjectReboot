@@ -38,7 +38,18 @@ void UPRGA_MeleeAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	// 히트 캐시 초기화
 	HitActors.Reset();
 
-	if (!IsValid(AttackMontage))
+	// AttackMontage 설정 사용
+	if (bUseMontageOverride)
+	{
+		MontageToPlay = AttackMontage;
+	}
+	// 태그 기반 몽타주 조회
+	else
+	{
+		MontageToPlay = FindMontageByGameplayTag(AttackMontageTag);
+	}
+
+	if (!IsValid(MontageToPlay))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
@@ -83,7 +94,7 @@ void UPRGA_MeleeAttack::PlayAttackMontage()
 	MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 		this,
 		NAME_None,
-		AttackMontage,
+		MontageToPlay,
 		MontagePlayRate,
 		NAME_None,
 		false
@@ -151,12 +162,12 @@ void UPRGA_MeleeAttack::PerformAttackTrace()
 	if (!TraceStartSocketName.IsNone())
 	{
 		const FTransform StartSocketTransform = MeshComp->GetSocketTransform(TraceStartSocketName, RTS_World);
-		TraceStart = StartSocketTransform.TransformPosition(TraceStartSocketOffset);
+		TraceStart = StartSocketTransform.TransformPosition(TraceStartOffset);
 		TraceDirection = (TraceDirectionType == EPRMeleeTraceDirection::ActorForward) ? AvatarActor->GetActorForwardVector() : StartSocketTransform.GetRotation().GetForwardVector();
 	}
 	else
 	{
-		TraceStart = AvatarActor->GetActorLocation();
+		TraceStart = AvatarActor->GetActorLocation() + TraceStartOffset;
 		TraceDirection = AvatarActor->GetActorForwardVector();
 	}
 	

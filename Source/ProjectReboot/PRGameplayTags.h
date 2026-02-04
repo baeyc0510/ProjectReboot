@@ -82,6 +82,7 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_ShowEquipment);
 /*~ Montage Tags ~*/
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Montage);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Montage_Attack);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Montage_SpecialAttack);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Montage_Death);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Montage_Death_Front);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Montage_Death_Right);
@@ -119,6 +120,10 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Active_Reload);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Active_Dash);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Active_Aim);
 
+/*~ Ability Tags - CommonEnemy ~*/
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_CommonEnemy_Attack);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_CommonEnemy_SpecialAttack);
+
 /*~ Ability Tags - Leviathan ~*/
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Leviathan);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Leviathan_Shoot);
@@ -128,6 +133,10 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Leviathan_TailSweep);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Leviathan_HeadCharge);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Leviathan_Bite);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Leviathan_DoubleBite);
+
+/*~ Ability Tags - Hound ~*/
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Hound);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Hound_MissileLaunch);
 
 /*~ Ability Cooldown Tags ~*/
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Cooldown_WeaponFire);
@@ -160,6 +169,7 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Common_HitImmunity);
 /*~ SetByCaller Tags - Combat Attributes ~*/
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Combat_Damage);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Combat_PenetrationCount);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Combat_Duration);
 
 /*~ Target Tags ~*/
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Target);

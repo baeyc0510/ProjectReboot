@@ -79,6 +79,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Event_ShowEquipment, "Event.ShowEquipment");
 /*~ Montage Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage, "Montage");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Attack, "Montage.Attack");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_SpecialAttack, "Montage.SpecialAttack");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Death, "Montage.Death");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Death_Front, "Montage.Death.Front");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Montage_Death_Right,"Montage.Death.Right");
@@ -116,6 +117,10 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Active_Attack, "Ability.Active.Attack");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Active_Dash, "Ability.Active.Dash");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Active_Aim, "Ability.Active.Aim");
 
+/*~ Ability Tags - CommonEnemy ~*/
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_CommonEnemy_Attack, "Ability.CommonEnemy.Attack");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_CommonEnemy_SpecialAttack, "Ability.CommonEnemy.SpecialAttack");
+
 /*~ Ability Tags - Leviathan ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Leviathan, "Ability.Leviathan");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Leviathan_Shoot, "Ability.Leviathan.Shoot");
@@ -125,6 +130,10 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Leviathan_TailSweep, "Ability.Leviathan.TailS
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Leviathan_HeadCharge, "Ability.Leviathan.HeadCharge");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Leviathan_Bite, "Ability.Leviathan.Bite");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Leviathan_DoubleBite, "Ability.Leviathan.DoubleBite");
+
+/*~ Ability Tags - Hound ~*/
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Hound, "Ability.Hound");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Hound_MissileLaunch, "Ability.Hound.MissileLaunch");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cooldown_WeaponFire, "Cooldown.WeaponFire");
 
@@ -156,6 +165,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Common_HitImmunity,"SetByCaller.Common.Hi
 /*~ SetByCaller Tags - Combat Attributes ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Combat_Damage, "SetByCaller.Combat.Damage");
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Combat_PenetrationCount, "SetByCaller.Combat.PenetrationCount");
+UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Combat_Duration, "SetByCaller.Combat.Duration");
 
 /*~ Target Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Target, "Target");

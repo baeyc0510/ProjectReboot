@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "ProjectReboot/AbilitySystem/PRGameplayAbility.h"
+#include "ProjectReboot/Character/PRPlayerCharacter.h"
 #include "PRGA_Hound_MissileLaunch.generated.h"
 
 class APRHoundAOEZone;
@@ -80,7 +81,7 @@ protected:
 
 	// 데미지 대상 클래스 필터 (비어있으면 전체)
 	UPROPERTY(EditDefaultsOnly, Category = "HoundMissile|Target")
-	TSubclassOf<AActor> TargetActorClass;
+	TSubclassOf<AActor> TargetActorClass = APRPlayerCharacter::StaticClass();
 
 	/*~ Config - Montage ~*/
 

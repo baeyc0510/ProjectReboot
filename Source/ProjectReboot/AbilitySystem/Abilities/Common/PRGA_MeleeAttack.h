@@ -2,6 +2,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "ProjectReboot/AbilitySystem/PRGameplayAbility.h"
 #include "ProjectReboot/Combat/PRTraceTypes.h"
 #include "PRGA_MeleeAttack.generated.h"
@@ -70,9 +71,17 @@ protected:
 	USkeletalMeshComponent* GetMeshComponent() const;
 
 protected:
-	// 공격 몽타주
+	// 몽타주 직접 설정 여부 (false: 태그 기반 조회, true: 직접 설정)
 	UPROPERTY(EditDefaultsOnly, Category = "Melee|Montage")
+	bool bUseMontageOverride = false;
+
+	// 공격 몽타주 (직접 설정)
+	UPROPERTY(EditDefaultsOnly, Category = "Melee|Montage", meta = (EditCondition = "bUseMontageOverride"))
 	TObjectPtr<UAnimMontage> AttackMontage;
+
+	// 공격 몽타주 태그 (태그 기반 조회)
+	UPROPERTY(EditDefaultsOnly, Category = "Melee|Montage", meta = (EditCondition = "!bUseMontageOverride"))
+	FGameplayTag AttackMontageTag;
 
 	// 몽타주 재생 속도
 	UPROPERTY(EditDefaultsOnly, Category = "Melee|Montage")
@@ -111,6 +120,9 @@ protected:
 	float BaseDamage = 10.0f;
 
 private:
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> MontageToPlay;
+	
 	UPROPERTY()
 	UAbilityTask_PlayMontageAndWait* MontageTask;
 

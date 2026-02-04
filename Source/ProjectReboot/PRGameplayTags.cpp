@@ -126,6 +126,10 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Leviathan_HeadCharge, "Ability.Leviathan.Head
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Leviathan_Bite, "Ability.Leviathan.Bite");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Leviathan_DoubleBite, "Ability.Leviathan.DoubleBite");
 
+/*~ Ability Tags - Hound ~*/
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Hound, "Ability.Hound");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Hound_MissileLaunch, "Ability.Hound.MissileLaunch");
+
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cooldown_WeaponFire, "Cooldown.WeaponFire");
 
 /*~ SetByCaller Tags - Weapon Attributes ~*/
@@ -156,6 +160,8 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Common_HitImmunity,"SetByCaller.Common.Hi
 /*~ SetByCaller Tags - Combat Attributes ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Combat_Damage, "SetByCaller.Combat.Damage");
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Combat_PenetrationCount, "SetByCaller.Combat.PenetrationCount");
+UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Combat_Duration, "SetByCaller.Combat.Duration");
+UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Combat_Period, "SetByCaller.Combat.Period");
 
 /*~ Target Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Target, "Target");

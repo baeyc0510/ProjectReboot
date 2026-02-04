@@ -3,7 +3,7 @@
 #include "PROrbitalStrike.h"
 #include "Components/SphereComponent.h"
 #include "NiagaraComponent.h"
-#include "NiagaraFunctionLibrary.h"
+#include "Particles/ParticleSystemComponent.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "ProjectReboot/Combat/PRCombatInterface.h"
@@ -28,7 +28,7 @@ APROrbitalStrike::APROrbitalStrike()
 	TelegraphEffect->SetupAttachment(RootComponent);
 	TelegraphEffect->bAutoActivate = false;
 
-	ImpactEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("ImpactEffect"));
+	ImpactEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("ImpactEffect"));
 	ImpactEffect->SetupAttachment(RootComponent);
 	ImpactEffect->bAutoActivate = false;
 }
@@ -43,17 +43,6 @@ void APROrbitalStrike::InitStrike(const FGameplayEffectSpecHandle& InDamageSpec,
 	{
 		DamageArea->SetSphereRadius(Radius);
 		DamageArea->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
-	}
-
-	// Niagara 에셋 설정 (BP에서 미설정 시 여기서 설정)
-	if (IsValid(TelegraphNiagaraSystem) && IsValid(TelegraphEffect))
-	{
-		TelegraphEffect->SetAsset(TelegraphNiagaraSystem);
-	}
-
-	if (IsValid(ImpactNiagaraSystem) && IsValid(ImpactEffect))
-	{
-		ImpactEffect->SetAsset(ImpactNiagaraSystem);
 	}
 
 	// Phase 1 시작

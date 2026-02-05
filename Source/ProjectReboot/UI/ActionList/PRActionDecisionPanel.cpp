@@ -7,6 +7,7 @@
 #include "Components/Button.h"
 #include "Components/VerticalBox.h"
 #include "ProjectReboot/PRGameplayTags.h"
+#include "ProjectReboot/Game/PRGameplayGameState.h"
 #include "ProjectReboot/Camera/PRCameraBlueprintLibrary.h"
 #include "ProjectReboot/Equipment/PREquipmentBlueprintLibrary.h"
 #include "ProjectReboot/Equipment/PREquipActionData.h"
@@ -148,6 +149,14 @@ void UPRActionDecisionPanel::HandleConfirmButtonClicked()
 		if (URogueliteActionData* ActionToAcquire = SelectedItem->GetActionData())
 		{
 			URogueliteBlueprintLibrary::AcquireAction(this, ActionToAcquire);
+		}
+	}
+
+	if (UWorld* World = GetWorld())
+	{
+		if (APRGameplayGameState* GS = World->GetGameState<APRGameplayGameState>())
+		{
+			GS->SendRoomEvent(TAG_Event_Reward_Selected);
 		}
 	}
 

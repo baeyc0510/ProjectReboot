@@ -7,7 +7,7 @@
 #include "ProjectReboot/Room/PRRoomTypes.h"
 #include "PRGameplayGameMode.generated.h"
 
-struct FPRRoomConfig;
+struct FPRRoomNodeInfo;
 /**
  * 
  */
@@ -31,13 +31,14 @@ protected:
 	virtual void OnRoomCleared();
 	
 private:
-	void OnNextRoomReady( APRRoomController* RoomController, const FPRRoomConfig& RoomConfig);
+	void OnNextRoomReady(APRRoomController* RoomController, const FPRRoomNodeInfo& InNodeInfo);
 	
 public:
-	// TEMP: 테스트용 Config
+	// TEMP: 테스트용 Config (NodeInfo에 Config가 없을 때 사용)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "PR|Rules")
 	FPRRoomConfig DefaultRoomConfig;
 	
 private:
-	FPRRoomConfig CurrentRoomConfig;
+	// 현재 방 노드 정보
+	FPRRoomNodeInfo CurrentNodeInfo;
 };

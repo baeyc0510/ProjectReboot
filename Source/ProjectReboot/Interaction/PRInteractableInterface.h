@@ -26,10 +26,13 @@ public:
 	virtual void Interact(APawn* Interactor) = 0;
 
 	/*~ Optional ~*/
-	// UI 힌트 텍스트
+	// 상호작용 가능 상태 설정 (선택적 구현)
+	virtual void SetInteractable(bool bEnabled) {}
+	
+	// UI 힌트 텍스트 (선택적 구현)
 	virtual FText GetInteractionText() const { return FText::GetEmpty(); }
 
-	// UI 표시용 정보
+	// UI 표시용 정보 (선택적 구현)
 	virtual void GetInteractionInfo(APawn* Interactor, FPRInteractionInfo& OutInfo) const
 	{
 		OutInfo = FPRInteractionInfo();

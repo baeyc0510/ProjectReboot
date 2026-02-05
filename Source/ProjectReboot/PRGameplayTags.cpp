@@ -62,6 +62,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Attack, "Event.Attack");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Damage, "Event.Damage");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Room, "Event.Room");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Room_Clear, "Event.Room.Clear");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Reward_Selected, "Event.Reward.Selected");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Dash, "Event.Dash");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_JustDodge, "Event.JustDodge");

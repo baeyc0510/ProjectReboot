@@ -9,6 +9,7 @@
 class UStateTree;
 class APRRoomController;
 class URoguelitePoolPreset;
+class APREnemyCharacter;
 
 /*~ Enums ~*/
 
@@ -36,13 +37,11 @@ enum class EPRRoomType : uint8
 	Boss
 };
 
-/*~ Room Config ~*/
-
 /**
- * 방 설정 (클리어 조건, StateTree 등)
+ * 방 흐름 설정 (클리어 조건, StateTree 등)
  */
 USTRUCT(BlueprintType)
-struct FPRRoomConfig
+struct FPRRoomFlowConfig
 {
 	GENERATED_BODY()
 
@@ -53,6 +52,81 @@ struct FPRRoomConfig
 	// 방 로직 StateTree
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UStateTree> StateTree;
+};
+
+/**
+ * 방 스폰 설정 (적/환경 스폰 수량)
+ */
+USTRUCT(BlueprintType)
+struct FPRRoomSpawnConfig
+{
+	GENERATED_BODY()
+
+	// 최소 웨이브 수
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "1"))
+	int32 MinWaveCount = 1;
+
+	// 최대 웨이브 수
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "1"))
+	int32 MaxWaveCount = 1;
+
+	// 웨이브당 최소 일반 적 수
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
+	int32 MinNormalEnemies = 3;
+
+	// 웨이브당 최대 일반 적 수
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
+	int32 MaxNormalEnemies = 5;
+
+	// 웨이브당 최소 엘리트 적 수
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
+	int32 MinEliteEnemies = 0;
+
+	// 웨이브당 최대 엘리트 적 수
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
+	int32 MaxEliteEnemies = 0;
+
+	// 최소 미니보스 수
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
+	int32 MinMiniBosses = 0;
+
+	// 최대 미니보스 수
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
+	int32 MaxMiniBosses = 0;
+};
+
+/**
+ * 웨이브별 스폰 정보 (확정된 정보)
+ */
+USTRUCT(BlueprintType)
+struct FPRWaveSpawnInfo
+{
+	GENERATED_BODY()
+
+	// 스폰할 일반 적 목록
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TArray<TSubclassOf<APREnemyCharacter>> NormalEnemies;
+
+	// 스폰할 엘리트 적 목록
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TArray<TSubclassOf<APREnemyCharacter>> EliteEnemies;
+
+	// 스폰할 미니보스 목록
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TArray<TSubclassOf<APREnemyCharacter>> MiniBosses;
+};
+
+/**
+ * 방 스폰 정보 (확정된 정보)
+ */
+USTRUCT(BlueprintType)
+struct FPRRoomSpawnInfo
+{
+	GENERATED_BODY()
+
+	// 웨이브 목록
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TArray<FPRWaveSpawnInfo> Waves;
 };
 
 /**
@@ -67,9 +141,9 @@ struct FPRRoomNodeInfo
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	int32 RoomIndex = -1;
 
-	// 슬롯 인덱스 (Depth, 층 번호)
+	// 스텝 인덱스 (진행 단계)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	int32 SlotIndex = 0;
+	int32 StepIndex = 0;
 
 	// 방 타입
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
@@ -99,9 +173,13 @@ struct FPRRoomNodeInfo
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TArray<int32> NextRoomIndices;
 
-	// 방 설정 (StateTree, 클리어 조건)
+	// 방 흐름 설정 (StateTree, 클리어 조건)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FPRRoomConfig Config;
+	FPRRoomFlowConfig FlowConfig;
+
+	// 방 스폰 정보 (확정된 웨이브/적 정보)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FPRRoomSpawnInfo SpawnInfo;
 };
 
 /**
@@ -116,9 +194,9 @@ struct FRoomInstanceInfo
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	int32 RoomIndex = -1;
 
-	// 슬롯 인덱스 (Depth)
+	// 스텝 인덱스 (진행 단계)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	int32 SlotIndex = 0;
+	int32 StepIndex = 0;
 
 	// 방 컨트롤러
 	UPROPERTY(BlueprintReadOnly)
@@ -196,38 +274,43 @@ struct FPRRoomTemplatePool
 /*~ Transition Types ~*/
 
 /**
- * 방 타입 전이 규칙 (다음 슬롯에 적용될 가중치 수정)
+ * 방 타입 전이 규칙 (다음 스텝에 적용될 가중치 수정)
  */
 USTRUCT(BlueprintType)
 struct FPRRoomTypeTransition
 {
 	GENERATED_BODY()
 
-	// 다음 슬롯의 타입별 가중치 배율
+	// 다음 스텝의 타입별 가중치 배율
 	// 0 = 등장 불가, 0.5 = 확률 절반, 2.0 = 확률 2배
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TMap<EPRRoomType, float> WeightModifiers;
 };
 
-/*~ Slot Types ~*/
+/*~ Step Types ~*/
 
 /**
- * 슬롯 정의 (스테이지 내 각 위치별 방 설정)
+ * 스텝 정의 (스테이지 내 각 단계별 연결 규칙)
+ * 노드 수는 이전 스텝의 연결에서 자연스럽게 도출됨
  */
 USTRUCT(BlueprintType)
-struct FPRRoomSlot
+struct FPRRoomStep
 {
 	GENERATED_BODY()
 
-	// 가능한 방 타입 및 가중치
+	// 각 노드에서 다음 스텝으로 연결할 최소 분기 수
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = "1"))
+	int32 MinBranchCount = 1;
+
+	// 각 노드에서 다음 스텝으로 연결할 최대 분기 수
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = "1"))
+	int32 MaxBranchCount = 3;
+
+	// 가능한 방 타입 및 가중치 (노드마다 독립 선택)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TMap<EPRRoomType, float> PossibleTypes;
 
-	// 문 개수 (1 = 강제, 2+ = 선택)
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = "1"))
-	int32 ChoiceCount = 2;
-
-	// 난이도 배율
+	// TODO: 난이도 배율
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = "0.0"))
 	float Difficulty = 1.0f;
 };
@@ -262,7 +345,7 @@ struct FPRRoomChoice
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	int32 Seed = 0;
 
-	// 슬롯의 난이도 배율
+	// 스텝의 난이도 배율
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	float Difficulty = 1.0f;
 };

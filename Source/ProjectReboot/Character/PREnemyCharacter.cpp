@@ -9,6 +9,7 @@
 #include "Components/WidgetComponent.h"
 #include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/AbilitySystem/PRAbilitySystemComponent.h"
+#include "ProjectReboot/Game/PRGameplayGameState.h"
 #include "ProjectReboot/UI/Enemy/PREnemyStatusViewModel.h"
 #include "ProjectReboot/UI/Enemy/PREnemyStatusWidget.h"
 #include "ProjectReboot/UI/LockOn/PRLockOnViewModel.h"
@@ -38,14 +39,23 @@ APREnemyCharacter::APREnemyCharacter()
 void APREnemyCharacter::FinishDie()
 {
 	Super::FinishDie();
-	
+
 	DestructWidget(StatusWidgetComponent);
 	DestructWidget(LockOnWidgetComponent);
-	
+
 	if (AbilitySystem)
 	{
 		// 락온 대상에서 제거
 		AbilitySystem->RemoveLooseGameplayTag(TAG_Target_Lockable);
+	}
+
+	// 킬 이벤트 전송 (웨이브 클리어 판정용)
+	if (UWorld* World = GetWorld())
+	{
+		if (APRGameplayGameState* GameState = World->GetGameState<APRGameplayGameState>())
+		{
+			GameState->AddEventCount(TAG_Event_Kill);
+		}
 	}
 }
 

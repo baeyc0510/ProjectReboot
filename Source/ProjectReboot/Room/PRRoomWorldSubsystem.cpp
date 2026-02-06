@@ -181,7 +181,7 @@ void UPRRoomWorldSubsystem::RegisterRoomController(int32 RoomIndex, APRRoomContr
 		if (const FPRRoomNodeInfo* FoundNode = StageManager->GetRoomNodeInfo(RoomIndex))
 		{
 			NodeInfo = *FoundNode;
-			Info.SlotIndex = NodeInfo.SlotIndex;
+			Info.StepIndex = NodeInfo.StepIndex;
 		}
 	}
 

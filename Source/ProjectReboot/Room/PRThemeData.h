@@ -6,7 +6,7 @@
 #include "Engine/DataAsset.h"
 #include "PRThemeData.generated.h"
 
-class UPREnemyData;
+class APREnemyCharacter;
 
 /**
  * 적 스폰 항목
@@ -16,9 +16,9 @@ struct FPREnemySpawnEntry
 {
 	GENERATED_BODY()
 
-	// 적 데이터 에셋
+	// 스폰할 적 캐릭터 클래스
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TObjectPtr<UPREnemyData> EnemyData;
+	TSubclassOf<APREnemyCharacter> EnemyClass;
 
 	// 스폰 가중치
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = "0.0"))
@@ -90,21 +90,4 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Environment")
 	TArray<FPREnvironmentSpawnEntry> Obstacles;
 
-	/*~ Spawn Settings ~*/
-
-	// 방당 최소 적 수
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Spawn Settings", meta = (ClampMin = "0"))
-	int32 MinEnemiesPerRoom = 3;
-
-	// 방당 최대 적 수
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Spawn Settings", meta = (ClampMin = "0"))
-	int32 MaxEnemiesPerRoom = 8;
-
-	// 함정 스폰 확률 (0.0 ~ 1.0)
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Spawn Settings", meta = (ClampMin = "0.0", ClampMax = "1.0"))
-	float TrapSpawnChance = 0.5f;
-
-	// 장애물 스폰 확률 (0.0 ~ 1.0)
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Spawn Settings", meta = (ClampMin = "0.0", ClampMax = "1.0"))
-	float ObstacleSpawnChance = 0.3f;
 };

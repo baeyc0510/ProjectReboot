@@ -20,7 +20,7 @@ void APRGameplayGameMode::OnGameplayEvent(const FGameplayTag& EventTag, int32 De
 	GS->AddEventCount(EventTag, Delta);
 
 	// 클리어 조건 판정: 모든 목표 이벤트 수치 달성 여부
-	const FPRRoomConfig& RoomConfig = CurrentNodeInfo.Config;
+	const FPRRoomFlowConfig& RoomConfig = CurrentNodeInfo.FlowConfig;
 	bool bAllGoalsMet = true;
 	if (RoomConfig.TargetEventCounts.Num() <= 0)
 	{
@@ -73,26 +73,14 @@ void APRGameplayGameMode::BeginPlay()
 
 void APRGameplayGameMode::OnRoomCleared()
 {
+	// 방 클리어 알림
 	if (APRGameplayGameState* GS = GetGameState<APRGameplayGameState>())
 	{
 		GS->SendRoomEvent(TAG_Event_Room_Clear);
 	}
-
-	// PRStageManagerSubsystem에 방 클리어 알림
 	if (UPRStageManagerSubsystem* StageManager = UPRStageManagerSubsystem::Get(this))
 	{
 		StageManager->OnRoomCleared();
-
-		if (APRGameplayGameState* GS = GetGameState<APRGameplayGameState>())
-		{
-			if (APRRoomController* RoomController = GS->GetCurrentRoomController())
-			{
-				// 현재 방의 NextRoomIndices를 가져와 문에 할당
-				const TArray<int32> NextRoomIndices = CurrentNodeInfo.NextRoomIndices;
-				RoomController->AssignExitDoors(NextRoomIndices);
-				RoomController->SetExitDoorsInteractable(true);
-			}
-		}
 	}
 
 	UE_LOG(LogTemp, Log, TEXT("APRGameplayGameMode: Room cleared!"));
@@ -103,14 +91,14 @@ void APRGameplayGameMode::OnNextRoomReady(APRRoomController* RoomController, con
 	CurrentNodeInfo = InNodeInfo;
 	
 	// NodeInfo의 Config가 비어있으면 DefaultRoomConfig 사용
-	if (CurrentNodeInfo.Config.TargetEventCounts.Num() <= 0 && DefaultRoomConfig.TargetEventCounts.Num() > 0)
+	if (CurrentNodeInfo.FlowConfig.TargetEventCounts.Num() <= 0 && DefaultRoomConfig.TargetEventCounts.Num() > 0)
 	{
-		CurrentNodeInfo.Config.TargetEventCounts = DefaultRoomConfig.TargetEventCounts;
+		CurrentNodeInfo.FlowConfig.TargetEventCounts = DefaultRoomConfig.TargetEventCounts;
 	}
 
-	if (!IsValid(CurrentNodeInfo.Config.StateTree) && IsValid(DefaultRoomConfig.StateTree))
+	if (!IsValid(CurrentNodeInfo.FlowConfig.StateTree) && IsValid(DefaultRoomConfig.StateTree))
 	{
-		CurrentNodeInfo.Config.StateTree = DefaultRoomConfig.StateTree;
+		CurrentNodeInfo.FlowConfig.StateTree = DefaultRoomConfig.StateTree;
 	}
 
 	if (APRGameplayGameState* GS = GetGameState<APRGameplayGameState>())

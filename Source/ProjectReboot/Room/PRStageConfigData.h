@@ -23,8 +23,6 @@ public:
 	virtual FPrimaryAssetId GetPrimaryAssetId() const override;
 
 public:
-	/*~ Basic Info ~*/
-
 	// 스테이지 표시 이름
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Info")
 	FText DisplayName;
@@ -33,39 +31,39 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Info")
 	int32 StageIndex = 0;
 
-	/*~ Theme ~*/
-
 	// 테마 데이터 에셋 (적/함정/장애물 풀)
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Theme")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Info")
 	TObjectPtr<UPRThemeData> ThemeData;
 
-	/*~ Slot Sequence ~*/
+	// 스텝 시퀀스 (스테이지 진행 순서)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Info")
+	TArray<FPRRoomStep> Steps;
 
-	// 슬롯 시퀀스 (스테이지 진행 순서)
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Slots")
-	TArray<FPRRoomSlot> Slots;
+	// 시작 방 템플릿 (스테이지 진입 시 첫 방)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Templates")
+	TSoftObjectPtr<UWorld> StartRoomTemplate;
 
-	/*~ Templates ~*/
+	// 보스 맵 템플릿 (스테이지의 마지막 방)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Templates")
+	TSoftObjectPtr<UWorld> BossMap;
 
 	// 방 타입별 템플릿 풀
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Templates")
 	TMap<EPRRoomType, FPRRoomTemplatePool> Templates;
 
-	/*~ Rewards ~*/
-
-	// 방 타입별 보상 카테고리
+	// 방 타입별 등장 보상 정보
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Rewards")
 	TMap<EPRRoomType, FPRRewardCategoryPool> RewardsByType;
 
-	/*~ Transitions ~*/
-
-	// 방 타입별 전이 규칙 (다음 슬롯 가중치 수정)
+	// 방 타입별 전이 규칙 (다음 스텝 가중치 수정)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Transitions")
 	TMap<EPRRoomType, FPRRoomTypeTransition> TypeTransitions;
 
-	/*~ Boss ~*/
+	// 방 타입별 스폰 설정
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Spawn")
+	TMap<EPRRoomType, FPRRoomSpawnConfig> SpawnConfigs;
 
-	// 보스 맵 (Seamless Travel 대상)
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss")
-	TSoftObjectPtr<UWorld> BossMap;
+	// 방 타입별 흐름 설정
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Flow")
+	TMap<EPRRoomType, FPRRoomFlowConfig> FlowConfigs;
 };

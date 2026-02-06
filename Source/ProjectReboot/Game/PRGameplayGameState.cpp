@@ -3,9 +3,8 @@
 #include "PRGameplayGameState.h"
 
 #include "StateTreeEvents.h"
-#include "Components/StateTreeComponent.h"
 #include "ProjectReboot/Room/PRRoomController.h"
-#include "ProjectReboot/Room/PRRoomStateTreeComponent.h"
+#include "ProjectReboot/Room/StateTree/PRRoomStateTreeComponent.h"
 
 void APRGameplayGameState::NotifyRoomEnter(APRRoomController* NewRoom)
 {
@@ -32,6 +31,8 @@ void APRGameplayGameState::AddEventCount(const FGameplayTag& EventTag, int32 Del
 
 	int32& Count = CurrentEventCounts.FindOrAdd(EventTag);
 	Count = FMath::Max(0, Count + Delta);
+
+	OnEventCountChanged.Broadcast(EventTag, Count);
 }
 
 int32 APRGameplayGameState::GetEventCount(const FGameplayTag& EventTag) const
@@ -42,4 +43,15 @@ int32 APRGameplayGameState::GetEventCount(const FGameplayTag& EventTag) const
 	}
 
 	return 0;
+}
+
+void APRGameplayGameState::ResetEventCount(const FGameplayTag& EventTag)
+{
+	if (!EventTag.IsValid())
+	{
+		return;
+	}
+
+	CurrentEventCounts.Remove(EventTag);
+	OnEventCountChanged.Broadcast(EventTag, 0);
 }

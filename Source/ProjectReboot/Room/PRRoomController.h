@@ -42,7 +42,15 @@ public:
 	// 출구 문에 다음 방 정보 할당
 	UFUNCTION(BlueprintCallable, Category = "Room|Door")
 	void AssignExitDoors(const TArray<int32>& NextRoomIndices);
-	
+
+	// 방 노드 정보 조회
+	UFUNCTION(BlueprintPure, Category = "Room")
+	const FPRRoomNodeInfo& GetNodeInfo() const { return NodeInfo; }
+
+	// 스폰 정보 조회
+	UFUNCTION(BlueprintPure, Category = "Room|Spawn")
+	const FPRRoomSpawnInfo& GetSpawnInfo() const { return NodeInfo.SpawnInfo; }
+
 protected:
 	/*~ AActor Interface ~*/
 	virtual void BeginPlay() override;
@@ -65,6 +73,10 @@ public:
 	// 플레이어 스폰 위치 반환
 	UFUNCTION(BlueprintPure, Category = "Room")
 	FTransform GetPlayerSpawnTransform() const;
+
+	// 적 스폰 포인트 배열
+	UPROPERTY(EditAnywhere, Category = "Room|Spawn")
+	TArray<AActor*> EnemySpawnPoints;
 	
 	// 현재 방 인덱스 (Level Instance 기반)
 	UPROPERTY(VisibleAnywhere, Category = "Room")

@@ -2,9 +2,11 @@
 
 #include "PRStageManagerSubsystem.h"
 #include "PRStageConfigData.h"
+#include "PRThemeData.h"
 #include "PRRoomWorldSubsystem.h"
 #include "RogueliteSubsystem.h"
 #include "Engine/AssetManager.h"
+#include "ProjectReboot/Character/PREnemyCharacter.h"
 
 namespace PRStageHelpers
 {
@@ -343,201 +345,189 @@ void UPRStageManagerSubsystem::BuildRoomGraphForStage(int32 StageIndex)
 	GraphStageIndex = StageIndex;
 
 	const UPRStageConfigData* StageConfig = GetStageConfig(StageIndex);
-	if (!IsValid(StageConfig))
+	if (!IsValid(StageConfig) || StageConfig->Steps.Num() == 0)
 	{
 		return;
 	}
 
 	int32 NextRoomIndex = 0;
-	
-	// 각 슬롯에 대해 모든 가능한 이전 RoomType 조합으로 노드 생성
-	// 단순화: 첫 슬롯부터 순차적으로 그래프 구축
-	TArray<EPRRoomType> RoomTypes = {
-		EPRRoomType::None,
-		EPRRoomType::Combat,
-		EPRRoomType::Elite,
-		EPRRoomType::MiniBoss,
-		EPRRoomType::Shop,
-		EPRRoomType::Treasure,
-		EPRRoomType::Rest,
-		EPRRoomType::Boss
-	};
 
-	// 슬롯별로 방 노드 생성
-	// 간소화된 그래프: 슬롯당 ChoiceCount개의 노드 생성
-	for (int32 SlotIndex = 0; SlotIndex < StageConfig->Slots.Num(); SlotIndex++)
+	/*~ 시작 방 생성 (Step 0) ~*/
+	FPRRoomNodeInfo StartNode;
+	StartNode.RoomIndex = NextRoomIndex++;
+	StartNode.StepIndex = 0;
+	StartNode.RoomType = EPRRoomType::Combat;
+	StartNode.Template = StageConfig->StartRoomTemplate;
+	StartNode.Seed = RandomStream.RandRange(0, MAX_int32);
+	RoomGraph.Add(StartNode.RoomIndex, StartNode);
+	StartRoomIndices.Add(StartNode.RoomIndex);
+
+	// 스텝별 RoomIndex 매핑
+	TMap<int32, TArray<int32>> StepToRoomIndices;
+	StepToRoomIndices.Add(0, { StartNode.RoomIndex });
+
+	/*~ 각 스텝별로 연결 및 노드 생성 ~*/
+	// 노드 수는 이전 스텝의 연결에서 자연스럽게 도출됨
+	// 연결 시 기존 노드 재사용 또는 새 노드 생성 (최소 1개의 전이 보장)
+
+	for (int32 StepArrayIndex = 0; StepArrayIndex < StageConfig->Steps.Num(); StepArrayIndex++)
 	{
-		const FPRRoomSlot& Slot = StageConfig->Slots[SlotIndex];
-		
-		// 이전 슬롯의 마지막 노드 타입 (첫 슬롯은 None)
-		EPRRoomType LastType = EPRRoomType::None;
-		if (SlotIndex > 0)
+		const FPRRoomStep& Step = StageConfig->Steps[StepArrayIndex];
+		const int32 CurrentStepIndex = StepArrayIndex;        // 연결 출발점 (0=시작방, 1~N=스텝)
+		const int32 NextStepIndex = StepArrayIndex + 1;       // 연결 도착점
+
+		const TArray<int32>* CurrentStepRooms = StepToRoomIndices.Find(CurrentStepIndex);
+		if (!CurrentStepRooms)
 		{
-			// 이전 슬롯의 첫 번째 노드 타입 사용 (간소화)
-			for (const auto& Pair : RoomGraph)
+			continue;
+		}
+
+		TArray<int32> NextStepRoomIndices;
+
+		// 현재 스텝의 각 노드에서 다음 스텝으로 연결 생성
+		for (int32 CurrentRoomIndex : *CurrentStepRooms)
+		{
+			FPRRoomNodeInfo* CurrentNode = RoomGraph.Find(CurrentRoomIndex);
+			if (!CurrentNode)
 			{
-				if (Pair.Value.SlotIndex == SlotIndex - 1)
+				continue;
+			}
+
+			// 이 노드의 분기 수 결정 (Min~Max 범위 내 랜덤)
+			FRandomStream BranchRandom = CreateDeterministicRandom(StageIndex, CurrentRoomIndex, CurrentNode->RoomType);
+			const int32 BranchCount = BranchRandom.RandRange(Step.MinBranchCount, Step.MaxBranchCount);
+
+			// 각 분기마다 연결 대상 결정
+			// 보상 카테고리 다양성 필수: 연결된 방들은 반드시 서로 다른 카테고리를 가져야 함
+			TSet<FGameplayTag> UsedCategories;
+
+			for (int32 BranchIndex = 0; BranchIndex < BranchCount; BranchIndex++)
+			{
+				FRandomStream ConnectionRandom = CreateDeterministicRandom(StageIndex, CurrentRoomIndex * 100 + BranchIndex, CurrentNode->RoomType);
+
+				// 전이 가능한 타입 목록 조회
+				TArray<EPRRoomType> ValidTypes;
+				TArray<float> ValidWeights;
+				GetValidTypesForTransition(CurrentNode->RoomType, Step, ValidTypes, ValidWeights);
+
+				if (ValidTypes.Num() == 0)
 				{
-					LastType = Pair.Value.RoomType;
-					break;
+					continue;
+				}
+
+				// 카테고리 중복 없이 노드 생성 시도 (최대 시도 횟수 제한)
+				constexpr int32 MaxAttempts = 10;
+				int32 TargetRoomIndex = INDEX_NONE;
+
+				for (int32 Attempt = 0; Attempt < MaxAttempts; Attempt++)
+				{
+					FRandomStream AttemptRandom = CreateDeterministicRandom(StageIndex, CurrentRoomIndex * 100 + BranchIndex * 10 + Attempt, CurrentNode->RoomType);
+
+					// 타입 선택
+					const int32 TypeIndex = PRStageHelpers::SelectWeightedIndex(ValidWeights, AttemptRandom);
+					if (!ValidTypes.IsValidIndex(TypeIndex))
+					{
+						continue;
+					}
+					const EPRRoomType SelectedType = ValidTypes[TypeIndex];
+
+					// 기존 노드 재사용 시도: 카테고리가 중복되지 않는 노드만 재사용
+					for (int32 ExistingRoomIndex : NextStepRoomIndices)
+					{
+						if (const FPRRoomNodeInfo* ExistingNode = RoomGraph.Find(ExistingRoomIndex))
+						{
+							if (ExistingNode->RoomType == SelectedType && 
+								!UsedCategories.Contains(ExistingNode->RewardCategory))
+							{
+								// 재사용 확률 50%
+								if (AttemptRandom.FRand() < 0.5f)
+								{
+									TargetRoomIndex = ExistingRoomIndex;
+									break;
+								}
+							}
+						}
+					}
+
+					// 재사용할 노드 찾음
+					if (TargetRoomIndex != INDEX_NONE)
+					{
+						break;
+					}
+
+					// 새 노드 생성 시도
+					FRandomStream NodeRandom = CreateDeterministicRandom(StageIndex, NextStepIndex * 1000 + NextStepRoomIndices.Num() + Attempt, SelectedType);
+					FPRRoomNodeInfo NewNode = CreateRoomNode(NextRoomIndex, NextStepIndex, SelectedType, Step.Difficulty, NodeRandom);
+
+					// 카테고리 중복 검사
+					if (!UsedCategories.Contains(NewNode.RewardCategory))
+					{
+						NextRoomIndex++;
+						RoomGraph.Add(NewNode.RoomIndex, NewNode);
+						NextStepRoomIndices.Add(NewNode.RoomIndex);
+						TargetRoomIndex = NewNode.RoomIndex;
+						break;
+					}
+					// 중복이면 다음 시도 (NextRoomIndex 증가 없이 다시)
+				}
+
+				// 연결 추가 (중복 방지)
+				if (TargetRoomIndex != INDEX_NONE)
+				{
+					if (const FPRRoomNodeInfo* TargetNode = RoomGraph.Find(TargetRoomIndex))
+					{
+						UsedCategories.Add(TargetNode->RewardCategory);
+					}
+
+					if (!CurrentNode->NextRoomIndices.Contains(TargetRoomIndex))
+					{
+						CurrentNode->NextRoomIndices.Add(TargetRoomIndex);
+					}
 				}
 			}
 		}
 
-		TArray<FPRRoomNodeInfo> SlotNodes = BuildSlotNodes(SlotIndex, LastType, NextRoomIndex);
-
-		// 첫 슬롯의 노드들은 시작 방
-		if (SlotIndex == 0)
-		{
-			for (const FPRRoomNodeInfo& Node : SlotNodes)
-			{
-				StartRoomIndices.Add(Node.RoomIndex);
-			}
-		}
-
-		// 이전 슬롯 노드들의 NextRoomIndices 업데이트
-		if (SlotIndex > 0)
-		{
-			TArray<int32> CurrentSlotIndices;
-			for (const FPRRoomNodeInfo& Node : SlotNodes)
-			{
-				CurrentSlotIndices.Add(Node.RoomIndex);
-			}
-
-			for (auto& Pair : RoomGraph)
-			{
-				if (Pair.Value.SlotIndex == SlotIndex - 1)
-				{
-					Pair.Value.NextRoomIndices = CurrentSlotIndices;
-				}
-			}
-		}
-
-		// 그래프에 노드 추가
-		for (const FPRRoomNodeInfo& Node : SlotNodes)
-		{
-			RoomGraph.Add(Node.RoomIndex, Node);
-		}
+		StepToRoomIndices.Add(NextStepIndex, NextStepRoomIndices);
 	}
 
-	// 마지막 슬롯 노드들에 보스 방 연결
+	/*~ 보스 방 생성 및 연결 (Step N+1) ~*/
+	const int32 LastStepIndex = StageConfig->Steps.Num();
+	const int32 BossStepIndex = LastStepIndex + 1;
+
 	FPRRoomNodeInfo BossNode;
-	BossNode.RoomIndex = NextRoomIndex;
-	BossNode.SlotIndex = StageConfig->Slots.Num();
+	BossNode.RoomIndex = NextRoomIndex++;
+	BossNode.StepIndex = BossStepIndex;
 	BossNode.RoomType = EPRRoomType::Boss;
 	BossNode.Template = StageConfig->BossMap;
 	BossNode.Seed = RandomStream.RandRange(0, MAX_int32);
 	RoomGraph.Add(BossNode.RoomIndex, BossNode);
 
-	// 마지막 슬롯 노드들에 보스 방 연결
-	for (auto& Pair : RoomGraph)
+	// 마지막 스텝의 모든 노드를 보스 방에 연결
+	const TArray<int32>* LastStepRooms = StepToRoomIndices.Find(LastStepIndex);
+	if (LastStepRooms)
 	{
-		if (Pair.Value.SlotIndex == StageConfig->Slots.Num() - 1)
+		for (int32 RoomIndex : *LastStepRooms)
 		{
-			Pair.Value.NextRoomIndices.Add(BossNode.RoomIndex);
+			if (FPRRoomNodeInfo* Node = RoomGraph.Find(RoomIndex))
+			{
+				Node->NextRoomIndices.Add(BossNode.RoomIndex);
+			}
 		}
 	}
 
 	OnRoomGraphBuilt.Broadcast(StageIndex, StartRoomIndices);
 
-	UE_LOG(LogTemp, Log, TEXT("PRStageManagerSubsystem: Room graph built for stage %d with %d nodes, %d start rooms"), 
-		StageIndex, RoomGraph.Num(), StartRoomIndices.Num());
+	UE_LOG(LogTemp, Log, TEXT("PRStageManagerSubsystem: Room graph built for stage %d with %d nodes"), 
+		StageIndex, RoomGraph.Num());
 }
 
-TArray<FPRRoomNodeInfo> UPRStageManagerSubsystem::BuildSlotNodes(int32 SlotIndex, EPRRoomType LastSelectedRoomType, int32& OutNextRoomIndex) const
-{
-	TArray<FPRRoomNodeInfo> Nodes;
-
-	const UPRStageConfigData* StageConfig = GetStageConfig(StageProgress.CurrentStageIndex);
-	if (!IsValid(StageConfig))
-	{
-		return Nodes;
-	}
-
-	if (!StageConfig->Slots.IsValidIndex(SlotIndex))
-	{
-		return Nodes;
-	}
-
-	FRandomStream LocalRandom = CreateDeterministicRandom(StageProgress.CurrentStageIndex, SlotIndex, LastSelectedRoomType);
-	const FPRRoomSlot& Slot = StageConfig->Slots[SlotIndex];
-
-	// 1. 방 타입 결정 (슬롯당 하나)
-	TMap<EPRRoomType, float> Weights = GetModifiedWeightsForLastType(SlotIndex, LastSelectedRoomType);
-	EPRRoomType SelectedType = SelectWeightedRandom(Weights, LocalRandom);
-
-	// 2. 해당 방 타입의 보상 카테고리 풀 획득
-	const FPRRewardCategoryPool* RewardPool = StageConfig->RewardsByType.Find(SelectedType);
-
-	// 3. 보상 카테고리 선택 (ChoiceCount만큼, 중복 없이)
-	TArray<FPRRewardCategoryEntry> SelectedCategories;
-	if (RewardPool)
-	{
-		SelectedCategories = SelectRewardCategories(*RewardPool, Slot.ChoiceCount, LocalRandom);
-	}
-
-	// 4. 노드 생성 (같은 방 타입, 다른 보상 카테고리)
-	for (int32 i = 0; i < Slot.ChoiceCount; i++)
-	{
-		FPRRoomNodeInfo Node;
-		Node.RoomIndex = OutNextRoomIndex++;
-		Node.SlotIndex = SlotIndex;
-		Node.RoomType = SelectedType;
-		Node.Template = SelectTemplate(SelectedType, LocalRandom);
-		Node.Difficulty = Slot.Difficulty;
-
-		if (SelectedCategories.IsValidIndex(i))
-		{
-			Node.RewardCategory = SelectedCategories[i].Category;
-			Node.RewardPoolPreset = SelectedCategories[i].PoolPreset;
-		}
-
-		Node.Seed = LocalRandom.RandRange(0, MAX_int32);
-		Nodes.Add(Node);
-	}
-
-	return Nodes;
-}
-
-FRandomStream UPRStageManagerSubsystem::CreateDeterministicRandom(int32 StageIndex, int32 SlotIndex, EPRRoomType LastSelectedRoomType) const
+FRandomStream UPRStageManagerSubsystem::CreateDeterministicRandom(int32 StageIndex, int32 StepIndex, EPRRoomType LastSelectedRoomType) const
 {
 	const uint32 SeedStage = HashCombine(GetTypeHash(StageProgress.MasterSeed), GetTypeHash(StageIndex));
-	const uint32 SeedSlot = HashCombine(GetTypeHash(SlotIndex), GetTypeHash(static_cast<uint8>(LastSelectedRoomType)));
-	const uint32 Seed = HashCombine(SeedStage, SeedSlot);
+	const uint32 SeedStep = HashCombine(GetTypeHash(StepIndex), GetTypeHash(static_cast<uint8>(LastSelectedRoomType)));
+	const uint32 Seed = HashCombine(SeedStage, SeedStep);
 
 	return FRandomStream(Seed);
-}
-
-TMap<EPRRoomType, float> UPRStageManagerSubsystem::GetModifiedWeightsForLastType(int32 SlotIndex, EPRRoomType LastSelectedRoomType) const
-{
-	const UPRStageConfigData* StageConfig = GetCurrentStageConfig();
-	if (!IsValid(StageConfig) || !StageConfig->Slots.IsValidIndex(SlotIndex))
-	{
-		return TMap<EPRRoomType, float>();
-	}
-
-	const FPRRoomSlot& Slot = StageConfig->Slots[SlotIndex];
-	TMap<EPRRoomType, float> Weights = Slot.PossibleTypes;
-
-	// 첫 슬롯이거나 스테이지 시작 시 (None)는 전이 규칙 미적용
-	if (LastSelectedRoomType == EPRRoomType::None)
-	{
-		return Weights;
-	}
-
-	// 이전에 선택한 방 타입의 전이 규칙 적용
-	if (const FPRRoomTypeTransition* Transition = StageConfig->TypeTransitions.Find(LastSelectedRoomType))
-	{
-		for (auto& Elem : Weights)
-		{
-			if (const float* Mod = Transition->WeightModifiers.Find(Elem.Key))
-			{
-				Elem.Value *= *Mod;
-			}
-		}
-	}
-
-	return Weights;
 }
 
 EPRRoomType UPRStageManagerSubsystem::SelectWeightedRandom(const TMap<EPRRoomType, float>& Weights, FRandomStream& Random) const
@@ -612,4 +602,199 @@ TSoftObjectPtr<UWorld> UPRStageManagerSubsystem::SelectTemplate(EPRRoomType Room
 
 	const int32 SelectedIndex = PRStageHelpers::SelectWeightedIndex(Weights, Random);
 	return Pool->Entries.IsValidIndex(SelectedIndex) ? Pool->Entries[SelectedIndex].Level : nullptr;
+}
+
+FPRRoomNodeInfo UPRStageManagerSubsystem::CreateRoomNode(int32 RoomIndex, int32 StepIndex, EPRRoomType RoomType, float Difficulty, FRandomStream& Random) const
+{
+	const UPRStageConfigData* StageConfig = GetCurrentStageConfig();
+
+	FPRRoomNodeInfo Node;
+	Node.RoomIndex = RoomIndex;
+	Node.StepIndex = StepIndex;
+	Node.RoomType = RoomType;
+	Node.Template = SelectTemplate(RoomType, Random);
+	Node.Difficulty = Difficulty;
+	Node.Seed = Random.RandRange(0, MAX_int32);
+
+	// 보상 카테고리 설정
+	if (IsValid(StageConfig))
+	{
+		if (const FPRRewardCategoryPool* RewardPool = StageConfig->RewardsByType.Find(RoomType))
+		{
+			TArray<FPRRewardCategoryEntry> SelectedCategories = SelectRewardCategories(*RewardPool, 1, Random);
+			if (SelectedCategories.Num() > 0)
+			{
+				Node.RewardCategory = SelectedCategories[0].Category;
+				Node.RewardPoolPreset = SelectedCategories[0].PoolPreset;
+			}
+		}
+
+		// FlowConfig 주입
+		if (const FPRRoomFlowConfig* FlowConfig = StageConfig->FlowConfigs.Find(RoomType))
+		{
+			Node.FlowConfig = *FlowConfig;
+		}
+
+		// SpawnInfo 생성
+		if (const FPRRoomSpawnConfig* SpawnConfig = StageConfig->SpawnConfigs.Find(RoomType))
+		{
+			Node.SpawnInfo = CreateSpawnInfo(*SpawnConfig, RoomType, Difficulty, Random);
+		}
+	}
+
+	return Node;
+}
+
+float UPRStageManagerSubsystem::GetTransitionWeight(EPRRoomType FromType, EPRRoomType ToType) const
+{
+	const UPRStageConfigData* StageConfig = GetCurrentStageConfig();
+	if (!IsValid(StageConfig))
+	{
+		return 1.0f;
+	}
+
+	if (const FPRRoomTypeTransition* Transition = StageConfig->TypeTransitions.Find(FromType))
+	{
+		if (const float* Modifier = Transition->WeightModifiers.Find(ToType))
+		{
+			return *Modifier;
+		}
+	}
+
+	return 1.0f; // 기본 가중치
+}
+
+void UPRStageManagerSubsystem::GetValidTypesForTransition(EPRRoomType FromType, const FPRRoomStep& Step, TArray<EPRRoomType>& OutTypes, TArray<float>& OutWeights) const
+{
+	OutTypes.Empty();
+	OutWeights.Empty();
+
+	const UPRStageConfigData* StageConfig = GetCurrentStageConfig();
+	if (!IsValid(StageConfig))
+	{
+		return;
+	}
+
+	// 전이 규칙에서 유효한 타입 추출 (가중치 > 0 && PossibleTypes에 포함)
+	if (const FPRRoomTypeTransition* Transition = StageConfig->TypeTransitions.Find(FromType))
+	{
+		for (const auto& Pair : Transition->WeightModifiers)
+		{
+			if (Pair.Value > 0.0f && Step.PossibleTypes.Contains(Pair.Key))
+			{
+				OutTypes.Add(Pair.Key);
+				OutWeights.Add(Pair.Value);
+			}
+		}
+	}
+
+	// 유효 타입이 없으면 PossibleTypes 전체 사용
+	if (OutTypes.Num() == 0)
+	{
+		for (const auto& Pair : Step.PossibleTypes)
+		{
+			OutTypes.Add(Pair.Key);
+			OutWeights.Add(Pair.Value);
+		}
+	}
+}
+
+FPRRoomSpawnInfo UPRStageManagerSubsystem::CreateSpawnInfo(const FPRRoomSpawnConfig& Config, EPRRoomType RoomType, float Difficulty, FRandomStream& Random) const
+{
+	FPRRoomSpawnInfo SpawnInfo;
+
+	const UPRStageConfigData* StageConfig = GetCurrentStageConfig();
+	if (!IsValid(StageConfig) || !IsValid(StageConfig->ThemeData))
+	{
+		return SpawnInfo;
+	}
+
+	const UPRThemeData* ThemeData = StageConfig->ThemeData;
+
+	// 웨이브 수 결정
+	const int32 WaveCount = Random.RandRange(Config.MinWaveCount, Config.MaxWaveCount);
+
+	for (int32 WaveIndex = 0; WaveIndex < WaveCount; WaveIndex++)
+	{
+		FPRWaveSpawnInfo WaveInfo;
+
+		// 일반 적 수 결정 및 선택
+		const int32 NormalCount = Random.RandRange(Config.MinNormalEnemies, Config.MaxNormalEnemies);
+		for (int32 i = 0; i < NormalCount; i++)
+		{
+			if (TSubclassOf<APREnemyCharacter> EnemyClass = SelectEnemyFromPool(ThemeData->NormalEnemies, Difficulty, Random))
+			{
+				WaveInfo.NormalEnemies.Add(EnemyClass);
+			}
+		}
+
+		// 엘리트 적 수 결정 및 선택
+		const int32 EliteCount = Random.RandRange(Config.MinEliteEnemies, Config.MaxEliteEnemies);
+		for (int32 i = 0; i < EliteCount; i++)
+		{
+			if (TSubclassOf<APREnemyCharacter> EnemyClass = SelectEnemyFromPool(ThemeData->EliteEnemies, Difficulty, Random))
+			{
+				WaveInfo.EliteEnemies.Add(EnemyClass);
+			}
+		}
+
+		// 미니보스 (첫 웨이브에만)
+		if (WaveIndex == 0)
+		{
+			const int32 MiniBossCount = Random.RandRange(Config.MinMiniBosses, Config.MaxMiniBosses);
+			for (int32 i = 0; i < MiniBossCount; i++)
+			{
+				if (TSubclassOf<APREnemyCharacter> EnemyClass = SelectEnemyFromPool(ThemeData->MiniBosses, Difficulty, Random))
+				{
+					WaveInfo.MiniBosses.Add(EnemyClass);
+				}
+			}
+		}
+
+		SpawnInfo.Waves.Add(WaveInfo);
+	}
+
+	return SpawnInfo;
+}
+
+TSubclassOf<APREnemyCharacter> UPRStageManagerSubsystem::SelectEnemyFromPool(const TArray<FPREnemySpawnEntry>& Pool, float Difficulty, FRandomStream& Random) const
+{
+	// 난이도 필터링
+	TArray<FPREnemySpawnEntry> ValidEntries;
+	for (const FPREnemySpawnEntry& Entry : Pool)
+	{
+		// MinDifficulty 체크
+		if (Difficulty < Entry.MinDifficulty)
+		{
+			continue;
+		}
+
+		// MaxDifficulty 체크 (0 = 무제한)
+		if (Entry.MaxDifficulty > 0.0f && Difficulty > Entry.MaxDifficulty)
+		{
+			continue;
+		}
+
+		ValidEntries.Add(Entry);
+	}
+
+	if (ValidEntries.Num() == 0)
+	{
+		return nullptr;
+	}
+
+	// 가중치 배열 생성
+	TArray<float> Weights;
+	for (const FPREnemySpawnEntry& Entry : ValidEntries)
+	{
+		Weights.Add(Entry.Weight);
+	}
+
+	const int32 SelectedIndex = PRStageHelpers::SelectWeightedIndex(Weights, Random);
+	if (ValidEntries.IsValidIndex(SelectedIndex))
+	{
+		return ValidEntries[SelectedIndex].EnemyClass;
+	}
+
+	return nullptr;
 }

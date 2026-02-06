@@ -4,12 +4,11 @@
 #include "PRRoomController.h"
 
 #include "PRRoomWorldSubsystem.h"
-#include "PRRoomStateTreeComponent.h"
 #include "PRRoomDoor.h"
 #include "PRStageManagerSubsystem.h"
-#include "Components/StateTreeComponent.h"
 #include "ProjectReboot/Interaction/PRInteractableInterface.h"
 #include "Misc/PackageName.h"
+#include "StateTree/PRRoomStateTreeComponent.h"
 
 
 // Sets default values
@@ -29,7 +28,7 @@ void APRRoomController::InitRoom(const FPRRoomNodeInfo& InNodeInfo)
 
 	if (StateTreeComponent)
 	{
-		StateTreeComponent->SetStateTreeAsset(NodeInfo.Config.StateTree);
+		StateTreeComponent->SetStateTreeAsset(NodeInfo.FlowConfig.StateTree);
 	}
 
 	SetEntryDoorsInteractable(false);

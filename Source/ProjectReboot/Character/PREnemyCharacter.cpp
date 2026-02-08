@@ -8,6 +8,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
 #include "ProjectReboot/PRGameplayTags.h"
+#include "ProjectReboot/AI/PRAIController.h"
 #include "ProjectReboot/AbilitySystem/PRAbilitySystemComponent.h"
 #include "ProjectReboot/Game/PRGameplayGameState.h"
 #include "ProjectReboot/UI/Enemy/PREnemyStatusViewModel.h"
@@ -21,6 +22,10 @@ APREnemyCharacter::APREnemyCharacter()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	bUseControllerRotationYaw = false;
+
+	// AI 자동 Possess 설정
+	AIControllerClass = APRAIController::StaticClass();
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
 	// AI Sight가 동료 Enemy를 통과하도록 Visibility 채널 Ignore
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Ignore);
@@ -85,12 +90,15 @@ void APREnemyCharacter::SetStrafeMode(bool bEnable)
 void APREnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	// 스폰 위치 저장 (Patrol 용)
+	SpawnLocation = GetActorLocation();
+
 	if (USkeletalMeshComponent* MeshComponent = GetMesh())
 	{
 		for (TSubclassOf<UAnimInstance>& AnimLayerClass : EnemyAnimLayers)
 		{
-			MeshComponent->LinkAnimClassLayers(AnimLayerClass);	
+			MeshComponent->LinkAnimClassLayers(AnimLayerClass);
 		}
 	}
 	

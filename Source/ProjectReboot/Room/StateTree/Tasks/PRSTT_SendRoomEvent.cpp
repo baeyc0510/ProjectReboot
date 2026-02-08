@@ -8,11 +8,6 @@ EStateTreeRunStatus FPRStateTreeTask_SendRoomEvent::EnterState(
 	FStateTreeExecutionContext& Context,
 	const FStateTreeTransitionResult& Transition) const
 {
-	if (Transition.ChangeType != EStateTreeStateChangeType::Changed)
-	{
-		return EStateTreeRunStatus::Succeeded;
-	}
-
 	const FInstanceDataType& Data = Context.GetInstanceData(*this);
 
 	// EventTag 유효성 검사

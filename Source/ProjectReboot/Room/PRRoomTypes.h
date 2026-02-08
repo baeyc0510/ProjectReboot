@@ -20,13 +20,11 @@ UENUM(BlueprintType)
 enum class EPRRoomType : uint8
 {
 	// 초기값 (런/스테이지 시작)
-	None,
+	Default,
 	// 일반 전투 방
 	Combat,
 	// 엘리트 적 방
 	Elite,
-	// 미니보스 방
-	MiniBoss,
 	// 상점 방
 	Shop,
 	// 보물 방
@@ -143,7 +141,7 @@ struct FPRRoomNodeInfo
 
 	// 방 타입
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	EPRRoomType RoomType = EPRRoomType::None;
+	EPRRoomType RoomType = EPRRoomType::Default;
 
 	// 보상 카테고리 (문에 표시될 태그)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
@@ -323,7 +321,7 @@ struct FPRRoomChoice
 
 	// 선택된 방 타입
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	EPRRoomType RoomType = EPRRoomType::None;
+	EPRRoomType RoomType = EPRRoomType::Default;
 
 	// 사용할 템플릿 레벨
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)

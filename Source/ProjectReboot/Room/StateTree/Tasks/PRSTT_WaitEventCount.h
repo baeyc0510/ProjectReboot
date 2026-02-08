@@ -29,6 +29,7 @@ struct FPRSTT_WaitEventCount_InstanceData
 	TArray<FGameplayTag> OnCompletionEvents;
 
 	// 태스크 완료 여부 (런타임)
+	bool bPendingCompleted = false;
 	bool bCompleted = false;
 
 	// 델리게이트 핸들 (런타임)

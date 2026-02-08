@@ -80,7 +80,7 @@ void APRRoomDoor::SetDisplayInfo(EPRRoomType InRoomType, FGameplayTag InRewardCa
 void APRRoomDoor::ClearAssignment()
 {
 	TargetRoomIndex = -1;
-	DisplayRoomType = EPRRoomType::None;
+	DisplayRoomType = EPRRoomType::Default;
 	DisplayRewardCategory = FGameplayTag();
 	OnAssignmentCleared();
 }

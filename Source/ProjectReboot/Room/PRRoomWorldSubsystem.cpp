@@ -4,6 +4,7 @@
 #include "PRRoomController.h"
 #include "PRStageManagerSubsystem.h"
 #include "Engine/LevelStreamingDynamic.h"
+#include "ProjectReboot/Character/PRPlayerCharacter.h"
 
 /*~ USubsystem Interface ~*/
 
@@ -258,16 +259,15 @@ void UPRRoomWorldSubsystem::TeleportPlayerToRoom(int32 RoomIndex, APlayerControl
 		return;
 	}
 
-	APawn* Pawn = PlayerController->GetPawn();
-	if (!IsValid(Pawn))
+	APRPlayerCharacter* PlayerCharacter = Cast<APRPlayerCharacter>(PlayerController->GetPawn());
+	if (!IsValid(PlayerCharacter))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("PRRoomWorldSubsystem: Cannot teleport - no pawn"));
 		return;
 	}
 
-	// 스폰 위치로 텔레포트
 	const FTransform SpawnTransform = RoomController->GetPlayerSpawnTransform();
-	Pawn->SetActorTransform(SpawnTransform);
+	PlayerCharacter->TeleportWithoutCameraLag(SpawnTransform.GetLocation(), SpawnTransform.GetRotation().Rotator());
 
 	// 현재 방 업데이트
 	SetCurrentRoom(RoomIndex);

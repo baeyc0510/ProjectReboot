@@ -8,12 +8,8 @@ EStateTreeRunStatus FPRStateTreeTask_WaitEventCount::EnterState(
 	FStateTreeExecutionContext& Context,
 	const FStateTreeTransitionResult& Transition) const
 {
-	if (Transition.ChangeType != EStateTreeStateChangeType::Changed)
-	{
-		return EStateTreeRunStatus::Running;
-	}
-
 	FInstanceDataType& Data = Context.GetInstanceData(*this);
+	Data.bPendingCompleted = false;
 	Data.bCompleted = false;
 
 	// EventTag 유효성 검사
@@ -49,7 +45,7 @@ EStateTreeRunStatus FPRStateTreeTask_WaitEventCount::EnterState(
 		{
 			if (CompletionEvent.IsValid())
 			{
-				GameState->SendRoomEvent(CompletionEvent);
+				GameState->AddEventCount(CompletionEvent);
 				UE_LOG(LogTemp, Log, TEXT("PRSTT_WaitEventCount: Sent completion event - %s"), *CompletionEvent.ToString());
 			}
 		}
@@ -64,7 +60,7 @@ EStateTreeRunStatus FPRStateTreeTask_WaitEventCount::EnterState(
 		[WeakContext, TargetTag = Data.EventTag, TargetCount = Data.TargetCount, CompletionEvents = Data.OnCompletionEvents]
 		(const FGameplayTag& Tag, int32 Count)
 		{
-			if (Tag != TargetTag)
+			if (!Tag.MatchesTag(TargetTag))
 			{
 				return;
 			}
@@ -81,7 +77,7 @@ EStateTreeRunStatus FPRStateTreeTask_WaitEventCount::EnterState(
 				// Instance Data 업데이트
 				if (FPRSTT_WaitEventCount_InstanceData* LambdaData = StrongContext.GetInstanceDataPtr<FPRSTT_WaitEventCount_InstanceData>())
 				{
-					LambdaData->bCompleted = true;
+					LambdaData->bPendingCompleted = true;
 				}
 
 				// OnCompletionEvents 발생
@@ -94,7 +90,7 @@ EStateTreeRunStatus FPRStateTreeTask_WaitEventCount::EnterState(
 						{
 							if (CompletionEvent.IsValid())
 							{
-								GameState->SendRoomEvent(CompletionEvent);
+								GameState->AddEventCount(CompletionEvent);
 								UE_LOG(LogTemp, Log, TEXT("PRSTT_WaitEventCount: Sent completion event - %s"), *CompletionEvent.ToString());
 							}
 						}
@@ -116,8 +112,13 @@ EStateTreeRunStatus FPRStateTreeTask_WaitEventCount::Tick(
 	FStateTreeExecutionContext& Context,
 	const float DeltaTime) const
 {
-	const FInstanceDataType& Data = Context.GetInstanceData(*this);
+	FInstanceDataType& Data = Context.GetInstanceData(*this);
 
+	if (Data.bPendingCompleted)
+	{
+		Data.bCompleted = true;
+	}
+	// 1프레임 지연 완료 처리
 	if (Data.bCompleted)
 	{
 		return EStateTreeRunStatus::Succeeded;

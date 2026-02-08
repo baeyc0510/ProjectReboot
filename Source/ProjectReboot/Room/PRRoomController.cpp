@@ -63,9 +63,11 @@ void APRRoomController::ActivateRoom()
 		}
 	}
 
+	// StateTree 시작
 	if (StateTreeComponent)
 	{
 		StateTreeComponent->StartLogic();
+		UE_LOG(LogTemp, Log, TEXT("PRRoomController::ActivateRoom: StateTree started (Room %d)"), RoomIndex);
 	}
 }
 
@@ -260,7 +262,7 @@ void APRRoomController::BeginPlay()
 	{
 		RoomIndex = ExtractRoomIndexFromLevelName();
 	}
-
+	
 	if (UPRRoomWorldSubsystem* RoomSubsystem = GetWorld()->GetSubsystem<UPRRoomWorldSubsystem>())
 	{
 		RoomSubsystem->RegisterRoomController(GetRoomIndex(), this);

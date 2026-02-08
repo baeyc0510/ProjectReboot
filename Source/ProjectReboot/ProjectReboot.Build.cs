@@ -29,7 +29,7 @@ public class ProjectReboot : ModuleRules
 			"SlateCore",
 			"GameplayAbilities",
 			"GameplayTasks", "Niagara", "MotionWarping",
-
+			"MoviePlayer",
 		});
 
 		// Uncomment if you are using Slate UI

@@ -12,11 +12,6 @@ EStateTreeRunStatus FPRStateTreeTask_SpawnWave::EnterState(
 	FStateTreeExecutionContext& Context,
 	const FStateTreeTransitionResult& Transition) const
 {
-	if (Transition.ChangeType != EStateTreeStateChangeType::Changed)
-	{
-		return EStateTreeRunStatus::Succeeded;
-	}
-
 	FInstanceDataType& Data = Context.GetInstanceData(*this);
 
 	if (!IsValid(Data.RoomController))
@@ -69,6 +64,10 @@ int32 FPRStateTreeTask_SpawnWave::SpawnWaveEnemies(FStateTreeExecutionContext& C
 	UWorld* World = Context.GetWorld();
 	const TArray<AActor*>& SpawnPoints = Data.RoomController->EnemySpawnPoints;
 
+	// 스폰 파라미터 설정
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
 	int32 TotalSpawned = 0;
 	int32 SpawnPointIndex = 0;
 
@@ -97,7 +96,8 @@ int32 FPRStateTreeTask_SpawnWave::SpawnWaveEnemies(FStateTreeExecutionContext& C
 		}
 
 		FTransform SpawnTransform = GetNextSpawnTransform();
-		APREnemyCharacter* SpawnedEnemy = World->SpawnActor<APREnemyCharacter>(EnemyClass, SpawnTransform);
+		APREnemyCharacter* SpawnedEnemy = World->SpawnActor<APREnemyCharacter>(
+			EnemyClass, SpawnTransform, SpawnParams);
 		if (IsValid(SpawnedEnemy))
 		{
 			TotalSpawned++;
@@ -113,7 +113,8 @@ int32 FPRStateTreeTask_SpawnWave::SpawnWaveEnemies(FStateTreeExecutionContext& C
 		}
 
 		FTransform SpawnTransform = GetNextSpawnTransform();
-		APREnemyCharacter* SpawnedEnemy = World->SpawnActor<APREnemyCharacter>(EnemyClass, SpawnTransform);
+		APREnemyCharacter* SpawnedEnemy = World->SpawnActor<APREnemyCharacter>(
+			EnemyClass, SpawnTransform, SpawnParams);
 		if (IsValid(SpawnedEnemy))
 		{
 			TotalSpawned++;
@@ -129,7 +130,8 @@ int32 FPRStateTreeTask_SpawnWave::SpawnWaveEnemies(FStateTreeExecutionContext& C
 		}
 
 		FTransform SpawnTransform = GetNextSpawnTransform();
-		APREnemyCharacter* SpawnedEnemy = World->SpawnActor<APREnemyCharacter>(EnemyClass, SpawnTransform);
+		APREnemyCharacter* SpawnedEnemy = World->SpawnActor<APREnemyCharacter>(
+			EnemyClass, SpawnTransform, SpawnParams);
 		if (IsValid(SpawnedEnemy))
 		{
 			TotalSpawned++;

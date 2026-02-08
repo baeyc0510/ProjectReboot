@@ -86,7 +86,7 @@ protected:
 
 	// 표시되는 방 타입
 	UPROPERTY(VisibleAnywhere, Category = "Room|Door")
-	EPRRoomType DisplayRoomType = EPRRoomType::None;
+	EPRRoomType DisplayRoomType = EPRRoomType::Default;
 
 	// 표시되는 보상 카테고리
 	UPROPERTY(VisibleAnywhere, Category = "Room|Door")

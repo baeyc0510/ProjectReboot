@@ -222,69 +222,33 @@ void UPRStageManagerSubsystem::EnterRoomByIndex(int32 RoomIndex)
 
 	OnRoomEntered.Broadcast(RoomIndex);
 
-	if (NodeInfo->RoomType == EPRRoomType::Boss)
+	// 모든 방 (보스 포함)을 레벨 스트리밍으로 처리
+	if (NodeInfo->Template.IsNull())
 	{
-		// 보스 맵 이동
-		const UPRStageConfigData* StageConfig = GetCurrentStageConfig();
-		if (!IsValid(StageConfig))
-		{
-			UE_LOG(LogTemp, Warning, TEXT("PRStageManagerSubsystem: Cannot enter boss room - no stage config"));
-			return;
-		}
-
-		if (StageConfig->BossMap.IsNull())
-		{
-			UE_LOG(LogTemp, Warning, TEXT("PRStageManagerSubsystem: Cannot enter boss room - BossMap is null"));
-			return;
-		}
-
-		SaveStageProgress();
-
-		UGameInstance* GameInstance = GetGameInstance();
-		if (!IsValid(GameInstance))
-		{
-			UE_LOG(LogTemp, Error, TEXT("PRStageManagerSubsystem: Cannot travel to boss map - no game instance"));
-			return;
-		}
-
-		UWorld* World = GameInstance->GetWorld();
-		if (!IsValid(World))
-		{
-			UE_LOG(LogTemp, Error, TEXT("PRStageManagerSubsystem: Cannot travel to boss map - no world"));
-			return;
-		}
-
-		const FString MapPath = StageConfig->BossMap.ToString();
-		UE_LOG(LogTemp, Log, TEXT("PRStageManagerSubsystem: Traveling to boss map: %s"), *MapPath);
-		World->ServerTravel(MapPath, true);
+		UE_LOG(LogTemp, Warning, TEXT("PRStageManagerSubsystem: Cannot enter room %d - template is null"), RoomIndex);
+		return;
 	}
-	else
+
+	UGameInstance* GameInstance = GetGameInstance();
+	if (!IsValid(GameInstance))
 	{
-		// 일반 방 진입 (RoomSubsystem에 위임)
-		if (!NodeInfo->Template.IsNull())
-		{
-			UGameInstance* GameInstance = GetGameInstance();
-			if (!IsValid(GameInstance))
-			{
-				UE_LOG(LogTemp, Error, TEXT("PRStageManagerSubsystem: Cannot enter room - no game instance"));
-				return;
-			}
+		UE_LOG(LogTemp, Error, TEXT("PRStageManagerSubsystem: Cannot enter room - no game instance"));
+		return;
+	}
 
-			UWorld* World = GameInstance->GetWorld();
-			if (!IsValid(World))
-			{
-				UE_LOG(LogTemp, Error, TEXT("PRStageManagerSubsystem: Cannot enter room - no world"));
-				return;
-			}
+	UWorld* World = GameInstance->GetWorld();
+	if (!IsValid(World))
+	{
+		UE_LOG(LogTemp, Error, TEXT("PRStageManagerSubsystem: Cannot enter room - no world"));
+		return;
+	}
 
-			if (UPRRoomWorldSubsystem* RoomSubsystem = World->GetSubsystem<UPRRoomWorldSubsystem>())
-			{
-				RoomSubsystem->EnterRoom(RoomIndex, *NodeInfo);
+	if (UPRRoomWorldSubsystem* RoomSubsystem = World->GetSubsystem<UPRRoomWorldSubsystem>())
+	{
+		RoomSubsystem->EnterRoom(RoomIndex, *NodeInfo);
 
-				UE_LOG(LogTemp, Log, TEXT("PRStageManagerSubsystem: Entering room %d (Template: %s)"),
-					RoomIndex, *NodeInfo->Template.ToString());
-			}
-		}
+		UE_LOG(LogTemp, Log, TEXT("PRStageManagerSubsystem: Entering room %d (Type: %d, Template: %s)"),
+			RoomIndex, static_cast<int32>(NodeInfo->RoomType), *NodeInfo->Template.ToString());
 	}
 }
 
@@ -356,9 +320,13 @@ void UPRStageManagerSubsystem::BuildRoomGraphForStage(int32 StageIndex)
 	FPRRoomNodeInfo StartNode;
 	StartNode.RoomIndex = NextRoomIndex++;
 	StartNode.StepIndex = 0;
-	StartNode.RoomType = EPRRoomType::Combat;
+	StartNode.RoomType = EPRRoomType::Default;
 	StartNode.Template = StageConfig->StartRoomTemplate;
 	StartNode.Seed = RandomStream.RandRange(0, MAX_int32);
+	if (const FPRRoomFlowConfig* FlowConfig = StageConfig->FlowConfigs.Find(EPRRoomType::Default))
+	{
+		StartNode.FlowConfig = *FlowConfig;
+	}
 	RoomGraph.Add(StartNode.RoomIndex, StartNode);
 	StartRoomIndices.Add(StartNode.RoomIndex);
 
@@ -500,6 +468,10 @@ void UPRStageManagerSubsystem::BuildRoomGraphForStage(int32 StageIndex)
 	BossNode.RoomType = EPRRoomType::Boss;
 	BossNode.Template = StageConfig->BossMap;
 	BossNode.Seed = RandomStream.RandRange(0, MAX_int32);
+	if (const FPRRoomFlowConfig* FlowConfig = StageConfig->FlowConfigs.Find(EPRRoomType::Boss))
+	{
+		BossNode.FlowConfig = *FlowConfig;
+	}
 	RoomGraph.Add(BossNode.RoomIndex, BossNode);
 
 	// 마지막 스텝의 모든 노드를 보스 방에 연결

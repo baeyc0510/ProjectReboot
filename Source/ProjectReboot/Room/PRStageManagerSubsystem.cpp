@@ -6,6 +6,7 @@
 #include "PRRoomWorldSubsystem.h"
 #include "RogueliteSubsystem.h"
 #include "Engine/AssetManager.h"
+#include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/Character/PREnemyCharacter.h"
 
 namespace PRStageHelpers
@@ -259,30 +260,29 @@ void UPRStageManagerSubsystem::EnterRoomByIndex(int32 RoomIndex)
 	}
 	else
 	{
-		// Level Instance 로드
+		// 일반 방 진입 (RoomSubsystem에 위임)
 		if (!NodeInfo->Template.IsNull())
 		{
 			UGameInstance* GameInstance = GetGameInstance();
 			if (!IsValid(GameInstance))
 			{
-				UE_LOG(LogTemp, Error, TEXT("PRStageManagerSubsystem: Cannot load room - no game instance"));
+				UE_LOG(LogTemp, Error, TEXT("PRStageManagerSubsystem: Cannot enter room - no game instance"));
 				return;
 			}
 
 			UWorld* World = GameInstance->GetWorld();
 			if (!IsValid(World))
 			{
-				UE_LOG(LogTemp, Error, TEXT("PRStageManagerSubsystem: Cannot load room - no world"));
+				UE_LOG(LogTemp, Error, TEXT("PRStageManagerSubsystem: Cannot enter room - no world"));
 				return;
 			}
 
 			if (UPRRoomWorldSubsystem* RoomSubsystem = World->GetSubsystem<UPRRoomWorldSubsystem>())
 			{
-				// 레벨 인스턴스 로드 (방 위치는 추후 맵 레이아웃에 따라 계산)
-				const FVector RoomLocation = FVector(RoomIndex * 5000.0f, 0.0f, 0.0f);
-				RoomSubsystem->LoadRoomTemplate(RoomIndex, NodeInfo->Template, RoomLocation);
+				RoomSubsystem->EnterRoom(RoomIndex, *NodeInfo);
 
-				UE_LOG(LogTemp, Log, TEXT("PRStageManagerSubsystem: Loading room template %s at index %d"), *NodeInfo->Template.ToString(), RoomIndex);
+				UE_LOG(LogTemp, Log, TEXT("PRStageManagerSubsystem: Entering room %d (Template: %s)"),
+					RoomIndex, *NodeInfo->Template.ToString());
 			}
 		}
 	}

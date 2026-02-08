@@ -3,11 +3,25 @@
 #include "PRRoomDoor.h"
 
 #include "PRStageManagerSubsystem.h"
+#include "Kismet/GameplayStatics.h"
+#include "ProjectReboot/Game/PRGameplayGameMode.h"
 
 APRRoomDoor::APRRoomDoor()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	InteractionText = FText::FromString(TEXT("다음 방"));
+}
+
+void APRRoomDoor::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// 초기에는 숨김 상태
+	SetActorHiddenInGame(true);
+	SetActorEnableCollision(false);
+	SetInteractable(false);
+
+	UE_LOG(LogTemp, Log, TEXT("PRRoomDoor::BeginPlay: Door %s hidden on start"), *GetName());
 }
 
 bool APRRoomDoor::CanInteract(APawn* Interactor) const
@@ -17,7 +31,7 @@ bool APRRoomDoor::CanInteract(APawn* Interactor) const
 
 void APRRoomDoor::Interact(APawn* Interactor)
 {
-	if (!bIsInteractable)
+	if (!bIsInteractable || !GetWorld())
 	{
 		return;
 	}
@@ -27,10 +41,10 @@ void APRRoomDoor::Interact(APawn* Interactor)
 		UE_LOG(LogTemp, Warning, TEXT("PRRoomDoor: No target room index assigned for door %s"), *GetName());
 		return;
 	}
-
-	if (UPRStageManagerSubsystem* StageManager = UPRStageManagerSubsystem::Get(this))
+	
+	if (APRGameplayGameMode* GM = GetWorld()->GetAuthGameMode<APRGameplayGameMode>())
 	{
-		StageManager->EnterRoomByIndex(TargetRoomIndex);
+		GM->MoveToNextRoom(TargetRoomIndex);
 	}
 }
 

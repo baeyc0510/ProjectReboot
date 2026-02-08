@@ -19,22 +19,12 @@ EStateTreeRunStatus FPRStateTreeTask_SpawnRoomRewardActor::EnterState(
 		return EStateTreeRunStatus::Failed;
 	}
 
-	UWorld* World = Context.GetWorld();
-	if (!IsValid(World))
+	if (!IsValid(Data.RoomController))
 	{
 		return EStateTreeRunStatus::Failed;
 	}
 
-	FTransform SpawnTransform = FTransform::Identity;
-	if (IsValid(Data.SpawnPoint))
-	{
-		SpawnTransform = Data.SpawnPoint->GetActorTransform();
-	}
-	else if (Data.bUseRoomControllerTransform && IsValid(Data.RoomController))
-	{
-		SpawnTransform = Data.RoomController->GetActorTransform();
-	}
-
-	Data.SpawnedActor = World->SpawnActor<AActor>(Data.RewardActorClass, SpawnTransform);
+	// RoomController를 통해 보상 스폰 (RewardPoolPreset 자동 설정)
+	Data.SpawnedActor = Data.RoomController->SpawnReward(Data.RewardActorClass);
 	return IsValid(Data.SpawnedActor) ? EStateTreeRunStatus::Succeeded : EStateTreeRunStatus::Failed;
 }

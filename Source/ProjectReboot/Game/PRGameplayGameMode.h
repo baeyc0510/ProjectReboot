@@ -37,7 +37,11 @@ public:
 	// TEMP: 테스트용 Config (NodeInfo에 Config가 없을 때 사용)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "PR|Rules")
 	FPRRoomFlowConfig DefaultRoomConfig;
-	
+
+	// 스테이지 설정 에셋 타입 (기본값: "StageConfig")
+	UPROPERTY(EditDefaultsOnly, Category = "PR|Stage")
+	FPrimaryAssetType StageConfigAssetType;
+
 private:
 	// 현재 방 노드 정보
 	FPRRoomNodeInfo CurrentNodeInfo;

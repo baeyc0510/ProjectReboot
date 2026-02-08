@@ -38,18 +38,14 @@ enum class EPRRoomType : uint8
 };
 
 /**
- * 방 흐름 설정 (클리어 조건, StateTree 등)
+ * 방 흐름 설정 (StateTree)
  */
 USTRUCT(BlueprintType)
 struct FPRRoomFlowConfig
 {
 	GENERATED_BODY()
 
-	// 클리어 조건 이벤트 목표치 (태그 -> 목표 수치)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TMap<FGameplayTag, int32> TargetEventCounts;
-
-	// 방 로직 StateTree
+	// 방 로직 StateTree (클리어 조건은 StateTree 내부에서 관리)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UStateTree> StateTree;
 };

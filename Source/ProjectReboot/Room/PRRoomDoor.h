@@ -69,6 +69,9 @@ public:
 	FGameplayTag GetDisplayRewardCategory() const { return DisplayRewardCategory; }
 
 protected:
+	/*~ AActor Interface ~*/
+	virtual void BeginPlay() override;
+
 	// 상호작용 텍스트
 	UPROPERTY(EditAnywhere, Category = "Room|Door")
 	FText InteractionText;

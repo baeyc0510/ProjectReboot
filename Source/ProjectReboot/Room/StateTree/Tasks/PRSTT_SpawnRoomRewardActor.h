@@ -18,23 +18,15 @@ struct FPRSTT_SpawnRoomRewardActor_InstanceData
 	GENERATED_BODY()
 
 	// 방 컨트롤러 (Context)
-	UPROPERTY(EditAnywhere, Category = Context)
+	UPROPERTY(EditAnywhere, Category = "Context")
 	TObjectPtr<APRRoomController> RoomController = nullptr;
 
 	// 보상 액터 클래스
-	UPROPERTY(EditAnywhere, Category = Parameter)
+	UPROPERTY(EditAnywhere, Category = "Parameter")
 	TSubclassOf<AActor> RewardActorClass;
 
-	// 스폰 기준 액터
-	UPROPERTY(EditAnywhere, Category = Parameter)
-	TObjectPtr<AActor> SpawnPoint = nullptr;
-
-	// RoomController 위치 사용 여부
-	UPROPERTY(EditAnywhere, Category = Parameter)
-	bool bUseRoomControllerTransform = true;
-
 	// 스폰된 보상 액터
-	UPROPERTY(EditAnywhere, Category = Output)
+	UPROPERTY(EditAnywhere, Category = "Output")
 	TObjectPtr<AActor> SpawnedActor = nullptr;
 };
 

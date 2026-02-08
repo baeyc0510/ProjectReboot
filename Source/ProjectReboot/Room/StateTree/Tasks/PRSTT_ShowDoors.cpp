@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "PRSTT_SetRoomDoorsInteractable.h"
+#include "PRSTT_ShowDoors.h"
 
 #include "ProjectReboot/Room/PRRoomController.h"
 
-EStateTreeRunStatus FPRStateTreeTask_SetRoomDoorsInteractable::EnterState(
+EStateTreeRunStatus FPRStateTreeTask_ShowDoors::EnterState(
 	FStateTreeExecutionContext& Context,
 	const FStateTreeTransitionResult& Transition) const
 {
@@ -18,8 +18,9 @@ EStateTreeRunStatus FPRStateTreeTask_SetRoomDoorsInteractable::EnterState(
 	{
 		return EStateTreeRunStatus::Failed;
 	}
-	
-	Data.RoomController->SetDoorsInteractable(Data.bInteractable);
+
+	// 문 표시 및 활성화
+	Data.RoomController->ShowDoors();
 
 	return EStateTreeRunStatus::Succeeded;
 }

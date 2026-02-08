@@ -143,25 +143,22 @@ void UPRActionDecisionPanel::HandleItemClicked(UPRActionListItemWidget* ClickedI
 void UPRActionDecisionPanel::HandleConfirmButtonClicked()
 {
 	RestoreOriginalEquipment();
-	
+
+	URogueliteActionData* ActionToAcquire = nullptr;
 	if (SelectedItem)
 	{
-		if (URogueliteActionData* ActionToAcquire = SelectedItem->GetActionData())
+		ActionToAcquire = SelectedItem->GetActionData();
+		if (ActionToAcquire)
 		{
 			URogueliteBlueprintLibrary::AcquireAction(this, ActionToAcquire);
 		}
 	}
 
-	if (UWorld* World = GetWorld())
-	{
-		if (APRGameplayGameState* GS = World->GetGameState<APRGameplayGameState>())
-		{
-			GS->SendRoomEvent(TAG_Event_Reward_Selected);
-		}
-	}
-
 	// 장비 확정 플래그 설정 (NativeDestruct에서 복원하지 않음)
 	bEquipmentConfirmed = true;
+
+	// 델리게이트 호출 (외부에서 추가 처리 가능)
+	OnActionConfirmed.Broadcast(ActionToAcquire);
 
 	UPRUIBlueprintLibrary::PopUI(GetOwningPlayer(), this);
 

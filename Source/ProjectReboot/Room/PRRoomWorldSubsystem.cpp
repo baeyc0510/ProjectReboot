@@ -26,6 +26,24 @@ void UPRRoomWorldSubsystem::Deinitialize()
 
 /*~ Level Instance ~*/
 
+void UPRRoomWorldSubsystem::EnterRoom(int32 RoomIndex, const FPRRoomNodeInfo& NodeInfo)
+{
+	// 이전 방 언로드 (현재 방이 유효하고, 새 방과 다른 경우)
+	if (CurrentRoomIndex != INDEX_NONE && CurrentRoomIndex != RoomIndex)
+	{
+		UnloadRoom(CurrentRoomIndex);
+		UE_LOG(LogTemp, Log, TEXT("PRRoomWorldSubsystem: Unloaded previous room %d"), CurrentRoomIndex);
+	}
+
+	// 방 위치 계산 (추후 맵 레이아웃에 따라 수정 가능)
+	const FVector RoomLocation = FVector(RoomIndex * 5000.0f, 0.0f, 0.0f);
+
+	// 레벨 인스턴스 로드
+	LoadRoomTemplate(RoomIndex, NodeInfo.Template, RoomLocation);
+
+	UE_LOG(LogTemp, Log, TEXT("PRRoomWorldSubsystem: Entering room %d"), RoomIndex);
+}
+
 void UPRRoomWorldSubsystem::LoadRoomTemplate(int32 RoomIndex, TSoftObjectPtr<UWorld> Template, const FVector& Location)
 {
 	if (Template.IsNull())

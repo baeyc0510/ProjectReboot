@@ -4,6 +4,7 @@
 
 #include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/Game/PRGameplayGameState.h"
+#include "ProjectReboot/Room/PRRoomController.h"
 
 EStateTreeRunStatus FPRStateTreeTask_WaitWaveClear::EnterState(
 	FStateTreeExecutionContext& Context,
@@ -17,10 +18,31 @@ EStateTreeRunStatus FPRStateTreeTask_WaitWaveClear::EnterState(
 	FInstanceDataType& Data = Context.GetInstanceData(*this);
 	Data.bTaskCompleted = false;
 
-	// 처치할 적이 없으면 즉시 완료
-	if (Data.TargetKillCount <= 0)
+	// RoomController 유효성 검사
+	if (!IsValid(Data.RoomController))
 	{
-		UE_LOG(LogTemp, Log, TEXT("PRSTT_WaitWaveClear: No enemies to kill, wave cleared immediately"));
+		UE_LOG(LogTemp, Warning, TEXT("PRSTT_WaitWaveClear: RoomController is invalid"));
+		return EStateTreeRunStatus::Failed;
+	}
+
+	// SpawnInfo에서 웨이브 정보 가져오기
+	const int32 CurrentWaveIndex = Data.RoomController->GetCurrentWaveIndex();
+	const FPRRoomSpawnInfo& SpawnInfo = Data.RoomController->GetSpawnInfo();
+	if (!SpawnInfo.Waves.IsValidIndex(CurrentWaveIndex))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PRSTT_WaitWaveClear: Invalid wave index %d"), CurrentWaveIndex);
+		return EStateTreeRunStatus::Failed;
+	}
+
+	// 현재 웨이브의 총 적 수 계산
+	const FPRWaveSpawnInfo& CurrentWave = SpawnInfo.Waves[CurrentWaveIndex];
+	const int32 TargetKillCount = CurrentWave.NormalEnemies.Num() + CurrentWave.EliteEnemies.Num() + CurrentWave.MiniBosses.Num();
+
+	// 처치할 적이 없으면 즉시 완료
+	if (TargetKillCount <= 0)
+	{
+		UE_LOG(LogTemp, Log, TEXT("PRSTT_WaitWaveClear: No enemies to kill, wave cleared immediately (Wave %d)"), CurrentWaveIndex);
+		Data.RoomController->IncrementWaveIndex();
 		return EStateTreeRunStatus::Succeeded;
 	}
 
@@ -39,18 +61,19 @@ EStateTreeRunStatus FPRStateTreeTask_WaitWaveClear::EnterState(
 
 	// 현재 킬 카운트 확인 (이미 도달했을 수 있음)
 	const int32 CurrentKillCount = GameState->GetEventCount(TAG_Event_Kill);
-	if (CurrentKillCount >= Data.TargetKillCount)
+	if (CurrentKillCount >= TargetKillCount)
 	{
-		UE_LOG(LogTemp, Log, TEXT("PRSTT_WaitWaveClear: Already cleared (%d/%d)"), CurrentKillCount, Data.TargetKillCount);
+		UE_LOG(LogTemp, Log, TEXT("PRSTT_WaitWaveClear: Already cleared (%d/%d, Wave %d)"), CurrentKillCount, TargetKillCount, CurrentWaveIndex);
+		Data.RoomController->IncrementWaveIndex();
 		return EStateTreeRunStatus::Succeeded;
 	}
 
 	// 킬 카운트 델리게이트 바인딩 (WeakContext 패턴)
 	auto WeakContext = Context.MakeWeakExecutionContext();
-	const int32 TargetKillCount = Data.TargetKillCount;
+	TWeakObjectPtr<APRRoomController> WeakController = Data.RoomController;
 
 	Data.KillCountHandle = GameState->OnEventCountChanged.AddLambda(
-		[WeakContext, TargetKillCount](const FGameplayTag& Tag, int32 Count)
+		[WeakContext, WeakController, TargetKillCount](const FGameplayTag& Tag, int32 Count)
 		{
 			if (Tag != TAG_Event_Kill)
 			{
@@ -72,6 +95,12 @@ EStateTreeRunStatus FPRStateTreeTask_WaitWaveClear::EnterState(
 					LambdaData->bTaskCompleted = true;
 				}
 
+				// 웨이브 인덱스 증가
+				if (APRRoomController* RoomController = WeakController.Get())
+				{
+					RoomController->IncrementWaveIndex();
+				}
+
 				// 웨이브 클리어 이벤트 전송
 				UWorld* World = StrongContext.GetOwner()->GetWorld();
 				if (IsValid(World))
@@ -85,7 +114,7 @@ EStateTreeRunStatus FPRStateTreeTask_WaitWaveClear::EnterState(
 		}
 	);
 
-	UE_LOG(LogTemp, Log, TEXT("PRSTT_WaitWaveClear: Waiting for %d kills"), Data.TargetKillCount);
+	UE_LOG(LogTemp, Log, TEXT("PRSTT_WaitWaveClear: Waiting for %d kills (Wave %d/%d)"), TargetKillCount, CurrentWaveIndex + 1, SpawnInfo.Waves.Num());
 
 	return EStateTreeRunStatus::Running;
 }

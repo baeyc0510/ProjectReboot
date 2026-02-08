@@ -44,7 +44,9 @@ EStateTreeRunStatus FPRStateTreeTask_SpawnWave::EnterState(
 	// 웨이브 적 스폰
 	Data.SpawnedCount = SpawnWaveEnemies(Context, Data);
 
-	UE_LOG(LogTemp, Log, TEXT("PRSTT_SpawnWave: Wave %d spawned %d enemies"), Data.WaveIndex, Data.SpawnedCount);
+	const int32 CurrentWaveIndex = Data.RoomController->GetCurrentWaveIndex();
+	const int32 TotalWaves = Data.RoomController->GetSpawnInfo().Waves.Num();
+	UE_LOG(LogTemp, Log, TEXT("PRSTT_SpawnWave: Wave %d/%d spawned %d enemies"), CurrentWaveIndex + 1, TotalWaves, Data.SpawnedCount);
 
 	// 즉시 완료 (스폰만 하고 끝)
 	return EStateTreeRunStatus::Succeeded;
@@ -52,17 +54,18 @@ EStateTreeRunStatus FPRStateTreeTask_SpawnWave::EnterState(
 
 int32 FPRStateTreeTask_SpawnWave::SpawnWaveEnemies(FStateTreeExecutionContext& Context, FInstanceDataType& Data) const
 {
+	const int32 CurrentWaveIndex = Data.RoomController->GetCurrentWaveIndex();
 	const FPRRoomSpawnInfo& SpawnInfo = Data.RoomController->GetSpawnInfo();
 
 	// 웨이브 인덱스 유효성 검사
-	if (!SpawnInfo.Waves.IsValidIndex(Data.WaveIndex))
+	if (!SpawnInfo.Waves.IsValidIndex(CurrentWaveIndex))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("PRSTT_SpawnWave: Invalid wave index %d (max: %d)"),
-			Data.WaveIndex, SpawnInfo.Waves.Num() - 1);
+			CurrentWaveIndex, SpawnInfo.Waves.Num() - 1);
 		return 0;
 	}
 
-	const FPRWaveSpawnInfo& WaveInfo = SpawnInfo.Waves[Data.WaveIndex];
+	const FPRWaveSpawnInfo& WaveInfo = SpawnInfo.Waves[CurrentWaveIndex];
 	UWorld* World = Context.GetWorld();
 	const TArray<AActor*>& SpawnPoints = Data.RoomController->EnemySpawnPoints;
 

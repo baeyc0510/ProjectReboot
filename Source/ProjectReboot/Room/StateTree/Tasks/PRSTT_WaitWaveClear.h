@@ -17,9 +17,9 @@ struct FPRSTT_WaitWaveClear_InstanceData
 {
 	GENERATED_BODY()
 
-	// 처치해야 할 적 수 (Input)
-	UPROPERTY(EditAnywhere, Category = Input)
-	int32 TargetKillCount = 0;
+	// 방 컨트롤러 (Context)
+	UPROPERTY(EditAnywhere, Category = Context)
+	TObjectPtr<APRRoomController> RoomController = nullptr;
 
 	// 웨이브 클리어 이벤트 수신 여부 (런타임)
 	bool bTaskCompleted = false;

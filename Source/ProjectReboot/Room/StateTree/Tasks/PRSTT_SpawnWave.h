@@ -21,10 +21,6 @@ struct FPRSTT_SpawnWave_InstanceData
 	UPROPERTY(EditAnywhere, Category = Context)
 	TObjectPtr<APRRoomController> RoomController = nullptr;
 
-	// 웨이브 인덱스 (Input)
-	UPROPERTY(EditAnywhere, Category = Input)
-	int32 WaveIndex = 0;
-
 	// 스폰된 적 수 (Output)
 	UPROPERTY(EditAnywhere, Category = Output)
 	int32 SpawnedCount = 0;

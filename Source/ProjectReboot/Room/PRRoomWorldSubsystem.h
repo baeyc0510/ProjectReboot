@@ -26,6 +26,10 @@ public:
 
 	/*~ Level Instance ~*/
 
+	// 방 진입 (레벨 로드)
+	UFUNCTION(BlueprintCallable, Category = "Room|Level")
+	void EnterRoom(int32 RoomIndex, const FPRRoomNodeInfo& NodeInfo);
+
 	// 방 템플릿 레벨 인스턴스 로드
 	UFUNCTION(BlueprintCallable, Category = "Room|Level")
 	void LoadRoomTemplate(int32 RoomIndex, TSoftObjectPtr<UWorld> Template, const FVector& Location = FVector::ZeroVector);

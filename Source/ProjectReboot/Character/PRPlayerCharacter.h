@@ -42,6 +42,10 @@ public:
 	
 	// 카메라 컴포넌트 반환
 	FORCEINLINE UPRCameraComponent* GetCameraComponent() const { return CameraComponent; }
+
+	// 카메라 래그 없이 텔레포트
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	void TeleportWithoutCameraLag(const FVector& DestLocation, const FRotator& DestRotation);
 	
 	float GetDesiredLookDirection() const {return DesiredLookDirection;}
 	

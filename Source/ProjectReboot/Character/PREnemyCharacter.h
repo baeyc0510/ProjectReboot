@@ -31,21 +31,25 @@ public:
 	/*~ APREnemyCharacter Interface ~*/
 	UFUNCTION(BlueprintPure)
 	UPREnemyData* GetEnemyData() const {return EnemyData;}
-	
+
 	UFUNCTION(BlueprintPure)
 	FText GetEnemyDisplayName() const;
-	
+
 	UFUNCTION(BlueprintPure)
 	UPRAIConfig* GetAIConfig() const;
-	
+
 	UFUNCTION(BlueprintCallable)
 	void SetStrafeMode(bool bEnable);
-	
+
 	UFUNCTION(BlueprintPure)
 	bool IsStrafeMode() const {return bIsStrafeMode;}
-	
+
 	UFUNCTION(BlueprintPure)
 	UMotionWarpingComponent* GetMotionWarpingComponent() const { return MotionWarpingComponent; }
+
+	// 스폰 위치 반환 (Patrol용)
+	UFUNCTION(BlueprintPure)
+	FVector GetSpawnLocation() const {return SpawnLocation;}
 	
 protected:
 	/*~ AActor Interfaces ~*/
@@ -80,4 +84,7 @@ protected:
 private:
 	bool bIsStrafeMode;
 	FPRAbilitySetHandles AbilitySetHandles;
+
+	// 스폰 위치 (Patrol 용)
+	FVector SpawnLocation;
 };

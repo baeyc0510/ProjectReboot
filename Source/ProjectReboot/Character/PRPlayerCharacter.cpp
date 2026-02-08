@@ -94,6 +94,39 @@ UCameraComponent* APRPlayerCharacter::DetachCamera()
 	return CameraComponent;
 }
 
+void APRPlayerCharacter::TeleportWithoutCameraLag(const FVector& DestLocation, const FRotator& DestRotation)
+{
+	// SpringArm 래그 일시 비활성화
+	bool bOriginalEnableCameraLag = false;
+	bool bOriginalEnableCameraRotationLag = false;
+
+	if (IsValid(CameraBoom))
+	{
+		bOriginalEnableCameraLag = CameraBoom->bEnableCameraLag;
+		bOriginalEnableCameraRotationLag = CameraBoom->bEnableCameraRotationLag;
+
+		CameraBoom->bEnableCameraLag = false;
+		CameraBoom->bEnableCameraRotationLag = false;
+	}
+
+	// 텔레포트
+	TeleportTo(DestLocation, DestRotation);
+
+	// SpringArm 래그 복원 (다음 프레임에서)
+	if (IsValid(CameraBoom))
+	{
+		FTimerHandle RestoreLagHandle;
+		GetWorldTimerManager().SetTimerForNextTick([this, bOriginalEnableCameraLag, bOriginalEnableCameraRotationLag]()
+		{
+			if (IsValid(CameraBoom))
+			{
+				CameraBoom->bEnableCameraLag = bOriginalEnableCameraLag;
+				CameraBoom->bEnableCameraRotationLag = bOriginalEnableCameraRotationLag;
+			}
+		});
+	}
+}
+
 bool APRPlayerCharacter::IsCrouching() const
 {
 	if (AbilitySystem)

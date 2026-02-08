@@ -62,6 +62,8 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Attack, "Event.Attack");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Damage, "Event.Damage");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Room, "Event.Room");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Room_Clear, "Event.Room.Clear");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Wave_Cleared, "Event.Wave.Cleared");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Reward_Selected, "Event.Reward.Selected");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Dash, "Event.Dash");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_JustDodge, "Event.JustDodge");
@@ -187,9 +189,9 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Currency_Core, "Currency.Core");
 
 /*~ UI ViewModel Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel, "UI.ViewModel");
-UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_Crosshair, "UI.ViewModel.Crosshair");
 UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_HUD, "UI.ViewModel.HUD");
-UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_Interaction, "UI.ViewModel.Interaction");
-UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_LockOn, "UI.ViewModel.LockOn");
+UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_HUD_Crosshair, "UI.ViewModel.HUD.Crosshair");
+UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_HUD_Interaction, "UI.ViewModel.HUD.Interaction");
+UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_HUD_LockOn, "UI.ViewModel.HUD.LockOn");
+UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_HUD_EnemyStatus, "UI.ViewModel.HUD.EnemyStatus");
 UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_Upgrade, "UI.ViewModel.Upgrade");
-UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_EnemyStatus, "UI.ViewModel.EnemyStatus");

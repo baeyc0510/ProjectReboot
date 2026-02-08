@@ -7,6 +7,7 @@
 #include "Components/Button.h"
 #include "Components/VerticalBox.h"
 #include "ProjectReboot/PRGameplayTags.h"
+#include "ProjectReboot/Game/PRGameplayGameState.h"
 #include "ProjectReboot/Camera/PRCameraBlueprintLibrary.h"
 #include "ProjectReboot/Equipment/PREquipmentBlueprintLibrary.h"
 #include "ProjectReboot/Equipment/PREquipActionData.h"
@@ -17,8 +18,8 @@
 UPRActionDecisionPanel::UPRActionDecisionPanel(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	// 크로스헤어 및 상호작용 UI 감춤
-	FocusParams.ViewModelVisibilityOverrides.Add({TAG_UI_ViewModel_Crosshair,false});
-	FocusParams.ViewModelVisibilityOverrides.Add({TAG_UI_ViewModel_Interaction,false});
+	FocusParams.ViewModelVisibilityOverrides.Add({TAG_UI_ViewModel_HUD_Crosshair,false});
+	FocusParams.ViewModelVisibilityOverrides.Add({TAG_UI_ViewModel_HUD_Interaction,false});
 }
 
 void UPRActionDecisionPanel::NativeConstruct()
@@ -142,10 +143,12 @@ void UPRActionDecisionPanel::HandleItemClicked(UPRActionListItemWidget* ClickedI
 void UPRActionDecisionPanel::HandleConfirmButtonClicked()
 {
 	RestoreOriginalEquipment();
-	
+
+	URogueliteActionData* ActionToAcquire = nullptr;
 	if (SelectedItem)
 	{
-		if (URogueliteActionData* ActionToAcquire = SelectedItem->GetActionData())
+		ActionToAcquire = SelectedItem->GetActionData();
+		if (ActionToAcquire)
 		{
 			URogueliteBlueprintLibrary::AcquireAction(this, ActionToAcquire);
 		}
@@ -153,6 +156,9 @@ void UPRActionDecisionPanel::HandleConfirmButtonClicked()
 
 	// 장비 확정 플래그 설정 (NativeDestruct에서 복원하지 않음)
 	bEquipmentConfirmed = true;
+
+	// 델리게이트 호출 (외부에서 추가 처리 가능)
+	OnActionConfirmed.Broadcast(ActionToAcquire);
 
 	UPRUIBlueprintLibrary::PopUI(GetOwningPlayer(), this);
 

@@ -6,7 +6,7 @@
 UPRLockOnViewModel::UPRLockOnViewModel()
 {
 	// ViewModel Tag 설정
-	ViewModelTag = TAG_UI_ViewModel_LockOn;
+	ViewModelTag = TAG_UI_ViewModel_HUD_LockOn;
 }
 
 void UPRLockOnViewModel::InitializeForActor(AActor* InTargetActor, ULocalPlayer* InLocalPlayer)

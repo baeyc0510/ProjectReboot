@@ -17,6 +17,9 @@ class UButton;
 class UPREquipmentManagerComponent;
 struct FActorFocusParams;
 
+// 액션 선택 확정 델리게이트
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnActionConfirmedSignature, URogueliteActionData*, SelectedAction);
+
 /**
  * 액션 선택 패널 - 목록에서 액션을 선택하고 프리뷰 표시
  */
@@ -50,6 +53,10 @@ public:
 	// 현재 선택된 ActionData 반환
 	UFUNCTION(BlueprintPure, Category = "ActionDecision")
 	URogueliteActionData* GetSelectedActionData() const;
+
+	// 액션 선택 확정 이벤트
+	UPROPERTY(BlueprintAssignable, Category = "ActionDecision")
+	FOnActionConfirmedSignature OnActionConfirmed;
 
 protected:
 	// 아이템 클릭 핸들러

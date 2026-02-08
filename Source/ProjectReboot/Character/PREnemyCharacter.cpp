@@ -8,7 +8,9 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
 #include "ProjectReboot/PRGameplayTags.h"
+#include "ProjectReboot/AI/PRAIController.h"
 #include "ProjectReboot/AbilitySystem/PRAbilitySystemComponent.h"
+#include "ProjectReboot/Game/PRGameplayGameState.h"
 #include "ProjectReboot/UI/Enemy/PREnemyStatusViewModel.h"
 #include "ProjectReboot/UI/Enemy/PREnemyStatusWidget.h"
 #include "ProjectReboot/UI/LockOn/PRLockOnViewModel.h"
@@ -20,6 +22,10 @@ APREnemyCharacter::APREnemyCharacter()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	bUseControllerRotationYaw = false;
+
+	// AI 자동 Possess 설정
+	AIControllerClass = APRAIController::StaticClass();
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
 	// AI Sight가 동료 Enemy를 통과하도록 Visibility 채널 Ignore
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Ignore);
@@ -38,14 +44,23 @@ APREnemyCharacter::APREnemyCharacter()
 void APREnemyCharacter::FinishDie()
 {
 	Super::FinishDie();
-	
+
 	DestructWidget(StatusWidgetComponent);
 	DestructWidget(LockOnWidgetComponent);
-	
+
 	if (AbilitySystem)
 	{
 		// 락온 대상에서 제거
 		AbilitySystem->RemoveLooseGameplayTag(TAG_Target_Lockable);
+	}
+
+	// 킬 이벤트 전송 (웨이브 클리어 판정용)
+	if (UWorld* World = GetWorld())
+	{
+		if (APRGameplayGameState* GameState = World->GetGameState<APRGameplayGameState>())
+		{
+			GameState->AddEventCount(TAG_Event_Kill);
+		}
 	}
 }
 
@@ -75,12 +90,15 @@ void APREnemyCharacter::SetStrafeMode(bool bEnable)
 void APREnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	// 스폰 위치 저장 (Patrol 용)
+	SpawnLocation = GetActorLocation();
+
 	if (USkeletalMeshComponent* MeshComponent = GetMesh())
 	{
 		for (TSubclassOf<UAnimInstance>& AnimLayerClass : EnemyAnimLayers)
 		{
-			MeshComponent->LinkAnimClassLayers(AnimLayerClass);	
+			MeshComponent->LinkAnimClassLayers(AnimLayerClass);
 		}
 	}
 	

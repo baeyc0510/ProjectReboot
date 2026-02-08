@@ -16,8 +16,8 @@
 APRMechanicNPC::APRMechanicNPC(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	// 크로스헤어 및 상호작용 UI 감춤
-	FocusParams.ViewModelVisibilityOverrides.Add({TAG_UI_ViewModel_Crosshair,false});
-	FocusParams.ViewModelVisibilityOverrides.Add({TAG_UI_ViewModel_Interaction,false});
+	FocusParams.ViewModelVisibilityOverrides.Add({TAG_UI_ViewModel_HUD_Crosshair,false});
+	FocusParams.ViewModelVisibilityOverrides.Add({TAG_UI_ViewModel_HUD_Interaction,false});
 }
 
 bool APRMechanicNPC::CanInteract(APawn* Interactor) const

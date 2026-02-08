@@ -11,7 +11,7 @@
 UPRCrosshairViewModel::UPRCrosshairViewModel()
 {
 	// ViewModel Tag 설정
-	ViewModelTag = TAG_UI_ViewModel_Crosshair;
+	ViewModelTag = TAG_UI_ViewModel_HUD_Crosshair;
 }
 
 void UPRCrosshairViewModel::InitializeForPlayer(ULocalPlayer* InLocalPlayer)

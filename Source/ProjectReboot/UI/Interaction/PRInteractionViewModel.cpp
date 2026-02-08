@@ -7,7 +7,7 @@
 UPRInteractionViewModel::UPRInteractionViewModel()
 {
 	// ViewModel Tag 설정
-	ViewModelTag = TAG_UI_ViewModel_Interaction;
+	ViewModelTag = TAG_UI_ViewModel_HUD_Interaction;
 }
 
 void UPRInteractionViewModel::SetInteractionInfo(const FPRInteractionInfo& InInfo, bool bVisible)

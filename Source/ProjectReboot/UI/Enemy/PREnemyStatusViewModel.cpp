@@ -10,7 +10,7 @@
 UPREnemyStatusViewModel::UPREnemyStatusViewModel()
 {
 	// ViewModel Tag 설정
-	ViewModelTag = TAG_UI_ViewModel_EnemyStatus;
+	ViewModelTag = TAG_UI_ViewModel_HUD_EnemyStatus;
 }
 
 void UPREnemyStatusViewModel::InitializeForActor(AActor* InTargetActor, ULocalPlayer* InLocalPlayer)

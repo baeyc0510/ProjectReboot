@@ -183,6 +183,9 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_Weapon_Impact_Bullet);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_Weapon_Impact_Beam);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_Weapon_Impact_Missile);
 
+/*~ GameplayCue Tags - SlowMotion ~*/
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_SlowMotion);
+
 /*~ Upgrade Tags ~*/
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Upgrade);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Upgrade_Module);

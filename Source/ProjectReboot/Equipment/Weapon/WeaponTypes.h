@@ -7,17 +7,36 @@
 
 /*~ 전방 선언 ~*/
 class UNiagaraSystem;
+class UNiagaraComponent;
 class USoundBase;
 
-// 무기 VFX 설정
+// 활성화된 머즐 정보 (런타임)
 USTRUCT(BlueprintType)
-struct FWeaponVFXSettings
+struct FActiveMuzzleInfo
+{
+	GENERATED_BODY()
+
+	// 소켓 이름
+	FName SocketName;
+
+	// 부착된 Muzzle Flash 컴포넌트
+	UPROPERTY()
+	TObjectPtr<UNiagaraComponent> MuzzleFlashComp;
+};
+
+// 무기 FX 설정
+USTRUCT(BlueprintType)
+struct FWeaponFXSettings
 {
 	GENERATED_BODY()
 
 	// 총구 이펙트
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "VFX")
 	TObjectPtr<UNiagaraSystem> MuzzleFlashVFX;
+
+	// 총구 이펙트 스케일
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "VFX")
+	FVector MuzzleFlashScale = FVector(1.0f, 1.0f, 1.0f);
 
 	// 궤적 이펙트
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "VFX")
@@ -38,6 +57,14 @@ struct FWeaponVFXSettings
 	// 피격 사운드
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sound")
 	TObjectPtr<USoundBase> ImpactSound;
+
+	// 폭발 이펙트 (HitReact GCN에서 사용)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "VFX")
+	TObjectPtr<UNiagaraSystem> ExplodeVFX;
+
+	// 폭발 사운드 (HitReact GCN에서 사용)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sound")
+	TObjectPtr<USoundBase> ExplodeSound;
 };
 
 // 총구 슬롯 설정 (Equipment Tag 조합별)

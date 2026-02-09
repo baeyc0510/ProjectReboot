@@ -43,6 +43,10 @@ protected:
 	UMissileWeaponInstance* GetMissileWeapon() const;
 
 protected:
+	// 미사일 발사 몽타주
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Missile")
+	TObjectPtr<UAnimMontage> MissileFireMontage;
+	
 	// 스폰할 Projectile 클래스
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Missile")
 	TSubclassOf<APRMissileProjectile> DefaultProjectileClass;
@@ -62,4 +66,8 @@ protected:
 	// 최대 사거리 (0 이하면 무제한)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Missile", meta = (ClampMin = "0.0"))
 	float MaxRange = 5000.0f;
+	
+private:
+	UPROPERTY()
+	TObjectPtr<ACharacter> OwnerCharacter;
 };

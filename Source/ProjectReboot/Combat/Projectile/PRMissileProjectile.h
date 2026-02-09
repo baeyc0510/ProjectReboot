@@ -2,6 +2,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "GameFramework/Actor.h"
 #include "PRMissileProjectile.generated.h"
 
@@ -59,6 +60,10 @@ public:
 	// 최대 사거리 설정 (0 이하면 무제한)
 	UFUNCTION(BlueprintCallable, Category = "Missile")
 	void SetMaxRange(float Range);
+
+	// 무기 슬롯 태그 설정 (GCN에서 무기 인스턴스 조회용)
+	UFUNCTION(BlueprintCallable, Category = "Missile")
+	void SetWeaponSlotTag(FGameplayTag SlotTag);
 
 protected:
 	virtual void BeginPlay() override;
@@ -128,4 +133,8 @@ protected:
 
 	// 발사 위치 (사거리 계산용)
 	FVector LaunchLocation = FVector::ZeroVector;
+
+	// 무기 슬롯 태그 (GCN에서 무기 인스턴스 조회용)
+	UPROPERTY(BlueprintReadOnly, Category = "Missile|Damage")
+	FGameplayTag WeaponSlotTag;
 };

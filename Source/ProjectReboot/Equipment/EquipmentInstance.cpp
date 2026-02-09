@@ -354,6 +354,11 @@ void UEquipmentInstance::SetVisualsVisible(bool bVisible)
     }
 }
 
+void UEquipmentInstance::OnEquipped()
+{
+    // 하위 클래스에서 override하여 장착 완료 시 처리 수행
+}
+
 void UEquipmentInstance::OnEquipmentTagsChanged()
 {
     // 하위 클래스에서 override하여 태그 변경에 따른 처리 수행

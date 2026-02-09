@@ -19,6 +19,13 @@ void UPRProportionalNavigationComponent::SetNavigationTarget(USceneComponent* Ta
 {
     NavigationTargetComponent = TargetComponent;
     bIsFirstFrame = true;
+    
+    // 메시의 경우 발밑이 pivot이므로 BoxExtent.Z만큼 높임
+    if (USkeletalMeshComponent* MeshComp = Cast<USkeletalMeshComponent>(NavigationTargetComponent))
+    {
+        auto Bounds = MeshComp->GetLocalBounds();
+        TargetOffset.Z += Bounds.BoxExtent.Z;
+    }
 }
 
 void UPRProportionalNavigationComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -41,7 +48,8 @@ void UPRProportionalNavigationComponent::ApplyProportionalNavigation(float Delta
     }
 
     FVector CurrentLocation = UpdatedComponent->GetComponentLocation();
-    FVector TargetLocation = NavigationTargetComponent->GetComponentLocation();
+    FVector TargetLocation = NavigationTargetComponent->GetComponentLocation() + TargetOffset;
+    
     FVector CurrentLOS = TargetLocation - CurrentLocation;
     float Distance = CurrentLOS.Size();
 

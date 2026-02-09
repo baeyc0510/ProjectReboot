@@ -21,7 +21,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	static UPREquipmentManagerComponent* GetEquipmentManager(AActor* Owner);
 	
-	
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	static void SyncEquipmentManager(AActor* From, AActor* To);
 	

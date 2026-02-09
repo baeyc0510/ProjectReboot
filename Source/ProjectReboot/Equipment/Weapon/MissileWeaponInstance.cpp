@@ -3,7 +3,9 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "NiagaraComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/AbilitySystem/PRWeaponAttributeSet.h"
 
@@ -28,10 +30,10 @@ void UMissileWeaponInstance::OnFired()
 	ConsumeMissile();
 
 	// 다음 발사 인덱스로 이동
-	const TArray<FName>& MuzzleSockets = GetActiveMuzzleSockets();
-	if (MuzzleSockets.Num() > 0)
+	const TArray<FActiveMuzzleInfo>& Muzzles = GetActiveMuzzles();
+	if (Muzzles.Num() > 0)
 	{
-		CurrentFireIndex = (CurrentFireIndex + 1) % MuzzleSockets.Num();
+		CurrentFireIndex = (CurrentFireIndex + 1) % Muzzles.Num();
 	}
 
 	// 발사 후 메시 업데이트
@@ -162,7 +164,8 @@ int32 UMissileWeaponInstance::GetLoadedMissiles() const
 		float CurrentAmmo = ASC->GetGameplayAttributeValue(UPRWeaponAttributeSet::GetAmmoAttribute(), bFound);
 		if (bFound)
 		{
-			return FMath::Clamp(FMath::FloorToInt(CurrentAmmo), 0, ActiveMuzzleSockets.Num()) ;
+			const int32 MuzzleCount = ActiveMuzzles.Num();
+			return FMath::Clamp(FMath::FloorToInt(CurrentAmmo), 0, MuzzleCount);
 		}
 	}
 
@@ -204,8 +207,8 @@ float UMissileWeaponInstance::GetExplosionRadius() const
 
 FTransform UMissileWeaponInstance::GetMuzzleTransform() const
 {
-	const TArray<FName>& MuzzleSockets = GetActiveMuzzleSockets();
-	if (MuzzleSockets.Num() == 0)
+	const TArray<FActiveMuzzleInfo>& Muzzles = GetActiveMuzzles();
+	if (Muzzles.Num() == 0)
 	{
 		return Super::GetMuzzleTransform();
 	}
@@ -217,8 +220,8 @@ FTransform UMissileWeaponInstance::GetMuzzleTransform() const
 	}
 
 	// 현재 인덱스 범위 체크 (순차 발사)
-	int32 SafeIndex = CurrentFireIndex % MuzzleSockets.Num();
-	FName SocketName = MuzzleSockets[SafeIndex];
+	int32 SafeIndex = CurrentFireIndex % Muzzles.Num();
+	FName SocketName = Muzzles[SafeIndex].SocketName;
 
 	if (USkeletalMeshComponent* SkelMesh = Cast<USkeletalMeshComponent>(PrimaryComp))
 	{
@@ -236,6 +239,33 @@ FTransform UMissileWeaponInstance::GetMuzzleTransform() const
 	}
 
 	return PrimaryComp->GetComponentTransform();
+}
+
+void UMissileWeaponInstance::PlayMuzzleFlash()
+{
+	const TArray<FActiveMuzzleInfo>& Muzzles = GetActiveMuzzles();
+	if (Muzzles.Num() == 0)
+	{
+		return;
+	}
+
+	const int32 SafeIndex = CurrentFireIndex % Muzzles.Num();
+	const FActiveMuzzleInfo& Muzzle = Muzzles[SafeIndex];
+	if (IsValid(Muzzle.MuzzleFlashComp))
+	{
+		Muzzle.MuzzleFlashComp->SetRelativeScale3D(FXSettings.MuzzleFlashScale);
+		Muzzle.MuzzleFlashComp->Activate(true);
+	}
+
+	if (IsValid(FXSettings.FireSound))
+	{
+		const FTransform MuzzleTransform = GetMuzzleTransform();
+		UGameplayStatics::PlaySoundAtLocation(
+			GetWorld(),
+			FXSettings.FireSound,
+			MuzzleTransform.GetLocation()
+		);
+	}
 }
 
 void UMissileWeaponInstance::SpawnAmmoMeshComponents()

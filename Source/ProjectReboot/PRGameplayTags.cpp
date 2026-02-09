@@ -179,6 +179,9 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Weapon_Impact_Bullet, "GameplayCue.Weapon
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Weapon_Impact_Beam, "GameplayCue.Weapon.Impact.Beam");
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Weapon_Impact_Missile, "GameplayCue.Weapon.Impact.Missile");
 
+/*~ GameplayCue Tags - SlowMotion ~*/
+UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_SlowMotion, "GameplayCue.SlowMotion");
+
 /*~ Upgrade Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Upgrade, "Upgrade");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Upgrade_Module, "Upgrade.Module");

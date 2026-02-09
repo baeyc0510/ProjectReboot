@@ -46,6 +46,9 @@ public:
 	virtual void CancelReload() override;
 	virtual FTransform GetMuzzleTransform() const override;
 
+	// 미사일 총구 이펙트 재생
+	virtual void PlayMuzzleFlash() override;
+
 	/*~ UEquipmentInstance Interface ~*/
 	virtual void DestroyAllVisuals() override;
 
@@ -101,7 +104,6 @@ protected:
 	// Equipment Tag별 탄환 메시 설정 목록
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Missile")
 	TArray<FMissileAmmoMeshConfig> AmmoMeshConfigs;
-
 	// 재장전 중 여부
 	UPROPERTY(BlueprintReadOnly, Category = "Weapon|Missile")
 	bool bIsReloading = false;

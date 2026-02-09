@@ -10,6 +10,7 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "ProjectReboot/ProjectReboot.h"
 #include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/AbilitySystem/PRWeaponAttributeSet.h"
 #include "ProjectReboot/Combat/PRCombatInterface.h"
@@ -171,6 +172,11 @@ void APRMissileProjectile::SetMaxRange(float Range)
 	MaxRange = Range;
 }
 
+void APRMissileProjectile::SetWeaponSlotTag(FGameplayTag SlotTag)
+{
+	WeaponSlotTag = SlotTag;
+}
+
 void APRMissileProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	// 자기 자신이나 소유자와 충돌 무시
@@ -277,6 +283,17 @@ void APRMissileProjectile::ApplyAOEDamage()
 		OverlappedActors
 	);
 
+	// 폭발 위치
+	const FVector ExplosionLocation = GetActorLocation();
+
+	// LineTrace 설정
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+	QueryParams.AddIgnoredActor(GetOwner());
+	QueryParams.AddIgnoredActor(GetInstigator());
+	QueryParams.bTraceComplex = true;
+	QueryParams.bReturnPhysicalMaterial = true;
+
 	// 각 액터에게 데미지 적용
 	for (AActor* TargetActor : OverlappedActors)
 	{
@@ -291,10 +308,30 @@ void APRMissileProjectile::ApplyAOEDamage()
 			continue;
 		}
 
+		// 폭발 위치에서 타겟까지 LineTrace로 HitResult 생성
+		FHitResult HitResult;
+		FVector TargetLocation = TargetActor->GetActorLocation();
+		bool bHit = World->LineTraceSingleByChannel(
+			HitResult,
+			ExplosionLocation,
+			TargetLocation,
+			PRCollision::AttackTrace,
+			QueryParams
+		);
+
+		// LineTrace 실패 시 가상 HitResult 생성
+		if (!bHit)
+		{
+			HitResult.ImpactPoint = TargetLocation;
+			HitResult.ImpactNormal = (TargetLocation - ExplosionLocation).GetSafeNormal();
+			HitResult.Location = TargetLocation;
+		}
+
 		// GE Spec 생성
 		FGameplayEffectContextHandle ContextHandle = InstigatorASC->MakeEffectContext();
 		ContextHandle.AddSourceObject(this);
 		ContextHandle.AddInstigator(GetInstigator(), this);
+		ContextHandle.AddHitResult(HitResult);
 
 		FGameplayEffectSpecHandle SpecHandle = InstigatorASC->MakeOutgoingSpec(DamageEffectClass, 1, ContextHandle);
 		if (!SpecHandle.IsValid())
@@ -309,6 +346,12 @@ void APRMissileProjectile::ApplyAOEDamage()
 
 		// 폭발 데미지 타입 태그 추가
 		SpecHandle.Data->DynamicAssetTags.AddTag(TAG_DamageType_Explosion);
+
+		// 무기 슬롯 태그 추가 (GCN에서 무기 인스턴스 조회용)
+		if (WeaponSlotTag.IsValid())
+		{
+			SpecHandle.Data->DynamicAssetTags.AddTag(WeaponSlotTag);
+		}
 
 		// 데미지 적용
 		InstigatorASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);

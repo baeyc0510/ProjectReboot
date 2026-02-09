@@ -7,6 +7,7 @@
 #include "PREnemyData.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/AI/PRAIController.h"
 #include "ProjectReboot/AbilitySystem/PRAbilitySystemComponent.h"
@@ -85,6 +86,15 @@ UPRAIConfig* APREnemyCharacter::GetAIConfig() const
 void APREnemyCharacter::SetStrafeMode(bool bEnable)
 {
 	bIsStrafeMode = bEnable;
+	
+	if (bIsStrafeMode)
+	{
+		GetCharacterMovement()->bOrientRotationToMovement = false;
+	}
+	else
+	{
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+	}
 }
 
 void APREnemyCharacter::BeginPlay()

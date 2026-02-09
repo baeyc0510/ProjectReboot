@@ -251,13 +251,6 @@ void UPRGA_JustDodge::HandleJustDodgeSuccess(const FGameplayEventData* DamageEve
 		}
 	}
 
-	// 회피 상태 GE 즉시 제거 (성공 후 더 이상 필요 없음)
-	if (DodgingEffectHandle.IsValid())
-	{
-		ASC->RemoveActiveGameplayEffect(DodgingEffectHandle);
-		DodgingEffectHandle.Invalidate();
-	}
-
 	K2_EndAbility();
 }
 

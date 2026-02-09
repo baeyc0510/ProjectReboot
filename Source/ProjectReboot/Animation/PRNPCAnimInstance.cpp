@@ -60,15 +60,15 @@ void UPRNPCAnimInstance::UpdateDirection()
 	
 	float Direction =  UKismetAnimationLibrary::CalculateDirection(Velocity2D,CachedRotation);
 	
-	if (Direction >= -70.f && Direction <= 70.f)
+	if (Direction >= -50.f && Direction <= 50.f)
 	{
 		CardinalDirection = ECardinalDirection::Forward;
 	}
-	else if (Direction > 70.f && Direction <= 110.f)
+	else if (Direction > 50.f && Direction <= 130.f)
 	{
 		CardinalDirection = ECardinalDirection::Right;
 	}
-	else if (Direction >= -110.f && Direction < -70.f)
+	else if (Direction >= -130.f && Direction < -50.f)
 	{
 		CardinalDirection = ECardinalDirection::Left;
 	}

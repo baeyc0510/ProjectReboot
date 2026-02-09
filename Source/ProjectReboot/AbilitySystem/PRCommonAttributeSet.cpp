@@ -145,6 +145,7 @@ void UPRCommonAttributeSet::HandleIncomingDamage(const FGameplayEffectModCallbac
 	// 회피 중 + Dodgeable 데미지 -> 이벤트 전송
 	if (bIsDodging && bDodgeable)
 	{
+		SetIncomingDamage(0.f);
 		SendDamageEvent(Data, IncomingDamageValue, true);
 		return;
 	}
@@ -152,6 +153,7 @@ void UPRCommonAttributeSet::HandleIncomingDamage(const FGameplayEffectModCallbac
 	// 무적 상태 -> 데미지 무시 (이벤트 없음)
 	if (bIsInvincible)
 	{
+		SetIncomingDamage(0.f);
 		return;
 	}
 

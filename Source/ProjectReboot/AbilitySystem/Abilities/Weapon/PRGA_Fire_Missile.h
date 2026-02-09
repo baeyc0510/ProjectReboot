@@ -19,6 +19,9 @@ class PROJECTREBOOT_API UPRGA_Fire_Missile : public UPRGameplayAbility_WeaponFir
 
 public:
 	UPRGA_Fire_Missile();
+	
+	/*~ IPRPrewarmInterface ~*/
+	virtual void GetPrewarmChildren(TArray<UObject*>& OutChildren) const override;
 
 	/*~ UGameplayAbility Interface ~*/
 	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr, OUT FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;

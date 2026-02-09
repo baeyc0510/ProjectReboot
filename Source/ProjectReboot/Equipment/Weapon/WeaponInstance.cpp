@@ -5,6 +5,7 @@
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
+#include "ProjectReboot/Game/PRPrewarmManagerSubsystem.h"
 
 bool UWeaponInstance::CanFire() const
 {
@@ -136,15 +137,11 @@ void UWeaponInstance::OnEquipped()
 
 void UWeaponInstance::WarmupVFX()
 {
-	UWorld* World = GetWorld();
-	if (!IsValid(World))
+	UPRPrewarmManagerSubsystem* PrewarmManager = UPRPrewarmManagerSubsystem::Get(this);
+	if (!IsValid(PrewarmManager))
 	{
 		return;
 	}
-
-	// 화면 밖에서 아주 작은 스케일로 VFX를 생성해 셰이더 컴파일 히칭을 완화
-	const FVector WarmupLocation(1000000.0f, 1000000.0f, -1000000.0f);
-	const FVector WarmupScale(0.01f, 0.01f, 0.01f);
 
 	TArray<TObjectPtr<UNiagaraSystem>> WarmupSystems;
 	WarmupSystems.Reserve(4);
@@ -155,24 +152,7 @@ void UWeaponInstance::WarmupVFX()
 
 	for (const TObjectPtr<UNiagaraSystem>& System : WarmupSystems)
 	{
-		if (!IsValid(System))
-		{
-			continue;
-		}
-
-		UNiagaraComponent* WarmupComp = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-			World,
-			System,
-			WarmupLocation,
-			FRotator::ZeroRotator,
-			WarmupScale,
-			true,
-			true
-		);
-		if (IsValid(WarmupComp))
-		{
-			WarmupComp->Deactivate();
-		}
+		PrewarmManager->TryPrewarmNiagaraSystem(System.Get());
 	}
 }
 

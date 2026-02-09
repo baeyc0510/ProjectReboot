@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
 #include "PRRoomTypes.h"
+#include "ProjectReboot/Game/PRPrewarmInterface.h"
 #include "PRStageConfigData.generated.h"
 
 class UPRThemeData;
@@ -15,12 +16,20 @@ class UPRThemeData;
  */
 UCLASS(BlueprintType, Blueprintable)
 class PROJECTREBOOT_API UPRStageConfigData : public UPrimaryDataAsset
+	, public IPRPrewarmInterface
 {
 	GENERATED_BODY()
 
 public:
 	/*~ UPrimaryDataAsset Interface ~*/
 	virtual FPrimaryAssetId GetPrimaryAssetId() const override;
+
+	/*~ IPRPrewarmInterface ~*/
+	// 프리웜 대상 에셋 목록 수집
+	virtual void GetPrewarmNiagaraAssets(TArray<TSoftObjectPtr<UNiagaraSystem>>& OutAssets) const override;
+
+	// 프리웜 대상 자식 오브젝트 수집
+	virtual void GetPrewarmChildren(TArray<UObject*>& OutChildren) const override;
 
 public:
 	// 스테이지 표시 이름

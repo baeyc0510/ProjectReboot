@@ -3,10 +3,22 @@
 #include "PROrbitalStrike.h"
 #include "Components/SphereComponent.h"
 #include "NiagaraComponent.h"
+#include "NiagaraSystem.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "ProjectReboot/Combat/PRCombatInterface.h"
+
+void APROrbitalStrike::GetPrewarmNiagaraAssets(TArray<TSoftObjectPtr<UNiagaraSystem>>& OutAssets) const
+{
+	if (IsValid(TelegraphEffect))
+	{
+		if (UNiagaraSystem* Asset = TelegraphEffect->GetAsset())
+		{
+			OutAssets.Add(Asset);
+		}
+	}
+}
 
 APROrbitalStrike::APROrbitalStrike()
 {

@@ -23,6 +23,9 @@ class PROJECTREBOOT_API UPRGA_Leviathan_PlasmaWave : public UPRGameplayAbility
 public:
 	UPRGA_Leviathan_PlasmaWave();
 
+	/*~ IPRPrewarmInterface ~*/
+	virtual void GetPrewarmChildren(TArray<UObject*>& OutChildren) const override;
+	
 	/*~ UGameplayAbility Interface ~*/
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 		const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;

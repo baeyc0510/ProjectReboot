@@ -13,6 +13,15 @@ UPRGA_Fire_Missile::UPRGA_Fire_Missile()
 	ActivationRequiredTags.AddTag(TAG_State_Aiming);
 }
 
+void UPRGA_Fire_Missile::GetPrewarmChildren(TArray<UObject*>& OutChildren) const
+{
+	Super::GetPrewarmChildren(OutChildren);
+	if (IsValid(DefaultProjectileClass))
+	{
+		OutChildren.Add(DefaultProjectileClass);
+	}
+}
+
 bool UPRGA_Fire_Missile::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, OUT FGameplayTagContainer* OptionalRelevantTags) const
 {
 	if (!Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags))

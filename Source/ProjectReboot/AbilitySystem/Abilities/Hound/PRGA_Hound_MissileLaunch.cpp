@@ -14,8 +14,17 @@ UPRGA_Hound_MissileLaunch::UPRGA_Hound_MissileLaunch()
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 }
 
+void UPRGA_Hound_MissileLaunch::GetPrewarmChildren(TArray<UObject*>& OutChildren) const
+{
+	Super::GetPrewarmChildren(OutChildren);
+	if (IsValid(AOEZoneClass))
+	{
+		OutChildren.Add(AOEZoneClass);
+	}
+}
+
 void UPRGA_Hound_MissileLaunch::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-	const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
+                                                const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 

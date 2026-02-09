@@ -10,7 +10,9 @@
 #include "ProjectReboot/Room/PRRoomWorldSubsystem.h"
 #include "ProjectReboot/Room/PRRoomController.h"
 #include "ProjectReboot/Room/PRStageManagerSubsystem.h"
+#include "ProjectReboot/Game/PRPrewarmManagerSubsystem.h"
 #include "ProjectReboot/UI/ViewModel/PRViewModelSubsystem.h"
+#include "ProjectReboot/Room/PRStageConfigData.h"
 #include "RogueliteSubsystem.h"
 #include "GameFramework/Character.h"
 
@@ -105,27 +107,69 @@ void APRGameplayGameMode::OnFadeOutComplete()
 
 void APRGameplayGameMode::StartPrewarmPhase()
 {
-	// 프리웜 델리게이트가 바인딩되어 있으면 실행
-	if (OnRoomPrewarm.IsBound())
-	{
-		// 바인딩된 시스템들에게 프리웜 시작 알림 (동기적 실행)
-		OnRoomPrewarm.Broadcast();
+	bIsPrewarmWorkCompleted = false;
+	bIsPrewarmTimerElapsed = false;
 
-		// 모든 핸들러 처리 후 바인딩 해제
-		OnRoomPrewarm.Clear();
+	UPRPrewarmManagerSubsystem* PrewarmManager = UPRPrewarmManagerSubsystem::Get(this);
+	if (IsValid(PrewarmManager))
+	{
+		PrewarmManager->OnPrewarmComplete.RemoveAll(this);
+		PrewarmManager->OnPrewarmComplete.AddUObject(this, &ThisClass::HandlePrewarmWorkCompleted);
+
+		TArray<UObject*> RootObjects;
+		if (UPRStageManagerSubsystem* StageManager = UPRStageManagerSubsystem::Get(this))
+		{
+			if (UPRStageConfigData* StageConfig = StageManager->GetCurrentStageConfig())
+			{
+				RootObjects.Add(StageConfig);
+			}
+		}
+		
+		if (IsValid(DefaultPawnClass))
+		{
+			RootObjects.Add(DefaultPawnClass.Get());
+		}
+
+		PrewarmManager->ExecutePrewarm(RootObjects, true);
+	}
+	else
+	{
+		bIsPrewarmWorkCompleted = true;
 	}
 
 	// 최소 프리웜 시간 보장
 	if (MinPrewarmDuration > 0.f)
 	{
-		FTimerHandle PrewarmTimerHandle;
-		GetWorldTimerManager().SetTimer(PrewarmTimerHandle, this, &APRGameplayGameMode::OnPrewarmComplete, MinPrewarmDuration, false);
+		GetWorldTimerManager().SetTimer(PrewarmTimerHandle, this, &APRGameplayGameMode::HandlePrewarmTimerElapsed, MinPrewarmDuration, false);
 	}
 	else
 	{
-		// 최소 시간 없으면 즉시 완료
-		OnPrewarmComplete();
+		bIsPrewarmTimerElapsed = true;
 	}
+
+	TryFinishPrewarm();
+}
+
+void APRGameplayGameMode::HandlePrewarmWorkCompleted()
+{
+	bIsPrewarmWorkCompleted = true;
+	TryFinishPrewarm();
+}
+
+void APRGameplayGameMode::HandlePrewarmTimerElapsed()
+{
+	bIsPrewarmTimerElapsed = true;
+	TryFinishPrewarm();
+}
+
+void APRGameplayGameMode::TryFinishPrewarm()
+{
+	if (!bIsPrewarmWorkCompleted || !bIsPrewarmTimerElapsed)
+	{
+		return;
+	}
+
+	OnPrewarmComplete();
 }
 
 void APRGameplayGameMode::OnPrewarmComplete()

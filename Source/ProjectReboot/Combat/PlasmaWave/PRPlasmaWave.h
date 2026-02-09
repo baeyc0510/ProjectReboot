@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "GameplayEffectTypes.h"
+#include "ProjectReboot/Game/PRPrewarmInterface.h"
 #include "PRPlasmaWave.generated.h"
 
 class UBoxComponent;
@@ -16,7 +17,7 @@ class UNiagaraSystem;
  * 지면을 따라 직선으로 전진하며 접촉한 액터에게 데미지를 적용
  */
 UCLASS()
-class PROJECTREBOOT_API APRPlasmaWave : public AActor
+class PROJECTREBOOT_API APRPlasmaWave : public AActor, public IPRPrewarmInterface
 {
 	GENERATED_BODY()
 
@@ -27,6 +28,10 @@ public:
 
 	// 웨이브 초기화 (방향, 데미지 스펙 설정)
 	void InitWave(const FVector& Direction, const FGameplayEffectSpecHandle& InDamageSpec);
+
+	/*~ IPRPrewarmInterface ~*/
+	// 프리웜 대상 나이아가라 에셋 수집
+	virtual void GetPrewarmNiagaraAssets(TArray<TSoftObjectPtr<UNiagaraSystem>>& OutAssets) const override;
 
 protected:
 	virtual void BeginPlay() override;

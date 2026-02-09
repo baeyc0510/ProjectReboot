@@ -15,6 +15,14 @@
 #include "ProjectReboot/AbilitySystem/PRWeaponAttributeSet.h"
 #include "ProjectReboot/Combat/PRCombatInterface.h"
 
+void APRMissileProjectile::GetPrewarmNiagaraAssets(TArray<TSoftObjectPtr<UNiagaraSystem>>& OutAssets) const
+{
+	if (IsValid(ExplosionVFX))
+	{
+		OutAssets.Add(ExplosionVFX);
+	}
+}
+
 APRMissileProjectile::APRMissileProjectile()
 {
 	PrimaryActorTick.bCanEverTick = true;

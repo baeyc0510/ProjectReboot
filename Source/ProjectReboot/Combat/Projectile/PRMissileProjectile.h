@@ -4,6 +4,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "GameFramework/Actor.h"
+#include "ProjectReboot/Game/PRPrewarmInterface.h"
 #include "PRMissileProjectile.generated.h"
 
 class USphereComponent;
@@ -20,7 +21,7 @@ class UNiagaraSystem;
  * - HomingTarget 설정 시 유도 비행
  */
 UCLASS()
-class PROJECTREBOOT_API APRMissileProjectile : public AActor
+class PROJECTREBOOT_API APRMissileProjectile : public AActor, public IPRPrewarmInterface
 {
 	GENERATED_BODY()
 
@@ -64,6 +65,10 @@ public:
 	// 무기 슬롯 태그 설정 (GCN에서 무기 인스턴스 조회용)
 	UFUNCTION(BlueprintCallable, Category = "Missile")
 	void SetWeaponSlotTag(FGameplayTag SlotTag);
+
+	/*~ IPRPrewarmInterface ~*/
+	// 프리웜 대상 나이아가라 에셋 수집
+	virtual void GetPrewarmNiagaraAssets(TArray<TSoftObjectPtr<UNiagaraSystem>>& OutAssets) const override;
 
 protected:
 	virtual void BeginPlay() override;

@@ -12,8 +12,17 @@ UPRGA_Leviathan_PlasmaWave::UPRGA_Leviathan_PlasmaWave()
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 }
 
+void UPRGA_Leviathan_PlasmaWave::GetPrewarmChildren(TArray<UObject*>& OutChildren) const
+{
+	Super::GetPrewarmChildren(OutChildren);
+	if (IsValid(PlasmaWaveClass))
+	{
+		OutChildren.Add(PlasmaWaveClass);
+	}
+}
+
 void UPRGA_Leviathan_PlasmaWave::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-	const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
+                                                 const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 

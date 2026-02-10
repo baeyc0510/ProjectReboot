@@ -201,11 +201,12 @@ void UPRGA_JustDodge::OnDamageEventReceived(FGameplayEventData Payload)
 	}
 
 	// Dodgeable 태그 확인 (InstigatorTags에 포함됨)
-	if (!Payload.InstigatorTags.HasTag(TAG_Damage_Dodgeable))
+	const bool bInstigatorHasDodgeable = Payload.InstigatorTags.HasTag(TAG_Damage_Dodgeable);
+	if (!bInstigatorHasDodgeable)
 	{
 		return;
 	}
-
+	
 	// 저스트 회피 성공
 	HandleJustDodgeSuccess(&Payload);
 }

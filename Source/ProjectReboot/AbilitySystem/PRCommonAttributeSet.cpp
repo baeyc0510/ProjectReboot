@@ -133,9 +133,10 @@ void UPRCommonAttributeSet::HandleIncomingDamage(const FGameplayEffectModCallbac
 	}
 
 	// GE 태그에서 Dodgeable 여부 확인
-	FGameplayTagContainer AssetTags;
-	Data.EffectSpec.GetAllAssetTags(AssetTags);
-	const bool bDodgeable = AssetTags.HasTag(TAG_Damage_Dodgeable);
+	FGameplayTagContainer InstigatorTags;
+	Data.EffectSpec.GetAllAssetTags(InstigatorTags);
+	
+	const bool bDodgeable = InstigatorTags.HasTag(TAG_Damage_Dodgeable);
 
 	// 상태 체크
 	UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent();
@@ -145,15 +146,13 @@ void UPRCommonAttributeSet::HandleIncomingDamage(const FGameplayEffectModCallbac
 	// 회피 중 + Dodgeable 데미지 -> 이벤트 전송
 	if (bIsDodging && bDodgeable)
 	{
-		SetIncomingDamage(0.f);
-		SendDamageEvent(Data, IncomingDamageValue, true);
+		SendDamageEvent(Data, IncomingDamageValue, InstigatorTags);
 		return;
 	}
 
 	// 무적 상태 -> 데미지 무시 (이벤트 없음)
 	if (bIsInvincible)
 	{
-		SetIncomingDamage(0.f);
 		return;
 	}
 
@@ -199,7 +198,7 @@ void UPRCommonAttributeSet::HandleIncomingDamage(const FGameplayEffectModCallbac
 	}
 
 	// 데미지 이벤트 발송
-	SendDamageEvent(Data, IncomingDamageValue, bDodgeable);
+	SendDamageEvent(Data, IncomingDamageValue, InstigatorTags);
 
 	// AI 감지용 이벤트
 	ReportDamageEventIfNeeded(Data, IncomingDamageValue);
@@ -240,7 +239,7 @@ void UPRCommonAttributeSet::HandleDeath(const FGameplayEffectModCallbackData& Da
 	}
 }
 
-void UPRCommonAttributeSet::SendDamageEvent(const FGameplayEffectModCallbackData& Data, float DamageAmount, bool bDodgeable)
+void UPRCommonAttributeSet::SendDamageEvent(const FGameplayEffectModCallbackData& Data, float DamageAmount, const FGameplayTagContainer& InstigatorTags)
 {
 	UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent();
 	if (!ASC)
@@ -254,12 +253,7 @@ void UPRCommonAttributeSet::SendDamageEvent(const FGameplayEffectModCallbackData
 	EventData.Instigator = Data.EffectSpec.GetEffectContext().GetInstigator();
 	EventData.Target = GetOwningActor();
 	EventData.ContextHandle = Data.EffectSpec.GetEffectContext();
-
-	// Dodgeable 태그를 InstigatorTags에 포함
-	if (bDodgeable)
-	{
-		EventData.InstigatorTags.AddTag(TAG_Damage_Dodgeable);
-	}
+	EventData.InstigatorTags.AppendTags(InstigatorTags);
 
 	ASC->HandleGameplayEvent(TAG_Event_Damage, &EventData);
 }

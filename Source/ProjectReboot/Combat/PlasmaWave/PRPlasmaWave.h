@@ -26,6 +26,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	// 웨이브 초기화 (방향, 데미지 스펙 설정)
+	UFUNCTION(BlueprintCallable, Category = "Combat")
 	void InitWave(const FVector& Direction, const FGameplayEffectSpecHandle& InDamageSpec);
 
 protected:

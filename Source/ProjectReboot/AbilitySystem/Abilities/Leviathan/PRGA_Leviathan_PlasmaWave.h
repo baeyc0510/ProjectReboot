@@ -79,6 +79,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "PlasmaWave|Spawn")
 	float SpreadAngle = 30.f;
 
+	// 좌/우 웨이브 스폰 시 횡방향 간격 (cm)
+	UPROPERTY(EditDefaultsOnly, Category = "PlasmaWave|Spawn")
+	float SpawnLateralSpacing = 150.f;
+
 private:
 	// 몽타주 태스크
 	UPROPERTY()

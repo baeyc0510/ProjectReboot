@@ -40,7 +40,7 @@ protected:
 	void HandleDeath(const FGameplayEffectModCallbackData& Data);
 
 	// 데미지 이벤트 발송
-	void SendDamageEvent(const FGameplayEffectModCallbackData& Data, float DamageAmount, bool bDodgeable);
+	void SendDamageEvent(const FGameplayEffectModCallbackData& Data, float DamageAmount, const FGameplayTagContainer& InstigatorTags);
 
 private:
 	void ReportDamageEventIfNeeded(const FGameplayEffectModCallbackData& Data, float DamageAmount);

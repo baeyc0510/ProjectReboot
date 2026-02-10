@@ -129,16 +129,20 @@ void UPRGA_Leviathan_PlasmaWave::SpawnWaves()
 	const FVector Direction = AvatarActor->GetActorForwardVector();
 
 	// 부채꼴 3방향 스폰
+	const FVector RightVector = FVector::CrossProduct(FVector::UpVector, Direction).GetSafeNormal();
+
 	// 중앙
 	SpawnSingleWave(SpawnLocation, Direction, DamageSpec);
 
-	// 좌측 (+SpreadAngle)
+	// 좌측 (+SpreadAngle, 좌로 오프셋)
 	const FVector LeftDirection = Direction.RotateAngleAxis(-SpreadAngle, FVector::UpVector);
-	SpawnSingleWave(SpawnLocation, LeftDirection, DamageSpec);
+	const FVector LeftSpawnLocation = SpawnLocation - RightVector * SpawnLateralSpacing;
+	SpawnSingleWave(LeftSpawnLocation, LeftDirection, DamageSpec);
 
-	// 우측 (-SpreadAngle)
+	// 우측 (-SpreadAngle, 우로 오프셋)
 	const FVector RightDirection = Direction.RotateAngleAxis(SpreadAngle, FVector::UpVector);
-	SpawnSingleWave(SpawnLocation, RightDirection, DamageSpec);
+	const FVector RightSpawnLocation = SpawnLocation + RightVector * SpawnLateralSpacing;
+	SpawnSingleWave(RightSpawnLocation, RightDirection, DamageSpec);
 }
 
 void UPRGA_Leviathan_PlasmaWave::SpawnSingleWave(const FVector& SpawnLocation, const FVector& Direction, const FGameplayEffectSpecHandle& InDamageSpec)

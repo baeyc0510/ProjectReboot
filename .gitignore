@@ -104,8 +104,10 @@ Content/MegaMagicVFXBundle
 Content/Characters/Enemy/Hound
 Content/AdvancedPortalsSystemVFX
 Content/Polar
+Content/SwordTrailVFX
 # End 유료 에셋 폴더
 
 Backup
 Package
 Content/__ExternalActors__
+

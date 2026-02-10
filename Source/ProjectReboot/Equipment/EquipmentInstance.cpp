@@ -3,6 +3,7 @@
 
 #include "EquipmentInstance.h"
 #include "Components/MeshComponent.h"
+#include "Components/PrimitiveComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "ProjectReboot/Equipment/PREquipActionData.h"
@@ -58,6 +59,7 @@ void UEquipmentInstance::AttachPart(UPREquipActionData* InActionData)
     // 컴포넌트 생성
     bool bIsPrimaryMesh = InActionData == PrimaryActionData;
     USceneComponent* NewComponent = CreateMeshComponent(SpawnInfo,bIsPrimaryMesh);
+    ApplyCollisionSettings(NewComponent, InActionData->EquipmentVisualSettings);
 
     FSpawnedVisualEntry Entry;
     Entry.SpawnedComponent = NewComponent;
@@ -168,6 +170,7 @@ void UEquipmentInstance::RefreshVisuals()
             {
                 bool bIsPrimaryMesh = Data == PrimaryActionData;
                 Entry.SpawnedComponent = CreateMeshComponent(NewSpawnInfo,bIsPrimaryMesh);
+                ApplyCollisionSettings(Entry.SpawnedComponent, Data->EquipmentVisualSettings);
             }
 
             Entry.UsedSpawnInfo = NewSpawnInfo;
@@ -378,4 +381,21 @@ void UEquipmentInstance::ApplyMaterialOverrides(UMeshComponent* MeshComponent, c
             MeshComponent->SetMaterial(Pair.Key, Pair.Value);
         }
     }
+}
+
+void UEquipmentInstance::ApplyCollisionSettings(USceneComponent* Component, const FEquipmentVisualSettings& VisualSettings)
+{
+    if (VisualSettings.CollisionProfileName == UCollisionProfile::NoCollision_ProfileName)
+    {
+        return;
+    }
+
+    UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(Component);
+    if (!IsValid(PrimComp))
+    {
+        return;
+    }
+
+    PrimComp->SetCollisionProfileName(VisualSettings.CollisionProfileName);
+    PrimComp->SetCollisionEnabled(VisualSettings.CollisionEnabled);   
 }

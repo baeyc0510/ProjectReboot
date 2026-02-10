@@ -1,10 +1,7 @@
 // PRGA_SlowMotion.cpp
 #include "PRGA_SlowMotion.h"
 
-#include "AbilitySystemComponent.h"
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
-#include "Camera/CameraComponent.h"
-#include "Kismet/GameplayStatics.h"
 #include "ProjectReboot/PRGameplayTags.h"
 
 UPRGA_SlowMotion::UPRGA_SlowMotion()
@@ -26,10 +23,10 @@ void UPRGA_SlowMotion::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-	ApplySlowMotion();
+	// GCN 활성화 (슬로우 모션 연출 시작, 어빌리티 종료 시 자동 제거)
+	K2_AddGameplayCue(TAG_GameplayCue_Character_SlowMotion, FGameplayEffectContextHandle(), true);
 
 	// WaitDelay는 게임 시간 기준이므로, 실제 시간으로 변환
-	// 실제 시간 2초 = 게임 시간 2초 * GlobalTimeDilation
 	const float AdjustedDelay = SlowMotionDuration * GlobalTimeDilation;
 
 	UAbilityTask_WaitDelay* WaitDelayTask = UAbilityTask_WaitDelay::WaitDelay(this, AdjustedDelay);
@@ -40,115 +37,8 @@ void UPRGA_SlowMotion::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 void UPRGA_SlowMotion::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
-	// 시간 복원
-	RestoreNormalTime();
-
-	// 포스트 프로세스 복원
-	RestoreSlowMotionPostProcess();
-
+	// K2_AddGameplayCue의 bRemoveOnAbilityEnd=true로 자동 제거됨
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
-}
-
-void UPRGA_SlowMotion::ApplySlowMotion()
-{
-	UWorld* World = GetWorld();
-	if (!IsValid(World))
-	{
-		return;
-	}
-
-	AActor* AvatarActor = GetAvatarActorFromActorInfo();
-
-	// 원래 값 저장
-	OriginalGlobalTimeDilation = World->GetWorldSettings()->TimeDilation;
-	if (IsValid(AvatarActor))
-	{
-		OriginalPlayerTimeDilation = AvatarActor->CustomTimeDilation;
-	}
-
-	// 글로벌 타임 딜레이션 적용 (월드 슬로우)
-	UGameplayStatics::SetGlobalTimeDilation(World, GlobalTimeDilation);
-
-	// 플레이어 타임 딜레이션 보정 (정상 속도 유지)
-	if (IsValid(AvatarActor) && GlobalTimeDilation > 0.0f)
-	{
-		// 글로벌 딜레이션을 상쇄하여 정상 속도 유지
-		float CompensatedDilation = PlayerTimeDilationMultiplier / GlobalTimeDilation;
-		AvatarActor->CustomTimeDilation = CompensatedDilation;
-	}
-
-	ApplySlowMotionPostProcess();
-}
-
-void UPRGA_SlowMotion::RestoreNormalTime()
-{
-	UWorld* World = GetWorld();
-	if (!IsValid(World))
-	{
-		return;
-	}
-
-	// 글로벌 타임 딜레이션 복원
-	UGameplayStatics::SetGlobalTimeDilation(World, OriginalGlobalTimeDilation);
-
-	// 플레이어 타임 딜레이션 복원
-	AActor* AvatarActor = GetAvatarActorFromActorInfo();
-	if (IsValid(AvatarActor))
-	{
-		AvatarActor->CustomTimeDilation = OriginalPlayerTimeDilation;
-	}
-}
-
-void UPRGA_SlowMotion::ApplySlowMotionPostProcess()
-{
-	if (!SlowMotionLUT)
-	{
-		return;
-	}
-
-	AActor* AvatarActor = GetAvatarActorFromActorInfo();
-	if (!IsValid(AvatarActor))
-	{
-		return;
-	}
-
-	UCameraComponent* CameraComp = AvatarActor->FindComponentByClass<UCameraComponent>();
-	if (!IsValid(CameraComp))
-	{
-		return;
-	}
-
-	CachedCameraComponent = CameraComp;
-	OriginalPostProcessSettings = CameraComp->PostProcessSettings;
-	OriginalPostProcessBlendWeight = CameraComp->PostProcessBlendWeight;
-
-	CameraComp->PostProcessBlendWeight = 1.0f;
-	CameraComp->PostProcessSettings.bOverride_ColorGradingLUT = true;
-	CameraComp->PostProcessSettings.bOverride_ColorGradingIntensity = true;
-	CameraComp->PostProcessSettings.ColorGradingLUT = SlowMotionLUT;
-	CameraComp->PostProcessSettings.ColorGradingIntensity = SlowMotionLUTIntensity;
-
-	bPostProcessApplied = true;
-}
-
-void UPRGA_SlowMotion::RestoreSlowMotionPostProcess()
-{
-	if (!bPostProcessApplied)
-	{
-		return;
-	}
-
-	UCameraComponent* CameraComp = CachedCameraComponent.Get();
-	if (!IsValid(CameraComp))
-	{
-		return;
-	}
-
-	CameraComp->PostProcessSettings = OriginalPostProcessSettings;
-	CameraComp->PostProcessBlendWeight = OriginalPostProcessBlendWeight;
-
-	bPostProcessApplied = false;
-	CachedCameraComponent.Reset();
 }
 
 void UPRGA_SlowMotion::OnSlowMotionDurationExpired()

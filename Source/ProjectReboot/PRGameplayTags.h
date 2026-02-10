@@ -177,14 +177,15 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Combat_Duration);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Target);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Target_Lockable);
 
-/*~ GameplayCue Tags - Weapon Impact ~*/
+/*~ GameplayCue Tags ~*/
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_Weapon_Impact);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_Weapon_Impact_Bullet);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_Weapon_Impact_Beam);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_Weapon_Impact_Missile);
-
-/*~ GameplayCue Tags - SlowMotion ~*/
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_SlowMotion);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_Character_Dash);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_Character_SlowMotion);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_Character_Explode);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_Character_Dissolve);
 
 /*~ Upgrade Tags ~*/
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Upgrade);

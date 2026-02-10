@@ -72,12 +72,18 @@ void UPRGA_Dash::SendDashEvent()
 		return;
 	}
 
+	// GameplayEvent
 	FGameplayEventData EventData;
 	EventData.EventTag = TAG_Event_Dash;
 	EventData.Instigator = GetAvatarActorFromActorInfo();
 	EventData.Target = GetAvatarActorFromActorInfo();
-
 	ASC->HandleGameplayEvent(TAG_Event_Dash, &EventData);
+	
+	// GameplayCue
+	FGameplayCueParameters GCParams;
+	GCParams.NormalizedMagnitude = DashDuration;
+	GCParams.RawMagnitude = DashStrength;
+	K2_ExecuteGameplayCueWithParams(TAG_GameplayCue_Character_Dash, GCParams);
 }
 
 void UPRGA_Dash::PlayDashMontage()

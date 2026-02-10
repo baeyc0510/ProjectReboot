@@ -2,6 +2,7 @@
 
 #pragma once
 #include "NativeGameplayTags.h"
+#include "Engine/CollisionProfile.h"
 
 #include "PREquipmentTypes.generated.h"
 
@@ -102,7 +103,16 @@ struct FEquipmentVisualSettings
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh", meta = (EditCondition = "bUseRuleBasedMeshSpawnInfo"))
 	TArray<FRuleBasedMeshVisualSetting> RuleBasedMeshSpawnSettings;
-	
+
+	// 콜리전 활성화 타입
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
+	TEnumAsByte<ECollisionEnabled::Type> CollisionEnabled = ECollisionEnabled::Type::NoCollision;
+
+	// 콜리전 프로필 이름 (NoCollision이면 적용하지 않음)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
+	FName CollisionProfileName = UCollisionProfile::NoCollision_ProfileName;
+
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	TArray<TSubclassOf<UAnimInstance>> AnimLayersToLink;
 	// TODO: 장착 VFX?

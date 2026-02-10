@@ -108,6 +108,7 @@ protected:
 	USceneComponent* CreateMeshComponent(const FEquipmentMeshSpawnInfo& SpawnInfo, bool bIsPrimaryMesh);
 	void ApplyAttachment(USceneComponent* Component, const FEquipmentAttachmentInfo& AttachInfo, bool bIsChild);
 	void ApplyMaterialOverrides(UMeshComponent* MeshComponent, const TMap<int32, UMaterialInterface*>& MaterialOverrides);
+	void ApplyCollisionSettings(USceneComponent* Component, const FEquipmentVisualSettings& VisualSettings);
 
 protected:
 	UPROPERTY()

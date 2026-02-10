@@ -22,12 +22,15 @@ class PROJECTREBOOT_API UPRGA_Leviathan_OrbitalRain : public UPRGameplayAbility
 public:
 	UPRGA_Leviathan_OrbitalRain();
 
+	/*~ IPRPrewarmInterface ~*/
+	virtual void GetPrewarmChildren(TArray<UObject*>& OutChildren) const override;
+	
 	/*~ UGameplayAbility Interface ~*/
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 		const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 		const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
-
+	
 protected:
 	// Strike 순차 스폰 시작
 	void SpawnStrikes();

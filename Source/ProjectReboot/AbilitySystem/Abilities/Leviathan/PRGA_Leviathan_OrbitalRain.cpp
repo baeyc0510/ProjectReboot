@@ -3,7 +3,6 @@
 #include "PRGA_Leviathan_OrbitalRain.h"
 #include "AbilitySystemComponent.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
-#include "AIController.h"
 #include "NavigationSystem.h"
 #include "ProjectReboot/AI/PRAIController.h"
 #include "ProjectReboot/PRGameplayTags.h"
@@ -14,8 +13,17 @@ UPRGA_Leviathan_OrbitalRain::UPRGA_Leviathan_OrbitalRain()
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 }
 
+void UPRGA_Leviathan_OrbitalRain::GetPrewarmChildren(TArray<UObject*>& OutChildren) const
+{
+	Super::GetPrewarmChildren(OutChildren);
+	if (IsValid(OrbitalStrikeClass))
+	{
+		OutChildren.Add(OrbitalStrikeClass.Get());
+	}
+}
+
 void UPRGA_Leviathan_OrbitalRain::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-	const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
+                                                  const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 

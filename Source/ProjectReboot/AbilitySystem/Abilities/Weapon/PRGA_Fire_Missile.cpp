@@ -1,6 +1,7 @@
 // PRGA_Fire_Missile.cpp
 #include "PRGA_Fire_Missile.h"
 #include "AbilitySystemComponent.h"
+#include "GameFramework/Character.h"
 #include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/Combat/Projectile/PRMissileProjectile.h"
 #include "ProjectReboot/Equipment/Weapon/MissileWeaponInstance.h"
@@ -10,6 +11,15 @@ UPRGA_Fire_Missile::UPRGA_Fire_Missile()
 	ActivationPolicy = EPRAbilityActivationPolicy::OnInputTriggered;
 	
 	ActivationRequiredTags.AddTag(TAG_State_Aiming);
+}
+
+void UPRGA_Fire_Missile::GetPrewarmChildren(TArray<UObject*>& OutChildren) const
+{
+	Super::GetPrewarmChildren(OutChildren);
+	if (IsValid(DefaultProjectileClass))
+	{
+		OutChildren.Add(DefaultProjectileClass);
+	}
 }
 
 bool UPRGA_Fire_Missile::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, OUT FGameplayTagContainer* OptionalRelevantTags) const
@@ -32,6 +42,11 @@ void UPRGA_Fire_Missile::OnActivateAbility(const FGameplayAbilitySpecHandle Hand
 {
 	Super::OnActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
+	if (!IsValid(OwnerCharacter))
+	{
+		OwnerCharacter = Cast<ACharacter>(GetAvatarActorFromActorInfo());
+	}
+	
 	FireAllMissiles();
 
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
@@ -40,13 +55,17 @@ void UPRGA_Fire_Missile::OnActivateAbility(const FGameplayAbilitySpecHandle Hand
 void UPRGA_Fire_Missile::FireAllMissiles()
 {
 	UMissileWeaponInstance* Weapon = GetMissileWeapon();
-	if (!IsValid(Weapon))
+	if (!IsValid(Weapon) || !Weapon->CanFire())
 	{
 		return;
 	}
-
 	
-	if (Weapon->CanFire() && Weapon->GetLockedTargetCount() > 0)
+	if (IsValid(OwnerCharacter) && IsValid(MissileFireMontage))
+	{
+		OwnerCharacter->PlayAnimMontage(MissileFireMontage);
+	}
+	
+	if (Weapon->GetLockedTargetCount() > 0)
 	{
 		// 락온된 모든 타겟에 대해 잔탄이 있는 동안 발사
 		while (Weapon->CanFire() && Weapon->GetLockedTargetCount() > 0)
@@ -135,6 +154,12 @@ void UPRGA_Fire_Missile::InitializeProjectile(APRMissileProjectile* Projectile, 
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
 	{
 		Projectile->SetInstigatorASC(ASC);
+	}
+
+	// 무기 슬롯 태그 설정 (GCN에서 무기 인스턴스 조회용)
+	if (WeaponSlotTag.IsValid())
+	{
+		Projectile->SetWeaponSlotTag(WeaponSlotTag);
 	}
 
 	// 유도 타겟 설정

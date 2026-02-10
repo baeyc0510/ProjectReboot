@@ -95,6 +95,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Equipment")
 	bool IsVisualsVisible() const { return bVisualsVisible; }
 
+	// 장비 장착 완료 시 호출
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	virtual void OnEquipped();
+
 protected:
 	// 장비 태그 변경 시 호출되는 가상 함수
 	UFUNCTION(BlueprintCallable, Category = "Equipment")

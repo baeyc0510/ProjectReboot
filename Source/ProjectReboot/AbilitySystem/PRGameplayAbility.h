@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
 #include "GameplayTagContainer.h"
+#include "ProjectReboot/Game/PRPrewarmInterface.h"
 #include "PRGameplayAbility.generated.h"
 
 class UAnimMontage;
@@ -23,12 +24,20 @@ enum class EPRAbilityActivationPolicy
 
 UCLASS()
 class PROJECTREBOOT_API UPRGameplayAbility : public UGameplayAbility
+	, public IPRPrewarmInterface
 {
 	GENERATED_BODY()
 	
 public:
 	// 태그로 몽타주 찾기 공통 헬퍼
 	UAnimMontage* FindMontageByGameplayTag(const FGameplayTag& MontageTag) const;
+
+	/*~ IPRPrewarmInterface ~*/
+	// 프리웜 대상 에셋 목록 수집
+	virtual void GetPrewarmNiagaraAssets(TArray<TSoftObjectPtr<UNiagaraSystem>>& OutAssets) const override{};
+
+	// 프리웜 대상 자식 오브젝트 수집
+	virtual void GetPrewarmChildren(TArray<UObject*>& OutChildren) const override{};
 
 	EPRAbilityActivationPolicy GetActivationPolicy() const {return ActivationPolicy;}
 	

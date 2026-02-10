@@ -193,6 +193,14 @@ void APREnemyCharacter::UnBindViewModels()
 	}
 }
 
+void APREnemyCharacter::GetPrewarmChildren(TArray<UObject*>& OutChildren) const
+{
+	if (IsValid(EnemyData))
+	{
+		OutChildren.Add(EnemyData);
+	}
+}
+
 void APREnemyCharacter::DestructWidget(UWidgetComponent* WidgetComponent)
 {
 	if (WidgetComponent)

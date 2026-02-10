@@ -50,32 +50,36 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	virtual FTransform GetMuzzleTransform() const;
 
-	// VFX 재생
+	// FX 재생
 	UFUNCTION(BlueprintCallable, Category = "Weapon|VFX")
-	void PlayMuzzleFlash();
+	virtual void PlayMuzzleFlash();
 
 	UFUNCTION(BlueprintCallable, Category = "Weapon|VFX")
 	void PlayImpact(const FHitResult& HitResult);
 
 	// VFX 설정 Getter
 	UFUNCTION(BlueprintCallable, Category = "Weapon|VFX")
-	const FWeaponVFXSettings& GetVFXSettings() const { return VFXSettings; }
+	const FWeaponFXSettings& GetVFXSettings() const { return FXSettings; }
 
-	// 현재 활성화된 총구 소켓 목록 조회
+	// 현재 활성화된 총구 정보 조회
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
-	const TArray<FName>& GetActiveMuzzleSockets() const { return ActiveMuzzleSockets; }
+	const TArray<FActiveMuzzleInfo>& GetActiveMuzzles() const { return ActiveMuzzles; }
 
 protected:
 	/*~ UEquipmentInstance Interface ~*/
 	virtual void OnEquipmentTagsChanged() override;
+	virtual void OnEquipped() override;
 
 	// Equipment Tag에 따른 총구 소켓 설정 업데이트
 	void UpdateMuzzleSlotConfig();
 
+	// VFX Pre-warm (셰이더 컴파일 히칭 방지)
+	void WarmupVFX();
+
 protected:
 	// VFX 설정
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|VFX")
-	FWeaponVFXSettings VFXSettings;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|FX")
+	FWeaponFXSettings FXSettings;
 
 	// Equipment Tag별 총구 슬롯 설정 목록
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
@@ -85,9 +89,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	FName DefaultMuzzleSocketName = TEXT("Muzzle");
 
-	// 현재 활성화된 총구 소켓 목록
-	UPROPERTY(BlueprintReadOnly, Category = "Weapon")
-	TArray<FName> ActiveMuzzleSockets;
+	// 현재 활성화된 총구 정보 목록
+	UPROPERTY()
+	TArray<FActiveMuzzleInfo> ActiveMuzzles;
 
 	// ASC 참조 헬퍼
 	UAbilitySystemComponent* GetOwnerASC() const;

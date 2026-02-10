@@ -451,6 +451,7 @@ void UPREquipmentManagerComponent::Equip_Internal(UPREquipActionData* ActionData
 	{
 		UEquipmentInstance* Instance = CreateInstance(ActionData);
 		Instance->Initialize(GetAttachTarget(), ActionData);
+		Instance->OnEquipped();
 
 		FEquipmentSlotEntry Entry;
 		Entry.Instance = Instance;

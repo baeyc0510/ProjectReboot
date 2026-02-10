@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "GameplayEffectTypes.h"
+#include "ProjectReboot/Game/PRPrewarmInterface.h"
 #include "PROrbitalStrike.generated.h"
 
 class UNiagaraComponent;
@@ -16,7 +17,7 @@ class USphereComponent;
  * 3단계 흐름: Telegraph(경고) → Impact VFX(낙하) → Damage(데미지 판정)
  */
 UCLASS()
-class PROJECTREBOOT_API APROrbitalStrike : public AActor
+class PROJECTREBOOT_API APROrbitalStrike : public AActor, public IPRPrewarmInterface
 {
 	GENERATED_BODY()
 
@@ -25,6 +26,10 @@ public:
 
 	// 초기화 및 시작 (Ability에서 EffectSpec을 전달받음)
 	void InitStrike(const FGameplayEffectSpecHandle& InDamageSpec, FLinearColor Color, float TelegraphDuration, float Radius);
+
+	/*~ IPRPrewarmInterface ~*/
+	// 프리웜 대상 나이아가라 에셋 수집
+	virtual void GetPrewarmNiagaraAssets(TArray<TSoftObjectPtr<UNiagaraSystem>>& OutAssets) const override;
 
 protected:
 	/*~ Phase Handlers ~*/

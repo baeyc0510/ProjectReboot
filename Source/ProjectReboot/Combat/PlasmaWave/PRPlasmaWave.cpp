@@ -8,6 +8,14 @@
 #include "NiagaraSystem.h"
 #include "ProjectReboot/Combat/PRCombatInterface.h"
 
+void APRPlasmaWave::GetPrewarmNiagaraAssets(TArray<TSoftObjectPtr<UNiagaraSystem>>& OutAssets) const
+{
+	if (IsValid(WaveNiagaraSystem))
+	{
+		OutAssets.Add(WaveNiagaraSystem);
+	}
+}
+
 APRPlasmaWave::APRPlasmaWave()
 {
 	PrimaryActorTick.bCanEverTick = true;

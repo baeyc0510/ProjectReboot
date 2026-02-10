@@ -5,6 +5,7 @@
 #include "PRGameplayAbility_WeaponFire.h"
 #include "PRGA_Fire_Bullet.generated.h"
 
+class UAbilityTask_PlayMontageAndWait;
 class UBulletWeaponInstance;
 
 /**
@@ -36,4 +37,11 @@ protected:
 	// 탄퍼짐 각도 (AttributeSet에서 가져올 수도 있음)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Bullet")
 	float BaseSpreadAngle = 1.0f;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Bullet")
+	TObjectPtr<UAnimMontage> BulletFireMontage;
+	
+private:
+	UPROPERTY()
+	TObjectPtr<ACharacter> OwnerCharacter;
 };

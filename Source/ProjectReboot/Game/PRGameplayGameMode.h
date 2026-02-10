@@ -9,9 +9,7 @@
 
 class APlayerCameraManager;
 class APRRoomController;
-
-// 프리웜 페이즈 델리게이트 (동기적 실행, 바인딩된 모든 핸들러 완료 후 자동 해제)
-DECLARE_MULTICAST_DELEGATE(FOnRoomPrewarmSignature);
+class UPRPrewarmManagerSubsystem;
 
 struct FPRRoomNodeInfo;
 /**
@@ -45,6 +43,15 @@ protected:
 	// 방 진입 완료 후 프리웜 시작
 	void StartPrewarmPhase();
 
+	// 프리웜 작업 완료 처리
+	void HandlePrewarmWorkCompleted();
+
+	// 프리웜 타이머 완료 처리
+	void HandlePrewarmTimerElapsed();
+
+	// 프리웜 완료 조건 검사
+	void TryFinishPrewarm();
+
 	// 프리웜 완료 후 페이드 인
 	void OnPrewarmComplete();
 
@@ -63,9 +70,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "PR|Stage")
 	FPrimaryAssetType StageConfigAssetType;
 
-	// 프리웜 페이즈 델리게이트 (외부 시스템이 바인딩하여 프리웜 작업 수행)
-	FOnRoomPrewarmSignature OnRoomPrewarm;
-
 private:
 	// 현재 방 노드 정보
 	FPRRoomNodeInfo CurrentNodeInfo;
@@ -79,9 +83,18 @@ private:
 	// 페이드 타이머 핸들
 	FTimerHandle FadeTimerHandle;
 
+	// 프리웜 타이머 핸들
+	FTimerHandle PrewarmTimerHandle;
+
 	// 프리웜 대기중인 RoomController
 	UPROPERTY()
 	TObjectPtr<APRRoomController> PendingRoomController;
+
+	// 프리웜 작업 완료 여부
+	bool bIsPrewarmWorkCompleted = false;
+
+	// 프리웜 타이머 완료 여부
+	bool bIsPrewarmTimerElapsed = false;
 
 public:
 	// 페이드 지속 시간 (초)

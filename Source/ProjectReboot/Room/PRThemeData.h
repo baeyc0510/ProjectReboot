@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "ProjectReboot/Game/PRPrewarmInterface.h"
 #include "PRThemeData.generated.h"
 
 class APREnemyCharacter;
@@ -55,9 +56,14 @@ struct FPREnvironmentSpawnEntry
  * 스테이지별 적, 함정, 장애물 풀 정의
  */
 UCLASS(BlueprintType, Blueprintable)
-class PROJECTREBOOT_API UPRThemeData : public UDataAsset
+class PROJECTREBOOT_API UPRThemeData : public UDataAsset, public IPRPrewarmInterface
 {
 	GENERATED_BODY()
+
+public:
+	/*~ IPRPrewarmInterface ~*/
+	// 프리웜 대상 자식 오브젝트 수집
+	virtual void GetPrewarmChildren(TArray<UObject*>& OutChildren) const override;
 
 public:
 	/*~ Info ~*/

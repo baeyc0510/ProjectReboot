@@ -25,6 +25,9 @@ class PROJECTREBOOT_API UPRGA_Hound_MissileLaunch : public UPRGameplayAbility
 public:
 	UPRGA_Hound_MissileLaunch();
 
+	/*~ IPRPrewarmInterface ~*/
+	virtual void GetPrewarmChildren(TArray<UObject*>& OutChildren) const override;
+	
 	/*~ UGameplayAbility Interface ~*/
 
 	// 어빌리티 활성화

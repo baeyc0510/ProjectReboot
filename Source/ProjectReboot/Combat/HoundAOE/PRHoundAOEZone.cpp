@@ -3,9 +3,37 @@
 #include "PRHoundAOEZone.h"
 #include "Components/SphereComponent.h"
 #include "NiagaraComponent.h"
+#include "NiagaraSystem.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "ProjectReboot/Combat/PRCombatInterface.h"
+
+void APRHoundAOEZone::GetPrewarmNiagaraAssets(TArray<TSoftObjectPtr<UNiagaraSystem>>& OutAssets) const
+{
+	if (IsValid(TelegraphEffect))
+	{
+		if (UNiagaraSystem* Asset = TelegraphEffect->GetAsset())
+		{
+			OutAssets.Add(Asset);
+		}
+	}
+
+	if (IsValid(ImpactEffect))
+	{
+		if (UNiagaraSystem* Asset = ImpactEffect->GetAsset())
+		{
+			OutAssets.Add(Asset);
+		}
+	}
+
+	if (IsValid(DamageAreaEffect))
+	{
+		if (UNiagaraSystem* Asset = DamageAreaEffect->GetAsset())
+		{
+			OutAssets.Add(Asset);
+		}
+	}
+}
 
 APRHoundAOEZone::APRHoundAOEZone()
 {

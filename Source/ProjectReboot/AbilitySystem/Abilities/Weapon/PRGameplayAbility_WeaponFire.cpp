@@ -233,11 +233,17 @@ void UPRGameplayAbility_WeaponFire::ApplyWeaponDamage(const FHitResult& HitResul
 
 		// 관통 카운트 전달
 		SpecHandle.Data->SetSetByCallerMagnitude(TAG_SetByCaller_Combat_PenetrationCount, static_cast<float>(FMath::Max(0, PenetrationCount)));
-		
+
+		// 무기 슬롯 태그 전달 (GCN에서 무기 인스턴스 조회용)
+		if (WeaponSlotTag.IsValid())
+		{
+			SpecHandle.Data->AddDynamicAssetTag(WeaponSlotTag);
+		}
+
 		// 무기 태그 전달
 		if (UWeaponInstance* WeaponInstance = GetWeaponInstance())
 		{
-			SpecHandle.Data->AppendDynamicAssetTags(WeaponInstance->GetGrantedTags());	
+			SpecHandle.Data->AppendDynamicAssetTags(WeaponInstance->GetGrantedTags());
 		}
 		
 		FGameplayAbilityTargetDataHandle TargetDataHandle;

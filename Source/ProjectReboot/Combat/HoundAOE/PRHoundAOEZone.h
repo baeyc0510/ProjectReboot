@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "GameplayEffectTypes.h"
+#include "ProjectReboot/Game/PRPrewarmInterface.h"
 #include "PRHoundAOEZone.generated.h"
 
 class UNiagaraComponent;
@@ -16,7 +17,7 @@ class UAbilitySystemComponent;
  * 영역 내 대상에 Duration GE를 적용하고, 영역 이탈 시 GE를 제거
  */
 UCLASS()
-class PROJECTREBOOT_API APRHoundAOEZone : public AActor
+class PROJECTREBOOT_API APRHoundAOEZone : public AActor, public IPRPrewarmInterface
 {
 	GENERATED_BODY()
 
@@ -26,6 +27,10 @@ public:
 	// 초기화 및 시작 (Ability에서 DamageSpec 전달)
 	void InitZone(const FGameplayEffectSpecHandle& InDamageSpec, FLinearColor Color,
 		float TelegraphDuration, float Radius, float DamageDuration, TSubclassOf<AActor> InTargetActorClass);
+
+	/*~ IPRPrewarmInterface ~*/
+	// 프리웜 대상 나이아가라 에셋 수집
+	virtual void GetPrewarmNiagaraAssets(TArray<TSoftObjectPtr<UNiagaraSystem>>& OutAssets) const override;
 
 protected:
 	/*~ Phase Handlers ~*/

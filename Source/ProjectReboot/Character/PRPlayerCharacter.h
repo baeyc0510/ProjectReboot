@@ -8,6 +8,7 @@
 #include "PRCharacterBase.h"
 #include "ProjectReboot/AbilitySystem/PRAbilitySet.h"
 #include "ProjectReboot/Equipment/PREquipmentInterface.h"
+#include "ProjectReboot/Game/PRPrewarmInterface.h"
 #include "PRPlayerCharacter.generated.h"
 
 class UAIPerceptionStimuliSourceComponent;
@@ -26,7 +27,7 @@ class UInputAction;
 struct FInputActionValue;
 
 UCLASS()
-class PROJECTREBOOT_API APRPlayerCharacter : public APRCharacterBase, public IPREquipmentInterface, public IGenericTeamAgentInterface
+class PROJECTREBOOT_API APRPlayerCharacter : public APRCharacterBase, public IPREquipmentInterface, public IGenericTeamAgentInterface, public IPRPrewarmInterface
 {
 	GENERATED_BODY()
 
@@ -69,6 +70,13 @@ protected:
 	
 	/*~ IPREquipmentInterface ~*/
 	virtual UPREquipmentManagerComponent* GetEquipmentManager() const override {return EquipmentManager;}
+
+	/*~ IPRPrewarmInterface ~*/
+	// 프리웜 대상 에셋 목록 수집
+	virtual void GetPrewarmNiagaraAssets(TArray<TSoftObjectPtr<UNiagaraSystem>>& OutAssets) const override;
+
+	// 프리웜 대상 자식 오브젝트 수집
+	virtual void GetPrewarmChildren(TArray<UObject*>& OutChildren) const override;
 	
 	/*~ APRPlayerCharacter Interfaces ~*/
 	

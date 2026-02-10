@@ -19,6 +19,9 @@ class PROJECTREBOOT_API UPRGA_Fire_Missile : public UPRGameplayAbility_WeaponFir
 
 public:
 	UPRGA_Fire_Missile();
+	
+	/*~ IPRPrewarmInterface ~*/
+	virtual void GetPrewarmChildren(TArray<UObject*>& OutChildren) const override;
 
 	/*~ UGameplayAbility Interface ~*/
 	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr, OUT FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
@@ -43,6 +46,10 @@ protected:
 	UMissileWeaponInstance* GetMissileWeapon() const;
 
 protected:
+	// 미사일 발사 몽타주
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Missile")
+	TObjectPtr<UAnimMontage> MissileFireMontage;
+	
 	// 스폰할 Projectile 클래스
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Missile")
 	TSubclassOf<APRMissileProjectile> DefaultProjectileClass;
@@ -62,4 +69,8 @@ protected:
 	// 최대 사거리 (0 이하면 무제한)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Missile", meta = (ClampMin = "0.0"))
 	float MaxRange = 5000.0f;
+	
+private:
+	UPROPERTY()
+	TObjectPtr<ACharacter> OwnerCharacter;
 };

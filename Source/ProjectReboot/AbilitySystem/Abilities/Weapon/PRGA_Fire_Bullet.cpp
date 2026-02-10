@@ -1,13 +1,14 @@
 // PRGA_Fire_Bullet.cpp
 #include "PRGA_Fire_Bullet.h"
 
+#include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
+#include "GameFramework/Character.h"
 #include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/Equipment/Weapon/BulletWeaponInstance.h"
 
 UPRGA_Fire_Bullet::UPRGA_Fire_Bullet()
 {
 	ActivationPolicy = EPRAbilityActivationPolicy::WhileInputHeld;
-	
 	ActivationRequiredTags.AddTag(TAG_State_Aiming);
 }
 
@@ -31,6 +32,11 @@ void UPRGA_Fire_Bullet::OnActivateAbility(const FGameplayAbilitySpecHandle Handl
 {
 	Super::OnActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
+	if (!IsValid(OwnerCharacter))
+	{
+		OwnerCharacter = Cast<ACharacter>(GetAvatarActorFromActorInfo());
+	}
+	
 	FireOnce();
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 }
@@ -42,11 +48,18 @@ void UPRGA_Fire_Bullet::FireOnce()
 	{
 		return;
 	}
-
+	
+	// 몽타주 재생
+	if (IsValid(OwnerCharacter) && IsValid(BulletFireMontage))
+	{
+		OwnerCharacter->PlayAnimMontage(BulletFireMontage);
+	}
+	
+	// Muzzle VFX 재생
+	Weapon->PlayMuzzleFlash();
+	
 	// 스프레드 적용 히트스캔
 	const TArray<FHitResult> HitResults = PerformHitscanWithSpread(BaseSpreadAngle);
-
-	Weapon->PlayMuzzleFlash();
 
 	if (HitResults.Num() > 0)
 	{

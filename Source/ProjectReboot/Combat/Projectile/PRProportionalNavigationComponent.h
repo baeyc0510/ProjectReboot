@@ -51,6 +51,7 @@ protected:
     TWeakObjectPtr<USceneComponent> NavigationTargetComponent;
 
 private:
+    FVector TargetOffset = FVector::ZeroVector;
     FVector PreviousLOSDirection = FVector::ZeroVector;
     FVector PreviousTargetLocation = FVector::ZeroVector;
     bool bIsFirstFrame = true;

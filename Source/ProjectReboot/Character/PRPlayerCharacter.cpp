@@ -71,6 +71,26 @@ APRPlayerCharacter::APRPlayerCharacter()
 	}
 }
 
+void APRPlayerCharacter::GetPrewarmNiagaraAssets(TArray<TSoftObjectPtr<UNiagaraSystem>>& OutAssets) const
+{
+}
+
+void APRPlayerCharacter::GetPrewarmChildren(TArray<UObject*>& OutChildren) const
+{
+	if (!IsValid(DefaultAbilitySet))
+	{
+		return;
+	}
+
+	for (const FPRAbilityEntry& AbilityEntry : DefaultAbilitySet->Abilities)
+	{
+		if (AbilityEntry.AbilityClass)
+		{
+			OutChildren.Add(AbilityEntry.AbilityClass.Get());
+		}
+	}
+}
+
 FGenericTeamId APRPlayerCharacter::GetGenericTeamId() const
 {
 	return FGenericTeamId(PRTeamId::Player);

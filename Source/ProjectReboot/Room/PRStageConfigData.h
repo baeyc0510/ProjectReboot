@@ -75,4 +75,8 @@ public:
 	// 방 타입별 흐름 설정
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Flow")
 	TMap<EPRRoomType, FPRRoomFlowConfig> FlowConfigs;
+	
+	// 프리웜 대상
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Prewarm")
+	TArray<TScriptInterface<IPRPrewarmInterface>> AdditionalPrewarmTargets;
 };

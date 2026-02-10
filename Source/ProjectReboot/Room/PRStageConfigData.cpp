@@ -19,4 +19,12 @@ void UPRStageConfigData::GetPrewarmChildren(TArray<UObject*>& OutChildren) const
 	{
 		OutChildren.Add(ThemeData);
 	}
+	
+	for (TScriptInterface<IPRPrewarmInterface> PrewarmTarget : AdditionalPrewarmTargets)
+	{
+		if (IsValid(PrewarmTarget.GetObject()))
+		{
+			OutChildren.Add(PrewarmTarget.GetObject());
+		}
+	}
 }

@@ -7,6 +7,7 @@
 #include "ProjectReboot/Room/PRRoomTypes.h"
 #include "ProjectReboot/Game/PRGameplayGameState.h"
 #include "ProjectReboot/Character/PREnemyCharacter.h"
+#include "AbilitySystemComponent.h"
 
 EStateTreeRunStatus FPRStateTreeTask_SpawnWave::EnterState(
 	FStateTreeExecutionContext& Context,
@@ -87,54 +88,28 @@ int32 FPRStateTreeTask_SpawnWave::SpawnWaveEnemies(FStateTreeExecutionContext& C
 		return Data.RoomController->GetActorTransform();
 	};
 
-	// 일반 적 스폰
-	for (const TSubclassOf<APREnemyCharacter>& EnemyClass : WaveInfo.NormalEnemies)
+	// 적 스폰
+	for (const auto& [EnemyClass, Count] : WaveInfo.EnemySpawnMap)
 	{
 		if (!EnemyClass)
 		{
 			continue;
 		}
 
-		FTransform SpawnTransform = GetNextSpawnTransform();
-		APREnemyCharacter* SpawnedEnemy = World->SpawnActor<APREnemyCharacter>(
-			EnemyClass, SpawnTransform, SpawnParams);
-		if (IsValid(SpawnedEnemy))
+		for (int32 i = 0; i < Count; i++)
 		{
-			TotalSpawned++;
-		}
-	}
-
-	// 엘리트 적 스폰
-	for (const TSubclassOf<APREnemyCharacter>& EnemyClass : WaveInfo.EliteEnemies)
-	{
-		if (!EnemyClass)
-		{
-			continue;
-		}
-
-		FTransform SpawnTransform = GetNextSpawnTransform();
-		APREnemyCharacter* SpawnedEnemy = World->SpawnActor<APREnemyCharacter>(
-			EnemyClass, SpawnTransform, SpawnParams);
-		if (IsValid(SpawnedEnemy))
-		{
-			TotalSpawned++;
-		}
-	}
-
-	// 미니보스 스폰
-	for (const TSubclassOf<APREnemyCharacter>& EnemyClass : WaveInfo.MiniBosses)
-	{
-		if (!EnemyClass)
-		{
-			continue;
-		}
-
-		FTransform SpawnTransform = GetNextSpawnTransform();
-		APREnemyCharacter* SpawnedEnemy = World->SpawnActor<APREnemyCharacter>(
-			EnemyClass, SpawnTransform, SpawnParams);
-		if (IsValid(SpawnedEnemy))
-		{
-			TotalSpawned++;
+			FTransform SpawnTransform = GetNextSpawnTransform();
+			APREnemyCharacter* SpawnedEnemy = World->SpawnActor<APREnemyCharacter>(
+				EnemyClass, SpawnTransform, SpawnParams);
+			if (IsValid(SpawnedEnemy))
+			{
+				// 등장 GameplayCue 실행
+				if (UAbilitySystemComponent* ASC = SpawnedEnemy->GetAbilitySystemComponent())
+				{
+					ASC->ExecuteGameplayCue(TAG_GameplayCue_Character_Appear);
+				}
+				TotalSpawned++;
+			}
 		}
 	}
 

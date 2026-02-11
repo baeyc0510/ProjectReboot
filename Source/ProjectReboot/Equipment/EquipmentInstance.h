@@ -10,6 +10,7 @@
 
 class UPREquipActionData;
 class UMeshComponent;
+class UMaterialInstanceDynamic;
 
 USTRUCT()
 struct FSpawnedVisualEntry
@@ -99,6 +100,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	virtual void OnEquipped();
 
+	/*~ Dissolve ~*/
+	// 모든 파트 Dissolve 시작
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	void StartDissolve(float Time, bool bReverse);
+
+	// 특정 파트만 Dissolve 시작
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	void StartPartDissolve(UPREquipActionData* ActionData, float Time, bool bReverse);
+
 protected:
 	// 장비 태그 변경 시 호출되는 가상 함수
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
@@ -109,6 +119,15 @@ protected:
 	void ApplyAttachment(USceneComponent* Component, const FEquipmentAttachmentInfo& AttachInfo, bool bIsChild);
 	void ApplyMaterialOverrides(UMeshComponent* MeshComponent, const TMap<int32, UMaterialInterface*>& MaterialOverrides);
 	void ApplyCollisionSettings(USceneComponent* Component, const FEquipmentVisualSettings& VisualSettings);
+
+	// 단일 파트의 비주얼 컴포넌트 파괴 및 Dissolve 상태 정리
+	void DestroyVisualComponent(UPREquipActionData* ActionData);
+
+	// Dissolve 타이머 정리
+	void ClearDissolveTimer();
+
+	// Dissolve 타이머 업데이트
+	void UpdateDissolve();
 
 protected:
 	UPROPERTY()
@@ -129,4 +148,25 @@ protected:
 
 	// 외형 가시성 상태
 	bool bVisualsVisible = true;
+
+	/*~ Dissolve ~*/
+	// Dissolve 머티리얼 파라미터 이름
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Dissolve")
+	FName DissolveParameterName = TEXT("DissolveRate");
+
+	// true: 파라미터 값을 0~100 퍼센티지로 설정 / false: 0~1 비율로 설정
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Dissolve")
+	bool bUseDissolvePercentage = false;
+
+	// 파트별 Dissolve 상태
+	struct FDissolveEntry
+	{
+		TArray<UMaterialInstanceDynamic*> Materials;
+		float StartTime = 0.0f;
+		float Duration = 0.0f;
+		bool bReverse = false;
+	};
+
+	TMap<UPREquipActionData*, FDissolveEntry> ActiveDissolves;
+	FTimerHandle DissolveTimerHandle;
 };

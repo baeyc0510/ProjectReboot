@@ -97,17 +97,9 @@ struct FPRWaveSpawnInfo
 {
 	GENERATED_BODY()
 
-	// 스폰할 일반 적 목록
+	// 스폰할 적 클래스 → 수량 매핑
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TArray<TSubclassOf<APREnemyCharacter>> NormalEnemies;
-
-	// 스폰할 엘리트 적 목록
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TArray<TSubclassOf<APREnemyCharacter>> EliteEnemies;
-
-	// 스폰할 미니보스 목록
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TArray<TSubclassOf<APREnemyCharacter>> MiniBosses;
+	TMap<TSubclassOf<APREnemyCharacter>, int32> EnemySpawnMap;
 };
 
 /**

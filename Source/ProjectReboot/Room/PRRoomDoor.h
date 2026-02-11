@@ -20,20 +20,12 @@ public:
 	APRRoomDoor();
 
 	/*~ IPRInteractableInterface ~*/
-	// 상호작용 가능 여부
 	virtual bool CanInteract(APawn* Interactor) const override;
-
-	// 상호작용 실행
 	virtual void Interact(APawn* Interactor) override;
-
-	// UI 힌트 텍스트 반환
 	virtual FText GetInteractionText() const override;
-
-	// UI 표시용 정보 반환
 	virtual void GetInteractionInfo(APawn* Interactor, FPRInteractionInfo& OutInfo) const override;
-
-	// 상호작용 가능 상태 설정
 	virtual void SetInteractable(bool bEnabled) override;
+	virtual USoundBase* GetInteractionSound() override {return InteractionSound;}
 
 public:
 	// 대상 방 인덱스 설정
@@ -73,22 +65,26 @@ protected:
 	virtual void BeginPlay() override;
 
 	// 상호작용 텍스트
-	UPROPERTY(EditAnywhere, Category = "Room|Door")
+	UPROPERTY(EditAnywhere, Category = "Interaction")
 	FText InteractionText;
-
+	
+	// 사운드 세팅
+	UPROPERTY(EditDefaultsOnly, Category = "Interaction")
+	TObjectPtr<USoundBase> InteractionSound;
+	
 	// 상호작용 가능 여부
-	UPROPERTY(EditAnywhere, Category = "Room|Door")
+	UPROPERTY(EditAnywhere, Category = "Interaction")
 	bool bIsInteractable = false;
 
 	// 대상 방 인덱스
-	UPROPERTY(VisibleAnywhere, Category = "Room|Door")
+	UPROPERTY(VisibleAnywhere, Category = "Room")
 	int32 TargetRoomIndex = -1;
 
 	// 표시되는 방 타입
-	UPROPERTY(VisibleAnywhere, Category = "Room|Door")
+	UPROPERTY(VisibleAnywhere, Category = "Room")
 	EPRRoomType DisplayRoomType = EPRRoomType::Default;
 
 	// 표시되는 보상 카테고리
-	UPROPERTY(VisibleAnywhere, Category = "Room|Door")
+	UPROPERTY(VisibleAnywhere, Category = "Room")
 	FGameplayTag DisplayRewardCategory;
 };

@@ -45,4 +45,7 @@ public:
 
 	// 상호작용 포커스 상실 (플레이어가 다른 곳을 바라봄)
 	virtual void OnLoseInteractFocus(APawn* Interactor) {}
+	
+	// 상호작용 사운드 (상호작용 시점)
+	virtual USoundBase* GetInteractionSound() {return nullptr;}
 };

@@ -6,6 +6,7 @@
 #include "Components/Border.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
+#include "Kismet/GameplayStatics.h"
 
 void UPRActionListItemWidget::InitWidget(URogueliteActionData* InActionData)
 {
@@ -49,6 +50,24 @@ FReply UPRActionListItemWidget::NativeOnMouseButtonDown(const FGeometry& InGeome
 {
 	if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
 	{
+		if (ActionData)
+		{
+			USoundBase* ClickSound = DefaultClickSound;
+			
+			for (auto& ActionTag : ActionData->ActionTags)
+			{
+				if (ActionClickSoundMap.Contains(ActionTag) && IsValid(ActionClickSoundMap[ActionTag]))
+				{
+					ClickSound = ActionClickSoundMap[ActionTag];
+				}
+			}
+			
+			if (ClickSound)
+			{
+				UGameplayStatics::PlaySound2D(this,ClickSound);
+			}
+		}
+		
 		OnClicked.Broadcast(this);
 		return FReply::Handled();
 	}

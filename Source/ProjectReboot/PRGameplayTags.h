@@ -186,6 +186,7 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_Character_Dash);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_Character_SlowMotion);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_Character_Explode);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_Character_Dissolve);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_Character_Appear);
 
 /*~ Upgrade Tags ~*/
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Upgrade);

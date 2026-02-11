@@ -35,7 +35,8 @@ public:
 	virtual void GetInteractionInfo(APawn* Interactor, FPRInteractionInfo& OutInfo) const override;
 	virtual void OnGainInteractFocus(APawn* Interactor) override;
 	virtual void OnLoseInteractFocus(APawn* Interactor) override;
-
+	virtual USoundBase* GetInteractionSound() override {return InteractionSound;}
+	
 public:
 	/*~ APREquipmentStand Interface ~*/
 	// 거치대 선택 (장비 장착 + 숨김)
@@ -63,6 +64,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Interaction")
 	FText InteractionDisplayText = NSLOCTEXT("Interaction", "SelectEquipment", "장비 선택");
 
+	// 상호작용 사운드
+	UPROPERTY(EditDefaultsOnly, Category = "Interaction")
+	TObjectPtr<USoundBase> InteractionSound;
+	
 	// 상호작용 가능 여부
 	UPROPERTY(BlueprintReadOnly, Category = "State")
 	bool bCanInteract = true;

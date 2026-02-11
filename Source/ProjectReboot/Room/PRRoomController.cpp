@@ -7,6 +7,7 @@
 #include "PRRoomDoor.h"
 #include "PRRewardActor.h"
 #include "PRStageManagerSubsystem.h"
+#include "Kismet/GameplayStatics.h"
 #include "ProjectReboot/Interaction/PRInteractableInterface.h"
 #include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/Game/PRGameplayGameState.h"
@@ -111,6 +112,17 @@ void APRRoomController::ShowDoors()
 
 		// 충돌 활성화
 		DoorActor->SetActorEnableCollision(true);
+	}
+	
+	FVector DoorLocation = GetActorLocation();
+	if (!Doors.IsEmpty() && IsValid(Doors[0]))
+	{
+		DoorLocation = Doors[0]->GetActorLocation();
+	}
+	
+	if (IsValid(DoorActivationSound))
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, DoorActivationSound, DoorLocation);
 	}
 
 	UE_LOG(LogTemp, Log, TEXT("PRRoomController: Doors shown and enabled (Room %d)"), RoomIndex);

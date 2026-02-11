@@ -182,6 +182,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Character_Dash, "GameplayCue.Character.Da
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Character_SlowMotion, "GameplayCue.Character.SlowMotion");
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Character_Explode, "GameplayCue.Character.Explode");
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Character_Dissolve, "GameplayCue.Character.Dissolve");
+UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Character_Appear, "GameplayCue.Character.Appear");
 
 /*~ Upgrade Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Upgrade, "Upgrade");

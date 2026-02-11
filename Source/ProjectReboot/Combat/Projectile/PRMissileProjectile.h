@@ -120,6 +120,9 @@ protected:
 	// 폭발 이펙트
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Missile|Explosion")
 	TObjectPtr<UNiagaraSystem> ExplosionVFX;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Missile|Explosion")
+	TObjectPtr<USoundBase> ExplosionSFX;
 
 	// 유도 타겟
 	UPROPERTY(BlueprintReadOnly, Category = "Missile|Homing")

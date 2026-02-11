@@ -12,18 +12,6 @@ class UPREquipActionData;
 class UMeshComponent;
 class UMaterialInstanceDynamic;
 
-USTRUCT()
-struct FSpawnedVisualEntry
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	TObjectPtr<USceneComponent> SpawnedComponent = nullptr;
-
-	UPROPERTY()
-	FEquipmentMeshSpawnInfo UsedSpawnInfo;
-};
-
 UCLASS(BlueprintType, Blueprintable)
 class PROJECTREBOOT_API UEquipmentInstance : public UObject
 {
@@ -64,6 +52,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	virtual void DestroyAllVisuals();
 
+	// 외형 정보 조회
+	UFUNCTION(BlueprintCallable, Category = "Equipment")
+	void GetSpawnedVisualInfo(TMap<UPREquipActionData*, FSpawnedVisualEntry>& OutVisualInfo) const;
+	
 	// 태그 추가
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	void AddDynamicTag(FGameplayTag TagToAdd);

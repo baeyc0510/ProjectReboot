@@ -32,6 +32,19 @@ struct FEquipmentAttachmentInfo
 	// 스케일
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attachment")
 	FVector Scale = FVector::OneVector;
+
+	bool operator==(const FEquipmentAttachmentInfo& Other) const
+	{
+		return SocketName == Other.SocketName &&
+			   LocationOffset.Equals(Other.LocationOffset) &&
+			   RotationOffset.Equals(Other.RotationOffset) &&
+			   Scale.Equals(Other.Scale);
+	}
+
+	bool operator!=(const FEquipmentAttachmentInfo& Other) const
+	{
+		return !(*this == Other);
+	}
 };
 
 UENUM(BlueprintType)
@@ -66,11 +79,56 @@ struct FEquipmentMeshSpawnInfo
 	// 머티리얼 오버라이드 (슬롯 인덱스 -> 머티리얼)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
 	TMap<int32, UMaterialInterface*> MaterialOverrides;
-	
+
 public:
 	bool IsValid() const
 	{
 		return StaticMesh != nullptr || SkeletalMesh != nullptr;
+	}
+
+	bool operator==(const FEquipmentMeshSpawnInfo& Other) const
+	{
+		if (MeshType != Other.MeshType)
+		{
+			return false;
+		}
+
+		if (StaticMesh != Other.StaticMesh)
+		{
+			return false;
+		}
+
+		if (SkeletalMesh != Other.SkeletalMesh)
+		{
+			return false;
+		}
+
+		if (!(AttachmentInfo == Other.AttachmentInfo))
+		{
+			return false;
+		}
+
+		// MaterialOverrides 비교
+		if (MaterialOverrides.Num() != Other.MaterialOverrides.Num())
+		{
+			return false;
+		}
+
+		for (const auto& Pair : MaterialOverrides)
+		{
+			const UMaterialInterface* const* OtherMaterial = Other.MaterialOverrides.Find(Pair.Key);
+			if (!OtherMaterial || *OtherMaterial != Pair.Value)
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	bool operator!=(const FEquipmentMeshSpawnInfo& Other) const
+	{
+		return !(*this == Other);
 	}
 };
 
@@ -116,4 +174,16 @@ struct FEquipmentVisualSettings
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	TArray<TSubclassOf<UAnimInstance>> AnimLayersToLink;
 	// TODO: 장착 VFX?
+};
+
+USTRUCT(BlueprintType)
+struct FSpawnedVisualEntry
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TObjectPtr<USceneComponent> SpawnedComponent = nullptr;
+
+	UPROPERTY()
+	FEquipmentMeshSpawnInfo UsedSpawnInfo;
 };

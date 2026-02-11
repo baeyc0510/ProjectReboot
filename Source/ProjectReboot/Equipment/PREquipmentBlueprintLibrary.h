@@ -9,6 +9,7 @@
 class UPREquipmentManagerComponent;
 struct FGameplayTag;
 class UPREquipActionData;
+struct FSpawnedVisualEntry;
 /**
  * 
  */
@@ -39,4 +40,9 @@ public:
 	// EquipmentInstance의 모든 Attached Actions를 Roguelite RunState에서 제거
 	UFUNCTION(BlueprintCallable, Category = "Equipment")
 	static void RemoveEquipmentInstance(AActor* Target, FGameplayTag SlotTag);
+
+	// 두 SpawnedVisual 맵을 비교하여 MeshSpawnInfo가 변경된 ActionData들을 반환
+	static TArray<UPREquipActionData*> GetChangedMeshSpawnInfoActions(
+		const TMap<UPREquipActionData*, FSpawnedVisualEntry>& OldMap,
+		const TMap<UPREquipActionData*, FSpawnedVisualEntry>& NewMap);
 };

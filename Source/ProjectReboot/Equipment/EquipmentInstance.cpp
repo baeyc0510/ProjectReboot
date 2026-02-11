@@ -206,6 +206,11 @@ void UEquipmentInstance::DestroyAllVisuals()
     EquipmentTags.Reset();
 }
 
+void UEquipmentInstance::GetSpawnedVisualInfo(TMap<UPREquipActionData*, FSpawnedVisualEntry>& OutVisualInfo) const
+{
+	OutVisualInfo = SpawnedVisuals;
+}
+
 void UEquipmentInstance::AddDynamicTag(FGameplayTag TagToAdd)
 {
     EquipmentTags.AddTag(TagToAdd);

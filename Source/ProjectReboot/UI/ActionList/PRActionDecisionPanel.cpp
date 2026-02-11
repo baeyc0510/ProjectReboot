@@ -214,6 +214,12 @@ void UPRActionDecisionPanel::HandleEquipAction(UPREquipActionData* EquipAction, 
 		return;
 	}
 
+	TMap<UPREquipActionData*, FSpawnedVisualEntry> OldVisualInfo;
+	if (UEquipmentInstance* EquipmentInstance = EquipmentManager->GetEquipmentInstance(EquipAction->EquipmentSlot))
+	{
+		EquipmentInstance->GetSpawnedVisualInfo(OldVisualInfo);
+	}
+	
 	if (bEquip)
 	{
 		// 새 장비 미리보기 적용
@@ -227,7 +233,15 @@ void UPRActionDecisionPanel::HandleEquipAction(UPREquipActionData* EquipAction, 
 	
 	if (UEquipmentInstance* EquipmentInstance = EquipmentManager->GetEquipmentInstance(EquipAction->EquipmentSlot))
 	{
-		EquipmentInstance->StartDissolve(1.0f,true);
+		TMap<UPREquipActionData*, FSpawnedVisualEntry> NewVisualInfo;
+		EquipmentInstance->GetSpawnedVisualInfo(NewVisualInfo);
+
+		// 달라진 파츠의 Dissolve 이펙트 시작
+		TArray<UPREquipActionData*> Diff = UPREquipmentBlueprintLibrary::GetChangedMeshSpawnInfoActions(OldVisualInfo, NewVisualInfo);
+		for (UPREquipActionData* ChangedAction : Diff)
+		{
+			EquipmentInstance->StartPartDissolve(ChangedAction,1.0f,true);	
+		}
 	}
 }
 

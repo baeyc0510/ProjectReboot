@@ -43,9 +43,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Room|Door")
 	void HideAndDisableDoors();
 
-	// 문에 다음 방 정보 할당
+	// 문 동적 스폰 및 다음 방 정보 할당
 	UFUNCTION(BlueprintCallable, Category = "Room|Door")
-	void AssignDoorInfo(const TArray<int32>& NextRoomIndices);
+	void SpawnDoors(const TArray<int32>& NextRoomIndices);
+
+	// 스폰된 문 전체 파괴
+	UFUNCTION(BlueprintCallable, Category = "Room|Door")
+	void DestroyDoors();
 
 	// 방 노드 정보 조회
 	UFUNCTION(BlueprintPure, Category = "Room")
@@ -64,10 +68,18 @@ protected:
 	int32 ExtractRoomIndexFromLevelName() const;
 	
 public:
-	// 방 안에 배치된 문(Door) 액터들, TODO: Interface 활용한 Open / Close 처리
+	// 문 스폰 중앙 위치 (nullptr이면 RoomController 위치 사용)
 	UPROPERTY(EditAnywhere, Category = "Room|Door")
-	TArray<AActor*> Doors;
-	
+	TObjectPtr<AActor> DoorSpawnPoint;
+
+	// 문 액터 클래스
+	UPROPERTY(EditAnywhere, Category = "Room|Door")
+	TSubclassOf<APRRoomDoor> DoorClass;
+
+	// 문 간 간격 (중앙 기준 좌우 배치)
+	UPROPERTY(EditAnywhere, Category = "Room|Door")
+	float DoorSpacing = 300.f;
+
 	UPROPERTY(EditAnywhere, Category = "Room|Door")
 	TObjectPtr<USoundBase> DoorActivationSound;
 
@@ -90,6 +102,20 @@ public:
 	// 보상 액터 스폰 및 설정
 	UFUNCTION(BlueprintCallable, Category = "Room|Reward")
 	AActor* SpawnReward(TSubclassOf<AActor> RewardActorClass);
+
+	// 필드 드랍 스폰 포인트 배열
+	UPROPERTY(EditAnywhere, Category = "Room|FieldDrop")
+	TArray<AActor*> FieldDropSpawnPoints;
+
+	/*~ Spawned Actor Management ~*/
+
+	// 동적 스폰 액터 등록 (드랍, 보상, 적 등)
+	UFUNCTION(BlueprintCallable, Category = "Room")
+	void RegisterSpawnedActor(AActor* Actor);
+
+	// 등록된 모든 동적 스폰 액터 파괴
+	UFUNCTION(BlueprintCallable, Category = "Room")
+	void DestroyAllSpawnedActors();
 
 	/*~ Wave Management ~*/
 
@@ -124,6 +150,14 @@ public:
 	// 방 노드 정보 (런 시작 시 확정, StageManager에서 복사)
 	UPROPERTY(VisibleAnywhere, Category = "Room")
 	FPRRoomNodeInfo NodeInfo;
+
+	// 동적 스폰된 문 목록
+	UPROPERTY(VisibleAnywhere, Transient, Category = "Room|Door")
+	TArray<TObjectPtr<APRRoomDoor>> Doors;
+
+	// 동적 스폰 액터 목록 (방 전환 시 일괄 파괴)
+	UPROPERTY(VisibleAnywhere, Category = "Room")
+	TArray<TObjectPtr<AActor>> SpawnedActors;
 	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)

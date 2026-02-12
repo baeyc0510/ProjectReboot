@@ -49,6 +49,8 @@ void UPRGA_Dash::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const 
 void UPRGA_Dash::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
+	EnableMovement();
+	
 	if (MontageTask)
 	{
 		MontageTask->EndTask();
@@ -225,6 +227,7 @@ void UPRGA_Dash::ApplyDashMovement()
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
 	{
 		ASC->AddLooseGameplayTag(TAG_State_BlockMovementInput);
+		bMovementBlocked = true;
 	}
 
 	DashMoveTask->ReadyForActivation();
@@ -233,10 +236,21 @@ void UPRGA_Dash::ApplyDashMovement()
 
 void UPRGA_Dash::OnDashMovementFinished()
 {
+	EnableMovement();
+}
+
+void UPRGA_Dash::EnableMovement()
+{
+	if (!bMovementBlocked)
+	{
+		return;
+	}
+	
 	// 대시 이동 후 이동 입력 제한 해제
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
 	{
 		ASC->RemoveLooseGameplayTag(TAG_State_BlockMovementInput);
+		bMovementBlocked = false;
 	}
 }
 

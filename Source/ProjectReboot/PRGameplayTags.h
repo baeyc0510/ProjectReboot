@@ -28,6 +28,9 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Weapon_Scope);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Weapon_Stock);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Weapon_Trigger);
 
+/*~ FieldDrop Tags ~*/
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_FieldDrop);
+
 /*~ Damage Type Tags ~*/
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_DamageType);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_DamageType_Kinetic);

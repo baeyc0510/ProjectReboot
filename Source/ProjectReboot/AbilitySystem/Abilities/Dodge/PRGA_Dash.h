@@ -65,6 +65,7 @@ protected:
 	UFUNCTION()
 	void OnDashMovementFinished();
 
+	void EnableMovement();
 protected:
 	// 대시 몽타주 오버라이드
 	UPROPERTY(EditDefaultsOnly, Category = "Dash")
@@ -92,4 +93,6 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UAbilityTask_ApplyRootMotionConstantForce> DashMoveTask;
+	
+	bool bMovementBlocked = false;
 };

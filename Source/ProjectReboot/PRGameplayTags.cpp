@@ -25,6 +25,9 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot_Weapon_Scope, "Equipment.Slot.Weapon.S
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot_Weapon_Stock, "Equipment.Slot.Weapon.Stock");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot_Weapon_Trigger, "Equipment.Slot.Weapon.Trigger");
 
+/*~ FieldDrop Tags ~*/
+UE_DEFINE_GAMEPLAY_TAG(TAG_FieldDrop, "FieldDrop");
+
 /*~ Damage Type Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_DamageType, "DamageType");
 UE_DEFINE_GAMEPLAY_TAG(TAG_DamageType_Kinetic, "DamageType.Kinetic");

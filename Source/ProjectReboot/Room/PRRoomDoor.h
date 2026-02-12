@@ -3,10 +3,30 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "ProjectReboot/Interaction/PRInteractableInterface.h"
 #include "ProjectReboot/Room/PRRoomTypes.h"
 #include "GameFramework/Actor.h"
 #include "PRRoomDoor.generated.h"
+
+class UPRBillboardWidgetComponent;
+
+/**
+ * 보상 카테고리별 표시 정보
+ */
+USTRUCT(BlueprintType)
+struct FPRRewardCategoryDisplayInfo
+{
+	GENERATED_BODY()
+
+	// 표시 텍스트
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FText DisplayText;
+
+	// 표시 아이콘
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UTexture2D> Icon = nullptr;
+};
 
 /**
  * 방 전환용 문 액터
@@ -63,6 +83,17 @@ public:
 protected:
 	/*~ AActor Interface ~*/
 	virtual void BeginPlay() override;
+
+	// 빌보드 위젯에 보상 카테고리 정보 반영
+	void UpdateBillboardFromCategory(FGameplayTag InRewardCategory);
+
+	// 빌보드 위젯 컴포넌트
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	TObjectPtr<UPRBillboardWidgetComponent> BillboardWidget;
+
+	// 보상 카테고리별 표시 정보 매핑
+	UPROPERTY(EditDefaultsOnly, Category = "Room|Door")
+	TMap<FGameplayTag, FPRRewardCategoryDisplayInfo> RewardCategoryDisplayMap;
 
 	// 상호작용 텍스트
 	UPROPERTY(EditAnywhere, Category = "Interaction")

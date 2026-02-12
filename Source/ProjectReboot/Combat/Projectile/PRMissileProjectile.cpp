@@ -15,6 +15,7 @@
 #include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/AbilitySystem/PRWeaponAttributeSet.h"
 #include "ProjectReboot/Combat/PRCombatInterface.h"
+#include "ProjectReboot/Combat/Targeting/HomingTargetInterface.h"
 
 void APRMissileProjectile::GetPrewarmNiagaraAssets(TArray<TSoftObjectPtr<UNiagaraSystem>>& OutAssets) const
 {
@@ -106,12 +107,21 @@ void APRMissileProjectile::SetHomingTarget(AActor* Target)
 	// 비례항법 유도 활성화
 	USceneComponent* TargetComponent = nullptr;
 
-	// 기본 MeshComponent 사용
-	if (ACharacter* Character = Cast<ACharacter>(Target))
+	// HomingPoint 조회
+	if (Target->Implements<UHomingTargetInterface>())
 	{
-		if (USkeletalMeshComponent* TargetMeshComponent =Character->GetMesh())
+		TargetComponent =  IHomingTargetInterface::Execute_GetHomingPoint(Target);
+	}
+	
+	//  Fallback: 기본 MeshComponent 사용
+	if (!IsValid(TargetComponent))
+	{
+		if (ACharacter* Character = Cast<ACharacter>(Target))
 		{
-			TargetComponent = TargetMeshComponent;
+			if (USkeletalMeshComponent* TargetMeshComponent =Character->GetMesh())
+			{
+				TargetComponent = TargetMeshComponent;
+			}
 		}
 	}
 

@@ -6,6 +6,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "NiagaraSystem.h"
+#include "ProjectReboot/ProjectReboot.h"
 #include "ProjectReboot/Combat/PRCombatInterface.h"
 
 void APRPlasmaWave::GetPrewarmNiagaraAssets(TArray<TSoftObjectPtr<UNiagaraSystem>>& OutAssets) const
@@ -176,13 +177,11 @@ void APRPlasmaWave::TraceGround(float DeltaTime)
 	const FVector TraceEnd = FVector(CurrentLocation.X, CurrentLocation.Y, CurrentLocation.Z - GroundTraceHeight);
 
 	FHitResult HitResult;
-	FCollisionObjectQueryParams ObjectQueryParams;
-	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
-
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(this);
+	QueryParams.AddIgnoredActor(GetOwner());
 
-	if (World->LineTraceSingleByObjectType(HitResult, TraceStart, TraceEnd, ObjectQueryParams, QueryParams))
+	if (World->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd,PRCollision::ECC_Ground, QueryParams))
 	{
 		float BottomOffsetZ = DamageBoxExtent.Z;
 		if (IsValid(DamageBox))

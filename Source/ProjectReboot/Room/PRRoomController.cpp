@@ -39,7 +39,7 @@ void APRRoomController::InitRoom(const FPRRoomNodeInfo& InNodeInfo)
 	}
 
 	// 문에 다음 방 정보 할당
-	AssignDoorInfo(NodeInfo.NextRoomIndices);
+	SpawnDoors(NodeInfo.NextRoomIndices);
 
 	// 문 비활성화 (클리어 후 ShowDoors에서 활성화)
 	SetDoorsInteractable(false);
@@ -84,112 +84,131 @@ int32 APRRoomController::GetRoomIndex() const
 
 void APRRoomController::SetDoorsInteractable(bool bEnabled)
 {
-	for (AActor* DoorActor : Doors)
+	for (APRRoomDoor* Door : Doors)
 	{
-		if (!IsValid(DoorActor))
+		if (IsValid(Door))
 		{
-			continue;
-		}
-
-		if (IPRInteractableInterface* Interactable = Cast<IPRInteractableInterface>(DoorActor))
-		{
-			Interactable->SetInteractable(bEnabled);
+			Door->SetInteractable(bEnabled);
 		}
 	}
 }
 
 void APRRoomController::ShowDoors()
 {
-	for (AActor* DoorActor : Doors)
+	for (APRRoomDoor* Door : Doors)
 	{
-		if (!IsValid(DoorActor))
-		{
-			continue;
-		}
-
-		// 문 표시
-		DoorActor->SetActorHiddenInGame(false);
-
-		// 충돌 활성화
-		DoorActor->SetActorEnableCollision(true);
-	}
-	
-	FVector DoorLocation = GetActorLocation();
-	if (!Doors.IsEmpty() && IsValid(Doors[0]))
-	{
-		DoorLocation = Doors[0]->GetActorLocation();
-	}
-	
-	if (IsValid(DoorActivationSound))
-	{
-		UGameplayStatics::PlaySoundAtLocation(this, DoorActivationSound, DoorLocation);
-	}
-
-	UE_LOG(LogTemp, Log, TEXT("PRRoomController: Doors shown and enabled (Room %d)"), RoomIndex);
-}
-
-void APRRoomController::HideAndDisableDoors()
-{
-	for (AActor* DoorActor : Doors)
-	{
-		if (!IsValid(DoorActor))
-		{
-			continue;
-		}
-
-		// 문 숨김
-		DoorActor->SetActorHiddenInGame(true);
-
-		// 충돌 비활성화
-		DoorActor->SetActorEnableCollision(false);
-
-		// 상호작용 비활성화
-		if (IPRInteractableInterface* Interactable = Cast<IPRInteractableInterface>(DoorActor))
-		{
-			Interactable->SetInteractable(false);
-		}
-	}
-
-	UE_LOG(LogTemp, Log, TEXT("PRRoomController: Doors hidden and disabled (Room %d)"), RoomIndex);
-}
-
-void APRRoomController::AssignDoorInfo(const TArray<int32>& NextRoomIndices)
-{
-	UPRStageManagerSubsystem* StageManager = UPRStageManagerSubsystem::Get(this);
-
-	for (int32 i = 0; i < Doors.Num(); i++)
-	{
-		AActor* DoorActor = Doors[i];
-		if (!IsValid(DoorActor))
-		{
-			continue;
-		}
-
-		APRRoomDoor* Door = Cast<APRRoomDoor>(DoorActor);
 		if (!IsValid(Door))
 		{
 			continue;
 		}
 
-		if (NextRoomIndices.IsValidIndex(i))
-		{
-			const int32 TargetRoomIndex = NextRoomIndices[i];
-			Door->SetTargetRoomIndex(TargetRoomIndex);
+		Door->SetActorHiddenInGame(false);
+		Door->SetActorEnableCollision(true);
+	}
 
-			// StageManager에서 NodeInfo 조회하여 표시 정보 설정
-			if (IsValid(StageManager))
+	// 사운드 재생
+	FVector SoundLocation = IsValid(DoorSpawnPoint) ? DoorSpawnPoint->GetActorLocation() : GetActorLocation();
+	if (IsValid(DoorActivationSound))
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, DoorActivationSound, SoundLocation);
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("PRRoomController: Doors shown (Room %d, Count %d)"), RoomIndex, Doors.Num());
+}
+
+void APRRoomController::HideAndDisableDoors()
+{
+	for (APRRoomDoor* Door : Doors)
+	{
+		if (!IsValid(Door))
+		{
+			continue;
+		}
+
+		Door->SetActorHiddenInGame(true);
+		Door->SetActorEnableCollision(false);
+		Door->SetInteractable(false);
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("PRRoomController: Doors hidden (Room %d)"), RoomIndex);
+}
+
+void APRRoomController::SpawnDoors(const TArray<int32>& NextRoomIndices)
+{
+	// 기존 문 제거
+	DestroyDoors();
+
+	if (!DoorClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PRRoomController: DoorClass is not set (Room %d)"), RoomIndex);
+		return;
+	}
+
+	const int32 DoorCount = NextRoomIndices.Num();
+	if (DoorCount == 0)
+	{
+		return;
+	}
+
+	// 스폰 중앙 위치/회전
+	FVector CenterLocation = IsValid(DoorSpawnPoint) ? DoorSpawnPoint->GetActorLocation() : GetActorLocation();
+	FRotator CenterRotation = IsValid(DoorSpawnPoint) ? DoorSpawnPoint->GetActorRotation() : GetActorRotation();
+	FVector RightVector = CenterRotation.RotateVector(FVector::RightVector);
+
+	// 중앙 기준 좌우 대칭 배치 (오프셋 계산)
+	float TotalWidth = (DoorCount - 1) * DoorSpacing;
+	float StartOffset = -TotalWidth * 0.5f;
+
+	UPRStageManagerSubsystem* StageManager = UPRStageManagerSubsystem::Get(this);
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	for (int32 i = 0; i < DoorCount; i++)
+	{
+		float Offset = StartOffset + i * DoorSpacing;
+		FVector SpawnLocation = CenterLocation + RightVector * Offset;
+
+		APRRoomDoor* Door = GetWorld()->SpawnActor<APRRoomDoor>(DoorClass, SpawnLocation, CenterRotation, SpawnParams);
+		if (!IsValid(Door))
+		{
+			continue;
+		}
+
+		// 다음 방 정보 할당
+		const int32 TargetRoomIndex = NextRoomIndices[i];
+		Door->SetTargetRoomIndex(TargetRoomIndex);
+
+		if (IsValid(StageManager))
+		{
+			if (const FPRRoomNodeInfo* TargetNodeInfo = StageManager->GetRoomNodeInfo(TargetRoomIndex))
 			{
-				if (const FPRRoomNodeInfo* TargetNodeInfo = StageManager->GetRoomNodeInfo(TargetRoomIndex))
-				{
-					Door->SetDisplayInfo(TargetNodeInfo->RoomType, TargetNodeInfo->RewardCategory);
-				}
+				Door->SetDisplayInfo(TargetNodeInfo->RoomType, TargetNodeInfo->RewardCategory);
 			}
 		}
-		else
+
+		// 초기 숨김 상태 (ShowDoors에서 표시)
+		Door->SetActorHiddenInGame(true);
+		Door->SetActorEnableCollision(false);
+		Door->SetInteractable(false);
+
+		Doors.Add(Door);
+		RegisterSpawnedActor(Door);
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("PRRoomController: Spawned %d doors (Room %d)"), DoorCount, RoomIndex);
+}
+
+void APRRoomController::DestroyDoors()
+{
+	for (APRRoomDoor* Door : Doors)
+	{
+		if (IsValid(Door))
 		{
-			Door->ClearAssignment();
+			Door->Destroy();
 		}
 	}
+	Doors.Empty();
 }
 
 FTransform APRRoomController::GetPlayerSpawnTransform() const
@@ -233,6 +252,9 @@ AActor* APRRoomController::SpawnReward(TSubclassOf<AActor> RewardActorClass)
 	{
 		RewardActor->SetRewardPoolPreset(NodeInfo.RewardPoolPreset);
 	}
+
+	// 스폰 액터 등록
+	RegisterSpawnedActor(SpawnedActor);
 
 	return SpawnedActor;
 }
@@ -337,6 +359,8 @@ int32 APRRoomController::ExtractRoomIndexFromLevelName() const
 
 void APRRoomController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	// 동적 스폰 액터 정리
+	DestroyAllSpawnedActors();
 	// 웨이브 클리어 델리게이트 해제
 	if (WaveClearHandle.IsValid())
 	{
@@ -352,4 +376,24 @@ void APRRoomController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 
 	Super::EndPlay(EndPlayReason);
+}
+
+void APRRoomController::RegisterSpawnedActor(AActor* Actor)
+{
+	if (IsValid(Actor))
+	{
+		SpawnedActors.Add(Actor);
+	}
+}
+
+void APRRoomController::DestroyAllSpawnedActors()
+{
+	for (TObjectPtr<AActor>& Actor : SpawnedActors)
+	{
+		if (IsValid(Actor))
+		{
+			Actor->Destroy();
+		}
+	}
+	SpawnedActors.Empty();
 }

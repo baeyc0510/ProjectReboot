@@ -120,7 +120,7 @@ void UPRGA_Leviathan_PlasmaWave::SpawnWaves()
 	FVector SpawnLocation = AvatarActor->GetActorLocation();
 	if (UWorld* World = GetWorld())
 	{
-		const float GroundTraceHeight = 1000.f;
+		const float GroundTraceHeight = 3000.f;
 		const FVector TraceStart = SpawnLocation + FVector(0.f, 0.f, GroundTraceHeight);
 		const FVector TraceEnd = SpawnLocation - FVector(0.f, 0.f, GroundTraceHeight);
 
@@ -135,7 +135,8 @@ void UPRGA_Leviathan_PlasmaWave::SpawnWaves()
 	}
 
 	// 타겟 방향 계산
-	const FVector Direction = AvatarActor->GetActorForwardVector();
+	FVector Direction = AvatarActor->GetActorForwardVector() * FVector(1.0f,1.0f,0.0f);
+	Direction.Normalize();
 
 	// 부채꼴 3방향 스폰
 	const FVector RightVector = FVector::CrossProduct(FVector::UpVector, Direction).GetSafeNormal();

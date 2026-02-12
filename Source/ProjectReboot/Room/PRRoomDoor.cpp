@@ -5,11 +5,19 @@
 #include "PRStageManagerSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "ProjectReboot/Game/PRGameplayGameMode.h"
+#include "ProjectReboot/Interaction/PRBillboardWidgetComponent.h"
+#include "ProjectReboot/UI/PRBillboardInfoWidget.h"
 
 APRRoomDoor::APRRoomDoor()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	InteractionText = FText::FromString(TEXT("다음 방"));
+
+	USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
+	SetRootComponent(Root);
+
+	BillboardWidget = CreateDefaultSubobject<UPRBillboardWidgetComponent>(TEXT("BillboardWidget"));
+	BillboardWidget->SetupAttachment(Root);
 }
 
 void APRRoomDoor::BeginPlay()
@@ -74,6 +82,7 @@ void APRRoomDoor::SetDisplayInfo(EPRRoomType InRoomType, FGameplayTag InRewardCa
 {
 	DisplayRoomType = InRoomType;
 	DisplayRewardCategory = InRewardCategory;
+	UpdateBillboardFromCategory(InRewardCategory);
 	OnDisplayInfoSet(InRoomType, InRewardCategory);
 }
 
@@ -82,5 +91,39 @@ void APRRoomDoor::ClearAssignment()
 	TargetRoomIndex = -1;
 	DisplayRoomType = EPRRoomType::Default;
 	DisplayRewardCategory = FGameplayTag();
+
+	// 빌보드 위젯 숨김
+	if (IsValid(BillboardWidget))
+	{
+		BillboardWidget->SetVisibility(false);
+	}
+
 	OnAssignmentCleared();
+}
+
+void APRRoomDoor::UpdateBillboardFromCategory(FGameplayTag InRewardCategory)
+{
+	if (!IsValid(BillboardWidget))
+	{
+		return;
+	}
+
+	// 매핑에서 카테고리 정보 검색
+	const FPRRewardCategoryDisplayInfo* DisplayInfo = RewardCategoryDisplayMap.Find(InRewardCategory);
+	if (!DisplayInfo)
+	{
+		BillboardWidget->SetVisibility(false);
+		return;
+	}
+
+	// 위젯 초기화 및 콘텐츠 설정
+	BillboardWidget->InitWidget();
+
+	UPRBillboardInfoWidget* InfoWidget = Cast<UPRBillboardInfoWidget>(BillboardWidget->GetWidget());
+	if (IsValid(InfoWidget))
+	{
+		InfoWidget->SetContent(DisplayInfo->DisplayText, DisplayInfo->Icon);
+	}
+
+	BillboardWidget->SetVisibility(true);
 }

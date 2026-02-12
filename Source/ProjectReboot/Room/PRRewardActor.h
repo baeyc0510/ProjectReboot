@@ -38,7 +38,8 @@ protected:
 	virtual bool CanInteract(APawn* Interactor) const override;
 	virtual void Interact(APawn* Interactor) override;
 	virtual FText GetInteractionText() const override;
-
+	virtual USoundBase* GetInteractionSound() override {return InteractionSound;}
+	
 	// 보상 선택 패널 표시
 	void ShowRewardPanel(APawn* Interactor);
 
@@ -63,10 +64,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Reward")
 	int32 RewardCount = 3;
 
+	// 사운드 세팅
+	UPROPERTY(EditDefaultsOnly, Category = "Interaction")
+	TObjectPtr<USoundBase> InteractionSound;
+	
 	// 상호작용 가능 여부
 	UPROPERTY(BlueprintReadWrite, Category = "Interaction")
 	bool bIsInteractable = true;
-
+	
 private:
 	// 현재 표시 중인 패널
 	UPROPERTY()

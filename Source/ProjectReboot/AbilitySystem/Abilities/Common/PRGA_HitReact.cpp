@@ -29,6 +29,9 @@ void UPRGA_HitReact::ActivateAbility(const FGameplayAbilitySpecHandle Handle, co
 	// 피격 상태 GE 적용
 	ApplyHitState(TriggerEventData);
 
+	// 피격 폭발 큐 실행 (ImpactNormal을 UpVector로 정렬)
+	ExecuteHitExplodeCue(TriggerEventData);
+
 	if (UAnimMontage* HitMontage = GetHitMontage(TriggerEventData))
 	{
 		PlayHitMontage(HitMontage);
@@ -186,4 +189,25 @@ void UPRGA_HitReact::OnMontageBlendOut()
 void UPRGA_HitReact::OnMontageCancelled()
 {
 	K2_EndAbility();
+}
+
+void UPRGA_HitReact::ExecuteHitExplodeCue(const FGameplayEventData* TriggerEventData)
+{
+	if (!TriggerEventData || !TriggerEventData->ContextHandle.IsValid())
+	{
+		return;
+	}
+
+	FGameplayCueParameters CueParams;
+	CueParams.EffectContext = TriggerEventData->ContextHandle;
+
+	// GCN Burst PlacementInfo가 HitResult.ImpactNormal로 회전을 결정하므로 ImpactNormal이 z축이 되게 변환 
+	if (const FHitResult* HitResult = CueParams.EffectContext.GetHitResult())
+	{
+		FHitResult ModifiedHit = *HitResult;
+		ModifiedHit.ImpactNormal = FRotationMatrix::MakeFromZ(HitResult->ImpactNormal).GetUnitAxis(EAxis::X);
+		CueParams.EffectContext.AddHitResult(ModifiedHit, true);
+	}
+
+	K2_ExecuteGameplayCueWithParams(TAG_GameplayCue_Character_Explode, CueParams);
 }

@@ -696,7 +696,7 @@ FPRRoomSpawnInfo UPRStageManagerSubsystem::CreateSpawnInfo(const FPRRoomSpawnCon
 		{
 			if (TSubclassOf<APREnemyCharacter> EnemyClass = SelectEnemyFromPool(ThemeData->NormalEnemies, Difficulty, Random))
 			{
-				WaveInfo.NormalEnemies.Add(EnemyClass);
+				WaveInfo.EnemySpawnMap.FindOrAdd(EnemyClass) += 1;
 			}
 		}
 
@@ -706,7 +706,7 @@ FPRRoomSpawnInfo UPRStageManagerSubsystem::CreateSpawnInfo(const FPRRoomSpawnCon
 		{
 			if (TSubclassOf<APREnemyCharacter> EnemyClass = SelectEnemyFromPool(ThemeData->EliteEnemies, Difficulty, Random))
 			{
-				WaveInfo.EliteEnemies.Add(EnemyClass);
+				WaveInfo.EnemySpawnMap.FindOrAdd(EnemyClass) += 1;
 			}
 		}
 
@@ -718,7 +718,7 @@ FPRRoomSpawnInfo UPRStageManagerSubsystem::CreateSpawnInfo(const FPRRoomSpawnCon
 			{
 				if (TSubclassOf<APREnemyCharacter> EnemyClass = SelectEnemyFromPool(ThemeData->MiniBosses, Difficulty, Random))
 				{
-					WaveInfo.MiniBosses.Add(EnemyClass);
+					WaveInfo.EnemySpawnMap.FindOrAdd(EnemyClass) += 1;
 				}
 			}
 		}

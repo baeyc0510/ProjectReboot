@@ -3,9 +3,12 @@
 
 #include "EquipmentInstance.h"
 #include "Components/MeshComponent.h"
+#include "Components/PrimitiveComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "ProjectReboot/Equipment/PREquipActionData.h"
+#include "ProjectReboot/Utils/PRBlueprintFunctionLibrary.h"
 
 void UEquipmentInstance::Initialize(USceneComponent* InAttachTarget, UPREquipActionData* InPrimaryActionData)
 {
@@ -58,6 +61,7 @@ void UEquipmentInstance::AttachPart(UPREquipActionData* InActionData)
     // 컴포넌트 생성
     bool bIsPrimaryMesh = InActionData == PrimaryActionData;
     USceneComponent* NewComponent = CreateMeshComponent(SpawnInfo,bIsPrimaryMesh);
+    ApplyCollisionSettings(NewComponent, InActionData->EquipmentVisualSettings);
 
     FSpawnedVisualEntry Entry;
     Entry.SpawnedComponent = NewComponent;
@@ -81,16 +85,8 @@ void UEquipmentInstance::DetachPart(UPREquipActionData* InActionData)
 
     AttachedActions.Remove(InActionData);
 
-    if (FSpawnedVisualEntry* Entry = SpawnedVisuals.Find(InActionData))
-    {
-        // 컴포넌트 제거
-        if (Entry->SpawnedComponent)
-        {
-            Entry->SpawnedComponent->DestroyComponent();
-        }
-
-        SpawnedVisuals.Remove(InActionData);
-    }
+    DestroyVisualComponent(InActionData);
+    SpawnedVisuals.Remove(InActionData);
 
     // 태그 제거
     EquipmentTags.RemoveTags(InActionData->EquipmentTags);
@@ -156,18 +152,15 @@ void UEquipmentInstance::RefreshVisuals()
 
         if (bNeedsRefresh)
         {
-            // 기존 컴포넌트 제거
-            if (Entry.SpawnedComponent)
-            {
-                Entry.SpawnedComponent->DestroyComponent();
-                Entry.SpawnedComponent = nullptr;
-            }
+            // 기존 비주얼 정리 (Dissolve 포함)
+            DestroyVisualComponent(Data);
 
             // 새 컴포넌트 생성
             if (NewSpawnInfo.IsValid())
             {
                 bool bIsPrimaryMesh = Data == PrimaryActionData;
                 Entry.SpawnedComponent = CreateMeshComponent(NewSpawnInfo,bIsPrimaryMesh);
+                ApplyCollisionSettings(Entry.SpawnedComponent, Data->EquipmentVisualSettings);
             }
 
             Entry.UsedSpawnInfo = NewSpawnInfo;
@@ -197,6 +190,10 @@ void UEquipmentInstance::RespawnVisuals()
 
 void UEquipmentInstance::DestroyAllVisuals()
 {
+    // Dissolve 전체 정리
+    ActiveDissolves.Empty();
+    ClearDissolveTimer();
+
     for (auto& Pair : SpawnedVisuals)
     {
         if (Pair.Value.SpawnedComponent)
@@ -207,6 +204,11 @@ void UEquipmentInstance::DestroyAllVisuals()
 
     SpawnedVisuals.Empty();
     EquipmentTags.Reset();
+}
+
+void UEquipmentInstance::GetSpawnedVisualInfo(TMap<UPREquipActionData*, FSpawnedVisualEntry>& OutVisualInfo) const
+{
+	OutVisualInfo = SpawnedVisuals;
 }
 
 void UEquipmentInstance::AddDynamicTag(FGameplayTag TagToAdd)
@@ -364,6 +366,165 @@ void UEquipmentInstance::OnEquipmentTagsChanged()
     // 하위 클래스에서 override하여 태그 변경에 따른 처리 수행
 }
 
+void UEquipmentInstance::DestroyVisualComponent(UPREquipActionData* ActionData)
+{
+	// Dissolve 상태 정리
+	ActiveDissolves.Remove(ActionData);
+	if (ActiveDissolves.IsEmpty())
+	{
+		ClearDissolveTimer();
+	}
+
+	// 컴포넌트 파괴
+	if (FSpawnedVisualEntry* Entry = SpawnedVisuals.Find(ActionData))
+	{
+		if (Entry->SpawnedComponent)
+		{
+			Entry->SpawnedComponent->DestroyComponent();
+			Entry->SpawnedComponent = nullptr;
+		}
+	}
+}
+
+void UEquipmentInstance::ClearDissolveTimer()
+{
+	if (!DissolveTimerHandle.IsValid())
+	{
+		return;
+	}
+
+	UWorld* World = AttachTarget.IsValid() ? AttachTarget->GetWorld() : nullptr;
+	if (IsValid(World))
+	{
+		World->GetTimerManager().ClearTimer(DissolveTimerHandle);
+	}
+	DissolveTimerHandle.Invalidate();
+}
+
+void UEquipmentInstance::StartDissolve(float Time, bool bReverse)
+{
+	for (auto& [ActionData, Entry] : SpawnedVisuals)
+	{
+		if (IsValid(ActionData))
+		{
+			StartPartDissolve(ActionData, Time, bReverse);
+		}
+	}
+}
+
+void UEquipmentInstance::StartPartDissolve(UPREquipActionData* ActionData, float Time, bool bReverse)
+{
+	if (!IsValid(ActionData))
+	{
+		return;
+	}
+
+	FSpawnedVisualEntry* VisualEntry = SpawnedVisuals.Find(ActionData);
+	if (!VisualEntry)
+	{
+		return;
+	}
+
+	UMeshComponent* MeshComp = Cast<UMeshComponent>(VisualEntry->SpawnedComponent);
+	if (!IsValid(MeshComp))
+	{
+		return;
+	}
+
+	UWorld* World = AttachTarget.IsValid() ? AttachTarget->GetWorld() : nullptr;
+	if (!IsValid(World))
+	{
+		return;
+	}
+
+	TArray<UMaterialInstanceDynamic*> Mids = UPRBlueprintFunctionLibrary::GetAllDynamicMaterials(MeshComp);
+	if (Mids.IsEmpty())
+	{
+		return;
+	}
+
+	FDissolveEntry Entry;
+	Entry.Materials = Mids;
+	Entry.StartTime = World->GetTimeSeconds();
+	Entry.Duration = FMath::Max(Time, SMALL_NUMBER);
+	Entry.bReverse = bReverse;
+
+	// 초기값 설정
+	float InitialValue = bReverse ? 1.0f : 0.0f;
+	if (bUseDissolvePercentage)
+	{
+		InitialValue *= 100.0f;
+	}
+	for (UMaterialInstanceDynamic* Mid : Entry.Materials)
+	{
+		if (IsValid(Mid))
+		{
+			Mid->SetScalarParameterValue(DissolveParameterName, InitialValue);
+		}
+	}
+
+	ActiveDissolves.Add(ActionData, MoveTemp(Entry));
+
+	// 타이머 시작 (이미 돌고 있지 않다면)
+	if (!DissolveTimerHandle.IsValid())
+	{
+		World->GetTimerManager().SetTimer(
+			DissolveTimerHandle,
+			FTimerDelegate::CreateUObject(this, &ThisClass::UpdateDissolve),
+			1.0f / 60.0f,
+			true
+		);
+	}
+}
+
+void UEquipmentInstance::UpdateDissolve()
+{
+	UWorld* World = AttachTarget.IsValid() ? AttachTarget->GetWorld() : nullptr;
+	if (!IsValid(World))
+	{
+		ActiveDissolves.Empty();
+		return;
+	}
+
+	float CurrentTime = World->GetTimeSeconds();
+	TArray<UPREquipActionData*> CompletedEntries;
+
+	for (auto& [ActionData, Entry] : ActiveDissolves)
+	{
+		float Elapsed = CurrentTime - Entry.StartTime;
+		float Alpha = FMath::Clamp(Elapsed / Entry.Duration, 0.0f, 1.0f);
+
+		if (Entry.bReverse)
+		{
+			Alpha = 1.0f - Alpha;
+		}
+
+		float Value = bUseDissolvePercentage ? Alpha * 100.0f : Alpha;
+		for (UMaterialInstanceDynamic* Mid : Entry.Materials)
+		{
+			if (IsValid(Mid))
+			{
+				Mid->SetScalarParameterValue(DissolveParameterName, Value);
+			}
+		}
+
+		if (Elapsed >= Entry.Duration)
+		{
+			CompletedEntries.Add(ActionData);
+		}
+	}
+
+	for (UPREquipActionData* Completed : CompletedEntries)
+	{
+		ActiveDissolves.Remove(Completed);
+	}
+
+	if (ActiveDissolves.IsEmpty())
+	{
+		ClearDissolveTimer();
+	}
+}
+
 void UEquipmentInstance::ApplyMaterialOverrides(UMeshComponent* MeshComponent, const TMap<int32, UMaterialInterface*>& MaterialOverrides)
 {
     if (!IsValid(MeshComponent))
@@ -378,4 +539,21 @@ void UEquipmentInstance::ApplyMaterialOverrides(UMeshComponent* MeshComponent, c
             MeshComponent->SetMaterial(Pair.Key, Pair.Value);
         }
     }
+}
+
+void UEquipmentInstance::ApplyCollisionSettings(USceneComponent* Component, const FEquipmentVisualSettings& VisualSettings)
+{
+    if (VisualSettings.CollisionProfileName == UCollisionProfile::NoCollision_ProfileName)
+    {
+        return;
+    }
+
+    UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(Component);
+    if (!IsValid(PrimComp))
+    {
+        return;
+    }
+
+    PrimComp->SetCollisionProfileName(VisualSettings.CollisionProfileName);
+    PrimComp->SetCollisionEnabled(VisualSettings.CollisionEnabled);   
 }

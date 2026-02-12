@@ -27,7 +27,9 @@ public:
 	/*~ IPRPrewarmInterface ~*/
 	// 프리웜 대상 에셋 목록 수집
 	virtual void GetPrewarmNiagaraAssets(TArray<TSoftObjectPtr<UNiagaraSystem>>& OutAssets) const override;
-
+	
+	virtual void GetPrewarmSoundAssets(TArray<TSoftObjectPtr<USoundBase>>& OutAssets) const override;
+	
 	// 프리웜 대상 자식 오브젝트 수집
 	virtual void GetPrewarmChildren(TArray<UObject*>& OutChildren) const override;
 
@@ -79,4 +81,10 @@ public:
 	// 프리웜 대상
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Prewarm")
 	TArray<TScriptInterface<IPRPrewarmInterface>> AdditionalPrewarmTargets;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Prewarm")
+	TArray<TSoftObjectPtr<UNiagaraSystem>> AdditionalPrewarmSystems;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Prewarm")
+	TArray<TSoftObjectPtr<USoundBase>> AdditionalPrewarmSounds;
 };

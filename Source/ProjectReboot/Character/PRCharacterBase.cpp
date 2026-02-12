@@ -11,6 +11,8 @@
 #include "ProjectReboot/AbilitySystem/PRAbilitySystemComponent.h"
 #include "ProjectReboot/AbilitySystem/PRCommonAttributeSet.h"
 #include "ProjectReboot/Animation/PRMontageSet.h"
+#include "Components/AudioComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 
 // Sets default values
@@ -133,6 +135,76 @@ void APRCharacterBase::AddDefaultAbilitySystemTags() const
 	{
 		AbilitySystem->AddLooseGameplayTags(DefaultAbilitySystemTags);
 	}
+}
+
+UAudioComponent* APRCharacterBase::PlayLoopSound(FGameplayTag SoundTag, USoundBase* Sound)
+{
+	if (!SoundTag.IsValid() || !IsValid(Sound))
+	{
+		return nullptr;
+	}
+
+	// 동일 태그에 동일 사운드가 이미 재생 중이면 유지 (페이드아웃 중이면 취소)
+	if (TObjectPtr<UAudioComponent>* Existing = ActiveLoopSounds.Find(SoundTag))
+	{
+		if (IsValid(*Existing) && (*Existing)->IsPlaying() && (*Existing)->Sound == Sound)
+		{
+			(*Existing)->bIsFadingOut = false;
+			(*Existing)->FadeIn(0.1f,1.0f);
+			return *Existing;
+		}
+		StopLoopSound(SoundTag);
+	}
+
+	UAudioComponent* AudioComp = UGameplayStatics::SpawnSoundAttached(
+		Sound, GetRootComponent(), NAME_None,
+		FVector::ZeroVector, EAttachLocation::KeepRelativeOffset,
+		true);
+
+	if (IsValid(AudioComp))
+	{
+		ActiveLoopSounds.Add(SoundTag, AudioComp);
+	}
+
+	return AudioComp;
+}
+
+void APRCharacterBase::StopLoopSound(FGameplayTag SoundTag, float FadeOutDuration)
+{
+	if (TObjectPtr<UAudioComponent>* Found = ActiveLoopSounds.Find(SoundTag))
+	{
+		if (IsValid(*Found))
+		{
+			if (FadeOutDuration > 0.0f)
+			{
+				(*Found)->FadeOut(FadeOutDuration, 0.0f);
+			}
+			else
+			{
+				(*Found)->Stop();
+			}
+		}
+		ActiveLoopSounds.Remove(SoundTag);
+	}
+}
+
+void APRCharacterBase::StopAllLoopSounds(float FadeOutDuration)
+{
+	for (auto& [Tag, AudioComp] : ActiveLoopSounds)
+	{
+		if (IsValid(AudioComp))
+		{
+			if (FadeOutDuration > 0.0f)
+			{
+				AudioComp->FadeOut(FadeOutDuration, 0.0f);
+			}
+			else
+			{
+				AudioComp->Stop();
+			}
+		}
+	}
+	ActiveLoopSounds.Empty();
 }
 
 void APRCharacterBase::HandleCollisionAndMovementOnDeath()

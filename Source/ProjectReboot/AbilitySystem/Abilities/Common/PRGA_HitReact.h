@@ -33,6 +33,9 @@ protected:
 	// 피격 상태 GE 적용
 	void ApplyHitState(const FGameplayEventData* TriggerEventData);
 
+	// 피격 폭발 큐 실행 (Normal을 UpVector로 정렬)
+	void ExecuteHitExplodeCue(const FGameplayEventData* TriggerEventData);
+
 	// 피격 몽타주 재생
 	void PlayHitMontage(UAnimMontage* MontageToPlay);
 

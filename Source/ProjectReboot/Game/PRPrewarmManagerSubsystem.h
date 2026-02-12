@@ -7,6 +7,7 @@
 #include "PRPrewarmManagerSubsystem.generated.h"
 
 class UNiagaraSystem;
+class USoundBase;
 struct FStreamableHandle;
 
 // 프리웜 완료 델리게이트
@@ -35,6 +36,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Prewarm")
 	bool TryPrewarmNiagaraSystem(UNiagaraSystem* System);
 
+	// 사운드 프리웜 실행 (중복 방지)
+	UFUNCTION(BlueprintCallable, Category = "Prewarm")
+	bool TryPrewarmSound(USoundBase* Sound);
+
 	// 프리웜 실행 (인터페이스 기반 수집)
 	UFUNCTION(BlueprintCallable, Category = "Prewarm")
 	void ExecutePrewarm(const TArray<UObject*>& RootObjects, bool bLoadSynchronously = true);
@@ -48,7 +53,7 @@ public:
 
 private:
 	// 프리웜 대상 수집 (재귀)
-	void CollectPrewarmFromObject(UObject* RootObject, TSet<const UObject*>& Visited, TSet<FSoftObjectPath>& OutAssets) const;
+	void CollectPrewarmFromObject(UObject* RootObject, TSet<const UObject*>& Visited, TSet<FSoftObjectPath>& OutNiagaraAssets, TSet<FSoftObjectPath>& OutSoundAssets) const;
 
 	// 비동기 로딩 완료 처리
 	void HandleAsyncPrewarmLoaded();
@@ -61,8 +66,11 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Prewarm")
 	FVector PrewarmScale = FVector(0.01f, 0.01f, 0.01f);
 
-	// 비동기 로딩 대기 목록
-	TArray<FSoftObjectPath> PendingPrewarmAssets;
+	// 비동기 로딩 대기 목록 (나이아가라)
+	TArray<FSoftObjectPath> PendingNiagaraAssets;
+
+	// 비동기 로딩 대기 목록 (사운드)
+	TArray<FSoftObjectPath> PendingSoundAssets;
 
 	// 비동기 로딩 핸들
 	TSharedPtr<FStreamableHandle> PrewarmHandle;

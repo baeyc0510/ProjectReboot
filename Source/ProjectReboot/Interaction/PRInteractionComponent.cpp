@@ -7,6 +7,7 @@
 #include "Engine/OverlapResult.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/PlayerController.h"
+#include "Kismet/GameplayStatics.h"
 #include "ProjectReboot/Character/PRPlayerCharacter.h"
 #include "ProjectReboot/Interaction/PRInteractableInterface.h"
 #include "ProjectReboot/UI/Interaction/PRInteractionViewModel.h"
@@ -60,6 +61,12 @@ bool UPRInteractionComponent::TryInteract()
 	}
 
 	InteractableInterface->Interact(Player);
+	
+	if (USoundBase* InteractionSound = InteractableInterface->GetInteractionSound())
+	{
+		UGameplayStatics::PlaySound2D(this, InteractionSound);
+	}
+	
 	return true;
 }
 

@@ -11,20 +11,9 @@ class UTexture;
 
 /**
  * 슬로우 모션 GameplayCue (지속형)
- * - GE 지속 시간 동안 글로벌 타임 딜레이션 적용
- * - 타겟(플레이어)은 CustomTimeDilation으로 정상 속도 유지
- * - 포스트 프로세스 LUT로 비주얼 연출
- *
- * GE Stacking 설정 (Duration 갱신만 되도록):
- * - Stacking Type: Aggregate by Target
- * - Stack Limit Count: 1
- * - Stack Duration Refresh Policy: Refresh on Successful Application
- * - Stack Expiration Policy: Clear Entire Stack
- *
- * 콜백 동작:
- * - 최초 GE 적용 시: OnActive 호출 (슬로모션 시작)
- * - Duration 갱신 시: OnActive 재호출 안됨 (GCN 이미 활성 상태)
- * - Duration 만료 시: OnRemove 호출 (슬로모션 종료)
+ * - PRGA_SlowMotion이 AddGameplayCue/RemoveGameplayCue로 라이프사이클 관리
+ * - 타임 딜레이션은 즉시 적용/해제
+ * - LUT 포스트 프로세스는 페이드 인/아웃 보간
  */
 UCLASS()
 class PROJECTREBOOT_API APRGCN_SlowMotion : public AGameplayCueNotify_Actor
@@ -33,6 +22,9 @@ class PROJECTREBOOT_API APRGCN_SlowMotion : public AGameplayCueNotify_Actor
 
 public:
 	APRGCN_SlowMotion();
+
+	/*~ AActor Interface ~*/
+	virtual void Tick(float DeltaTime) override;
 
 	/*~ AGameplayCueNotify_Actor Interface ~*/
 	virtual bool OnActive_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) override;
@@ -45,10 +37,10 @@ protected:
 	// 슬로우 모션 해제
 	void RestoreNormalTime(AActor* TargetActor);
 
-	// 포스트 프로세스 적용
-	void ApplyPostProcess(AActor* TargetActor);
+	// 포스트 프로세스 초기 설정 (LUT 바인딩, 강도 0에서 시작)
+	void SetupPostProcess(AActor* TargetActor);
 
-	// 포스트 프로세스 해제
+	// 포스트 프로세스 원본 복원
 	void RestorePostProcess();
 
 protected:
@@ -64,9 +56,17 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SlowMotion|PostProcess")
 	TObjectPtr<UTexture> SlowMotionLUT;
 
-	// 슬로우 모션 LUT 강도 (0.0 ~ 1.0)
+	// 슬로우 모션 LUT 목표 강도 (0.0 ~ 1.0)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SlowMotion|PostProcess", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float SlowMotionLUTIntensity = 1.0f;
+
+	// LUT 페이드 인 시간 (초, 실시간 기준)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SlowMotion|PostProcess", meta = (ClampMin = "0.0"))
+	float LUTFadeInDuration = 0.15f;
+
+	// LUT 페이드 아웃 시간 (초, 실시간 기준)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SlowMotion|PostProcess", meta = (ClampMin = "0.0"))
+	float LUTFadeOutDuration = 0.15f;
 
 private:
 	// 원래 글로벌 타임 딜레이션 저장
@@ -87,6 +87,12 @@ private:
 	// 타겟 액터 캐시
 	TWeakObjectPtr<AActor> CachedTargetActor;
 
+	// 현재 LUT 보간 강도
+	float CurrentLUTIntensity = 0.0f;
+
 	// 포스트 프로세스 적용 여부
 	bool bPostProcessApplied = false;
+
+	// 페이드 아웃 진행 중 여부
+	bool bFadingOut = false;
 };

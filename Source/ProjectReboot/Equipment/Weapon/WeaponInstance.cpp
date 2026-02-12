@@ -148,7 +148,6 @@ void UWeaponInstance::WarmupVFX()
 	WarmupSystems.Add(FXSettings.MuzzleFlashVFX);
 	WarmupSystems.Add(FXSettings.TrailVFX);
 	WarmupSystems.Add(FXSettings.DefaultImpactVFX);
-	WarmupSystems.Add(FXSettings.ExplodeVFX);
 
 	for (const TObjectPtr<UNiagaraSystem>& System : WarmupSystems)
 	{

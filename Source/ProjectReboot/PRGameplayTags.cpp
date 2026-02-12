@@ -173,14 +173,16 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Combat_Duration, "SetByCaller.Combat.Dura
 UE_DEFINE_GAMEPLAY_TAG(TAG_Target, "Target");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Target_Lockable, "Target.Lockable");
 
-/*~ GameplayCue Tags - Weapon Impact ~*/
+/*~ GameplayCue Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Weapon_Impact, "GameplayCue.Weapon.Impact");
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Weapon_Impact_Bullet, "GameplayCue.Weapon.Impact.Bullet");
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Weapon_Impact_Beam, "GameplayCue.Weapon.Impact.Beam");
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Weapon_Impact_Missile, "GameplayCue.Weapon.Impact.Missile");
-
-/*~ GameplayCue Tags - SlowMotion ~*/
-UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_SlowMotion, "GameplayCue.SlowMotion");
+UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Character_Dash, "GameplayCue.Character.Dash");
+UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Character_SlowMotion, "GameplayCue.Character.SlowMotion");
+UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Character_Explode, "GameplayCue.Character.Explode");
+UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Character_Dissolve, "GameplayCue.Character.Dissolve");
+UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Character_Appear, "GameplayCue.Character.Appear");
 
 /*~ Upgrade Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Upgrade, "Upgrade");

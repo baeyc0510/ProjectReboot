@@ -11,6 +11,18 @@ FPrimaryAssetId UPRStageConfigData::GetPrimaryAssetId() const
 
 void UPRStageConfigData::GetPrewarmNiagaraAssets(TArray<TSoftObjectPtr<UNiagaraSystem>>& OutAssets) const
 {
+	for (TSoftObjectPtr<UNiagaraSystem> PrewarmTarget : AdditionalPrewarmSystems)
+	{
+		OutAssets.Add(PrewarmTarget);
+	}
+}
+
+void UPRStageConfigData::GetPrewarmSoundAssets(TArray<TSoftObjectPtr<USoundBase>>& OutAssets) const
+{
+	for (TSoftObjectPtr<USoundBase> PrewarmTarget : AdditionalPrewarmSounds)
+	{
+		OutAssets.Add(PrewarmTarget);
+	}
 }
 
 void UPRStageConfigData::GetPrewarmChildren(TArray<UObject*>& OutChildren) const

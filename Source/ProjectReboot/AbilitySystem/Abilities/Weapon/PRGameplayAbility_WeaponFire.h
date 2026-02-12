@@ -69,5 +69,5 @@ public:
 
 	// 트레이스 채널
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
-	TEnumAsByte<ECollisionChannel> TraceChannel = PRCollision::AttackTrace;
+	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Visibility;
 };

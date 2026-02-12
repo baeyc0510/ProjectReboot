@@ -9,6 +9,7 @@
 #include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/Game/PRGameplayGameState.h"
 #include "ProjectReboot/Camera/PRCameraBlueprintLibrary.h"
+#include "ProjectReboot/Equipment/EquipmentInstance.h"
 #include "ProjectReboot/Equipment/PREquipmentBlueprintLibrary.h"
 #include "ProjectReboot/Equipment/PREquipActionData.h"
 #include "ProjectReboot/Equipment/PREquipmentManagerComponent.h"
@@ -213,6 +214,12 @@ void UPRActionDecisionPanel::HandleEquipAction(UPREquipActionData* EquipAction, 
 		return;
 	}
 
+	TMap<UPREquipActionData*, FSpawnedVisualEntry> OldVisualInfo;
+	if (UEquipmentInstance* EquipmentInstance = EquipmentManager->GetEquipmentInstance(EquipAction->EquipmentSlot))
+	{
+		EquipmentInstance->GetSpawnedVisualInfo(OldVisualInfo);
+	}
+	
 	if (bEquip)
 	{
 		// 새 장비 미리보기 적용
@@ -222,6 +229,19 @@ void UPRActionDecisionPanel::HandleEquipAction(UPREquipActionData* EquipAction, 
 	{
 		// 선택 해제 시 원래 장비로 복원
 		RestoreSlotToOriginal(EquipAction->EquipmentSlot);
+	}
+	
+	if (UEquipmentInstance* EquipmentInstance = EquipmentManager->GetEquipmentInstance(EquipAction->EquipmentSlot))
+	{
+		TMap<UPREquipActionData*, FSpawnedVisualEntry> NewVisualInfo;
+		EquipmentInstance->GetSpawnedVisualInfo(NewVisualInfo);
+
+		// 달라진 파츠의 Dissolve 이펙트 시작
+		TArray<UPREquipActionData*> Diff = UPREquipmentBlueprintLibrary::GetChangedMeshSpawnInfoActions(OldVisualInfo, NewVisualInfo);
+		for (UPREquipActionData* ChangedAction : Diff)
+		{
+			EquipmentInstance->StartPartDissolve(ChangedAction,1.0f,true);	
+		}
 	}
 }
 

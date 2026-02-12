@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Blueprint/UserWidget.h"
 #include "PRActionListItemWidget.generated.h"
 
@@ -67,6 +68,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActionList|Style")
 	FLinearColor SelectedBorderColor = FLinearColor(0.3f, 0.8f, 1.f, 0.8f);
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActionList|Sound")
+	TMap<FGameplayTag, USoundBase*> ActionClickSoundMap;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActionList|Sound")
+	TObjectPtr<USoundBase> DefaultClickSound;
+	
 private:
 	UPROPERTY()
 	TObjectPtr<URogueliteActionData> ActionData;

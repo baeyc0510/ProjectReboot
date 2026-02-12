@@ -12,6 +12,8 @@
 class UPRMontageSet;
 class UPRCommonAttributeSet;
 class UPRAbilitySystemComponent;
+class UAudioComponent;
+class USoundBase;
 struct FHitResult;
 
 UCLASS()
@@ -39,9 +41,22 @@ public:
 	/*~ APRCharacterBase Interface ~*/
 	float GetBaseMoveSpeed() const {return BaseMoveSpeed;}
 	float GetMaxMoveSpeed() const;
-	
+
 	void AddDefaultAbilitySystemTags() const;
 	virtual void HandleCollisionAndMovementOnDeath();
+
+	/*~ Loop Sound ~*/
+	// 태그 기반 루프 사운드 재생
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+	UAudioComponent* PlayLoopSound(FGameplayTag SoundTag, USoundBase* Sound);
+
+	// 태그 기반 루프 사운드 정지 (FadeOutDuration > 0이면 페이드아웃)
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+	void StopLoopSound(FGameplayTag SoundTag, float FadeOutDuration = 0.0f);
+
+	// 모든 루프 사운드 정지 (FadeOutDuration > 0이면 페이드아웃)
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+	void StopAllLoopSounds(float FadeOutDuration = 0.0f);
 	
 protected:
 	/** MovementConfigs */
@@ -65,4 +80,9 @@ protected:
 	
 	UPROPERTY(BlueprintReadOnly, Category = "PR AbilitySystem")
 	TObjectPtr<UPRCommonAttributeSet> CommonAttributeSet;
+
+	/*~ Loop Sound ~*/
+	// 태그별 활성 루프 사운드 컴포넌트
+	UPROPERTY(Transient)
+	TMap<FGameplayTag, TObjectPtr<UAudioComponent>> ActiveLoopSounds;
 };

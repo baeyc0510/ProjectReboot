@@ -65,8 +65,11 @@ protected:
 	
 public:
 	// 방 안에 배치된 문(Door) 액터들, TODO: Interface 활용한 Open / Close 처리
-	UPROPERTY(EditAnywhere, Category = "Room")
+	UPROPERTY(EditAnywhere, Category = "Room|Door")
 	TArray<AActor*> Doors;
+	
+	UPROPERTY(EditAnywhere, Category = "Room|Door")
+	TObjectPtr<USoundBase> DoorActivationSound;
 
 	// 플레이어 스폰 위치 (nullptr이면 RoomController 위치 사용)
 	UPROPERTY(EditAnywhere, Category = "Room")

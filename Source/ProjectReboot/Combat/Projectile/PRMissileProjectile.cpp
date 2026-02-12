@@ -9,6 +9,7 @@
 #include "NiagaraSystem.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "ProjectReboot/ProjectReboot.h"
 #include "ProjectReboot/PRGameplayTags.h"
@@ -244,12 +245,9 @@ void APRMissileProjectile::Explode()
 
 void APRMissileProjectile::SpawnExplosionEffect()
 {
-	if (!IsValid(ExplosionVFX))
+	if (IsValid(ExplosionVFX))
 	{
-		return;
-	}
-
-	UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
 		GetWorld(),
 		ExplosionVFX,
 		GetActorLocation(),
@@ -257,8 +255,12 @@ void APRMissileProjectile::SpawnExplosionEffect()
 		FVector(1.0f),
 		true,
 		true,
-		ENCPoolMethod::AutoRelease
-	);
+		ENCPoolMethod::AutoRelease);
+	}
+	if (IsValid(ExplosionSFX))
+	{
+		UGameplayStatics::SpawnSoundAtLocation(this, ExplosionSFX,GetActorLocation());
+	}
 }
 
 void APRMissileProjectile::ApplyAOEDamage()

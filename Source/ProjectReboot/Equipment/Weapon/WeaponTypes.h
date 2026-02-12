@@ -57,14 +57,6 @@ struct FWeaponFXSettings
 	// 피격 사운드
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sound")
 	TObjectPtr<USoundBase> ImpactSound;
-
-	// 폭발 이펙트 (HitReact GCN에서 사용)
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "VFX")
-	TObjectPtr<UNiagaraSystem> ExplodeVFX;
-
-	// 폭발 사운드 (HitReact GCN에서 사용)
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sound")
-	TObjectPtr<USoundBase> ExplodeSound;
 };
 
 // 총구 슬롯 설정 (Equipment Tag 조합별)

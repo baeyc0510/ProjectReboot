@@ -70,9 +70,15 @@ void UPREnemyStatusViewModel::SetHealth(float NewCurrent, float NewMax)
 {
 	if (!FMath::IsNearlyEqual(CurrentHealth, NewCurrent) || !FMath::IsNearlyEqual(MaxHealth, NewMax))
 	{
+		const bool bMaxChanged = !FMath::IsNearlyEqual(MaxHealth, NewMax);
 		CurrentHealth = NewCurrent;
 		MaxHealth = NewMax;
 		OnHealthChanged.Broadcast(CurrentHealth, MaxHealth);
+
+		if (bMaxChanged)
+		{
+			UpdateSegments(MaxHealth, OnHealthSegmentChanged);
+		}
 	}
 }
 
@@ -80,10 +86,43 @@ void UPREnemyStatusViewModel::SetShield(float NewCurrent, float NewMax)
 {
 	if (!FMath::IsNearlyEqual(CurrentShield, NewCurrent) || !FMath::IsNearlyEqual(MaxShield, NewMax))
 	{
+		const bool bMaxChanged = !FMath::IsNearlyEqual(MaxShield, NewMax);
 		CurrentShield = NewCurrent;
 		MaxShield = NewMax;
 		OnShieldChanged.Broadcast(CurrentShield, MaxShield);
+
+		if (bMaxChanged)
+		{
+			UpdateSegments(MaxShield, OnShieldSegmentChanged);
+		}
 	}
+}
+
+void UPREnemyStatusViewModel::UpdateSegments(float MaxValue, FOnEnemySegmentChanged& SegmentDelegate)
+{
+	const int32 NumSegments = (UnitHealth > KINDA_SMALL_NUMBER) ? FMath::TruncToInt(MaxValue / UnitHealth) : 0;
+	const float Spacing = NumSegments / 100.0f;
+	SegmentDelegate.Broadcast(NumSegments, Spacing);
+}
+
+int32 UPREnemyStatusViewModel::GetHealthNumSegments() const
+{
+	return (UnitHealth > KINDA_SMALL_NUMBER) ? FMath::TruncToInt(MaxHealth / UnitHealth) : 0;
+}
+
+float UPREnemyStatusViewModel::GetHealthSpacing() const
+{
+	return GetHealthNumSegments() / 100.0f;
+}
+
+int32 UPREnemyStatusViewModel::GetShieldNumSegments() const
+{
+	return (UnitHealth > KINDA_SMALL_NUMBER) ? FMath::TruncToInt(MaxShield / UnitHealth) : 0;
+}
+
+float UPREnemyStatusViewModel::GetShieldSpacing() const
+{
+	return GetShieldNumSegments() / 100.0f;
 }
 
 void UPREnemyStatusViewModel::UpdateAttributeBindings()

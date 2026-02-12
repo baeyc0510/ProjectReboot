@@ -97,7 +97,7 @@ struct FPRWaveSpawnInfo
 {
 	GENERATED_BODY()
 
-	// 스폰할 적 클래스 → 수량 매핑
+	// 스폰할 적 클래스 수량 매핑
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TMap<TSubclassOf<APREnemyCharacter>, int32> EnemySpawnMap;
 };

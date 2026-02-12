@@ -40,9 +40,9 @@ void UPRActionListItemWidget::SetSelected(bool bInSelected)
 {
 	bIsSelected = bInSelected;
 
-	if (Border_Background)
+	if (Img_Background)
 	{
-		Border_Background->SetBrushColor(bIsSelected ? SelectedBorderColor : NormalBorderColor);
+		Img_Background->SetColorAndOpacity(bIsSelected ? SelectedBackgroundColor : NormalBackgroundColor);
 	}
 }
 

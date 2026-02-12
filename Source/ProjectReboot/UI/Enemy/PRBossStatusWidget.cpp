@@ -2,7 +2,7 @@
 #include "PRBossStatusWidget.h"
 
 #include "PREnemyStatusViewModel.h"
-#include "Components/ProgressBar.h"
+#include "ProjectReboot/UI/Interfaces/PRProgressBarInterface.h"
 #include "Components/TextBlock.h"
 
 void UPRBossStatusWidget::NativeConstruct()
@@ -29,6 +29,8 @@ void UPRBossStatusWidget::BindViewModel(UPREnemyStatusViewModel* TargetViewModel
 	ViewModel->OnEnemyDisplayNameChanged.AddDynamic(this, &UPRBossStatusWidget::HandleEnemyDisplayNameChanged);
 	ViewModel->OnHealthChanged.AddDynamic(this, &UPRBossStatusWidget::HandleHealthChanged);
 	ViewModel->OnShieldChanged.AddDynamic(this, &UPRBossStatusWidget::HandleShieldChanged);
+	ViewModel->OnHealthSegmentChanged.AddDynamic(this, &UPRBossStatusWidget::HandleHealthSegmentChanged);
+	ViewModel->OnShieldSegmentChanged.AddDynamic(this, &UPRBossStatusWidget::HandleShieldSegmentChanged);
 	ViewModel->OnDestructStatus.AddDynamic(this, &UPRBossStatusWidget::HandleDestructStatus);
 	ViewModel->OnVisibilityChanged.AddDynamic(this, &UPRBossStatusWidget::HandleVisibilityChanged);
 
@@ -45,6 +47,8 @@ void UPRBossStatusWidget::UnbindViewModel()
 	ViewModel->OnEnemyDisplayNameChanged.RemoveDynamic(this, &UPRBossStatusWidget::HandleEnemyDisplayNameChanged);
 	ViewModel->OnHealthChanged.RemoveDynamic(this, &UPRBossStatusWidget::HandleHealthChanged);
 	ViewModel->OnShieldChanged.RemoveDynamic(this, &UPRBossStatusWidget::HandleShieldChanged);
+	ViewModel->OnHealthSegmentChanged.RemoveDynamic(this, &UPRBossStatusWidget::HandleHealthSegmentChanged);
+	ViewModel->OnShieldSegmentChanged.RemoveDynamic(this, &UPRBossStatusWidget::HandleShieldSegmentChanged);
 	ViewModel->OnDestructStatus.RemoveDynamic(this, &UPRBossStatusWidget::HandleDestructStatus);
 	ViewModel->OnVisibilityChanged.RemoveDynamic(this, &UPRBossStatusWidget::HandleVisibilityChanged);
 
@@ -62,6 +66,8 @@ void UPRBossStatusWidget::ApplyInitialState()
 	HandleEnemyDisplayNameChanged(ViewModel->GetEnemyDisplayName());
 	HandleHealthChanged(ViewModel->GetCurrentHealth(), ViewModel->GetMaxHealth());
 	HandleShieldChanged(ViewModel->GetCurrentShield(), ViewModel->GetMaxShield());
+	HandleHealthSegmentChanged(ViewModel->GetHealthNumSegments(), ViewModel->GetHealthSpacing());
+	HandleShieldSegmentChanged(ViewModel->GetShieldNumSegments(), ViewModel->GetShieldSpacing());
 	HandleVisibilityChanged(ViewModel->IsVisible());
 }
 
@@ -81,20 +87,36 @@ void UPRBossStatusWidget::HandleEnemyDisplayNameChanged(const FText& DisplayName
 
 void UPRBossStatusWidget::HandleHealthChanged(float Current, float Max)
 {
-	if (HealthBar)
+	if (IsValid(HealthBar) && HealthBar->Implements<UPRProgressBarInterface>())
 	{
 		const float Percent = (Max > KINDA_SMALL_NUMBER) ? (Current / Max) : 0.0f;
-		HealthBar->SetPercent(Percent);
+		IPRProgressBarInterface::Execute_SetPercent(HealthBar, Percent);
 	}
 }
 
 void UPRBossStatusWidget::HandleShieldChanged(float Current, float Max)
 {
-	if (ShieldBar)
+	if (IsValid(ShieldBar) && ShieldBar->Implements<UPRProgressBarInterface>())
 	{
 		const float Percent = (Max > KINDA_SMALL_NUMBER) ? (Current / Max) : 0.0f;
-		ShieldBar->SetPercent(Percent);
+		IPRProgressBarInterface::Execute_SetPercent(ShieldBar, Percent);
 		ShieldBar->SetVisibility(Max > KINDA_SMALL_NUMBER ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
+	}
+}
+
+void UPRBossStatusWidget::HandleHealthSegmentChanged(int32 NumSegments, float Spacing)
+{
+	if (IsValid(HealthBar) && HealthBar->Implements<UPRProgressBarInterface>())
+	{
+		IPRProgressBarInterface::Execute_SetSegments(HealthBar, NumSegments, Spacing);
+	}
+}
+
+void UPRBossStatusWidget::HandleShieldSegmentChanged(int32 NumSegments, float Spacing)
+{
+	if (IsValid(ShieldBar) && ShieldBar->Implements<UPRProgressBarInterface>())
+	{
+		IPRProgressBarInterface::Execute_SetSegments(ShieldBar, NumSegments, Spacing);
 	}
 }
 

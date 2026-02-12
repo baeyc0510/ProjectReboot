@@ -5,9 +5,9 @@
 #include "Blueprint/UserWidget.h"
 #include "PRBossStatusWidget.generated.h"
 
-class UProgressBar;
 class UTextBlock;
 class UPREnemyStatusViewModel;
+class IPRProgressBarInterface;
 
 /**
  * 보스 체력/실드/이름 표시 위젯
@@ -48,6 +48,13 @@ protected:
 
 	UFUNCTION()
 	void HandleDestructStatus();
+
+	UFUNCTION()
+	void HandleHealthSegmentChanged(int32 NumSegments, float Spacing);
+
+	UFUNCTION()
+	void HandleShieldSegmentChanged(int32 NumSegments, float Spacing);
+
 protected:
 	// 보스 이름
 	UPROPERTY(meta = (BindWidget))
@@ -55,11 +62,11 @@ protected:
 
 	// 체력 바
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UProgressBar> HealthBar;
+	TObjectPtr<UUserWidget> HealthBar;
 
 	// 실드 바
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UProgressBar> ShieldBar;
+	TObjectPtr<UUserWidget> ShieldBar;
 
 private:
 	void UnbindViewModel();

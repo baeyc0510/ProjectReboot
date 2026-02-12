@@ -49,7 +49,7 @@ protected:
 
 protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	TObjectPtr<UBorder> Border_Background;
+	TObjectPtr<UImage> Img_Background;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UTextBlock> TB_ActionName;
@@ -62,11 +62,11 @@ protected:
 
 	// 기본 Border 색상
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActionList|Style")
-	FLinearColor NormalBorderColor = FLinearColor(0.1f, 0.1f, 0.1f, 0.8f);
+	FLinearColor NormalBackgroundColor = FLinearColor(0.1f, 0.1f, 0.1f, 0.8f);
 
 	// 선택 시 Border 색상
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActionList|Style")
-	FLinearColor SelectedBorderColor = FLinearColor(0.3f, 0.8f, 1.f, 0.8f);
+	FLinearColor SelectedBackgroundColor = FLinearColor(0.3f, 0.8f, 1.f, 0.8f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActionList|Sound")
 	TMap<FGameplayTag, USoundBase*> ActionClickSoundMap;

@@ -10,6 +10,7 @@ struct FOnAttributeChangeData;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnemyDisplayNameChanged, const FText&, DisplayName);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEnemyAttributeChanged, float, Current, float, Max);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEnemySegmentChanged, int32, NumSegments, float, Spacing);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDestructStatus);
 
 /**
@@ -64,6 +65,22 @@ public:
 	UFUNCTION(BlueprintPure, Category = "EnemyHUD")
 	float GetMaxShield() const { return MaxShield; }
 
+	// 체력 세그먼트 수 반환
+	UFUNCTION(BlueprintPure, Category = "EnemyHUD")
+	int32 GetHealthNumSegments() const;
+
+	// 체력 세그먼트 간격 반환
+	UFUNCTION(BlueprintPure, Category = "EnemyHUD")
+	float GetHealthSpacing() const;
+
+	// 실드 세그먼트 수 반환
+	UFUNCTION(BlueprintPure, Category = "EnemyHUD")
+	int32 GetShieldNumSegments() const;
+
+	// 실드 세그먼트 간격 반환
+	UFUNCTION(BlueprintPure, Category = "EnemyHUD")
+	float GetShieldSpacing() const;
+
 public:
 	UPROPERTY(BlueprintAssignable, Category = "EnemyHUD|Events")
 	FOnEnemyDisplayNameChanged OnEnemyDisplayNameChanged;
@@ -75,6 +92,12 @@ public:
 	FOnEnemyAttributeChanged OnShieldChanged;
 	
 	UPROPERTY(BlueprintAssignable, Category = "EnemyHUD|Events")
+	FOnEnemySegmentChanged OnHealthSegmentChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "EnemyHUD|Events")
+	FOnEnemySegmentChanged OnShieldSegmentChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "EnemyHUD|Events")
 	FOnDestructStatus OnDestructStatus;
 
 private:
@@ -82,6 +105,7 @@ private:
 	void SetEnemyDisplayName(const FText& InDisplayName);
 	void SetHealth(float NewCurrent, float NewMax);
 	void SetShield(float NewCurrent, float NewMax);
+	void UpdateSegments(float MaxValue, FOnEnemySegmentChanged& SegmentDelegate);
 	
 	void UpdateAttributeBindings();
 	void ClearAttributeBindings();
@@ -101,6 +125,9 @@ private:
 	float MaxHealth = 0.0f;
 	float CurrentShield = 0.0f;
 	float MaxShield = 0.0f;
+
+	// 세그먼트 단위 체력 값
+	float UnitHealth = 100.0f;
 
 	// 어트리뷰트 델리게이트 핸들
 	FDelegateHandle HealthChangeHandle;

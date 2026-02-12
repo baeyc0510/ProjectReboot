@@ -22,6 +22,7 @@ class URogueliteAbilityHandlerComponent;
 class UPRInputConfig;
 class UPREquipmentManagerComponent;
 class UPRCameraComponent;
+class UPREnemyDetectionComponent;
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
@@ -142,6 +143,10 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	UAIPerceptionStimuliSourceComponent* StimuliSourceComponent;
+
+	// 적 감지 컴포넌트 (EnemyIndicator 시스템)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detection")
+	TObjectPtr<UPREnemyDetectionComponent> EnemyDetectionComponent;
 private:
 	float DesiredLookDirection;
 	FPRAbilitySetHandles DefaultAbilitySetHandles;

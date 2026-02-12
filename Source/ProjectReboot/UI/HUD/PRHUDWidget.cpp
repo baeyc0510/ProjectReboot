@@ -3,7 +3,7 @@
 #include "ProjectReboot/UI/ViewModel/PRViewModelSubsystem.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
-#include "Components/ProgressBar.h"
+#include "ProjectReboot/UI/Interfaces/PRProgressBarInterface.h"
 
 void UPRHUDWidget::NativeConstruct()
 {
@@ -42,6 +42,8 @@ void UPRHUDWidget::BindViewModel()
 	ViewModel->OnWeaponTypeChanged.AddDynamic(this, &UPRHUDWidget::HandleWeaponTypeChanged);
 	ViewModel->OnHealthChanged.AddDynamic(this, &UPRHUDWidget::HandleHealthChanged);
 	ViewModel->OnShieldChanged.AddDynamic(this, &UPRHUDWidget::HandleShieldChanged);
+	ViewModel->OnHealthSegmentChanged.AddDynamic(this, &UPRHUDWidget::HandleHealthSegmentChanged);
+	ViewModel->OnShieldSegmentChanged.AddDynamic(this, &UPRHUDWidget::HandleShieldSegmentChanged);
 	ViewModel->OnVisibilityChanged.AddDynamic(this, &UPRHUDWidget::HandleVisibilityChanged);
 
 	ApplyInitialState();
@@ -59,6 +61,8 @@ void UPRHUDWidget::UnbindViewModel()
 	ViewModel->OnWeaponTypeChanged.RemoveDynamic(this, &UPRHUDWidget::HandleWeaponTypeChanged);
 	ViewModel->OnHealthChanged.RemoveDynamic(this, &UPRHUDWidget::HandleHealthChanged);
 	ViewModel->OnShieldChanged.RemoveDynamic(this, &UPRHUDWidget::HandleShieldChanged);
+	ViewModel->OnHealthSegmentChanged.RemoveDynamic(this, &UPRHUDWidget::HandleHealthSegmentChanged);
+	ViewModel->OnShieldSegmentChanged.RemoveDynamic(this, &UPRHUDWidget::HandleShieldSegmentChanged);
 	ViewModel->OnVisibilityChanged.RemoveDynamic(this, &UPRHUDWidget::HandleVisibilityChanged);
 
 	ViewModel = nullptr;
@@ -77,6 +81,8 @@ void UPRHUDWidget::ApplyInitialState()
 	HandleWeaponTypeChanged(ViewModel->GetWeaponTypeTag());
 	HandleHealthChanged(ViewModel->GetCurrentHealth(), ViewModel->GetMaxHealth());
 	HandleShieldChanged(ViewModel->GetCurrentShield(), ViewModel->GetMaxShield());
+	HandleHealthSegmentChanged(ViewModel->GetHealthNumSegments(), ViewModel->GetHealthSpacing());
+	HandleShieldSegmentChanged(ViewModel->GetShieldNumSegments(), ViewModel->GetShieldSpacing());
 	HandleVisibilityChanged(ViewModel->IsVisible());
 }
 
@@ -136,18 +142,34 @@ void UPRHUDWidget::HandleWeaponTypeChanged(const FGameplayTag& NewTag)
 
 void UPRHUDWidget::HandleHealthChanged(float Current, float Max)
 {
-	if (HealthBar)
+	if (IsValid(HealthBar) && HealthBar->Implements<UPRProgressBarInterface>())
 	{
 		const float Percent = (Max > KINDA_SMALL_NUMBER) ? (Current / Max) : 0.0f;
-		HealthBar->SetPercent(Percent);
+		IPRProgressBarInterface::Execute_SetPercent(HealthBar, Percent);
 	}
 }
 
 void UPRHUDWidget::HandleShieldChanged(float Current, float Max)
 {
-	if (ShieldBar)
+	if (IsValid(ShieldBar) && ShieldBar->Implements<UPRProgressBarInterface>())
 	{
 		const float Percent = (Max > KINDA_SMALL_NUMBER) ? (Current / Max) : 0.0f;
-		ShieldBar->SetPercent(Percent);
+		IPRProgressBarInterface::Execute_SetPercent(ShieldBar, Percent);
+	}
+}
+
+void UPRHUDWidget::HandleHealthSegmentChanged(int32 NumSegments, float Spacing)
+{
+	if (IsValid(HealthBar) && HealthBar->Implements<UPRProgressBarInterface>())
+	{
+		IPRProgressBarInterface::Execute_SetSegments(HealthBar, NumSegments, Spacing);
+	}
+}
+
+void UPRHUDWidget::HandleShieldSegmentChanged(int32 NumSegments, float Spacing)
+{
+	if (IsValid(ShieldBar) && ShieldBar->Implements<UPRProgressBarInterface>())
+	{
+		IPRProgressBarInterface::Execute_SetSegments(ShieldBar, NumSegments, Spacing);
 	}
 }

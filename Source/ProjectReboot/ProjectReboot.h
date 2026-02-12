@@ -6,5 +6,6 @@
 
 namespace PRCollision
 {
-	constexpr ECollisionChannel AttackTrace = ECC_GameTraceChannel1;
+	constexpr ECollisionChannel ECC_Attack = ECC_GameTraceChannel1;
+	constexpr ECollisionChannel ECC_Enemy = ECC_GameTraceChannel4;
 }

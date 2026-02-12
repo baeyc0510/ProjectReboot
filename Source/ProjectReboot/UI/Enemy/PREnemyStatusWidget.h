@@ -5,8 +5,8 @@
 #include "Blueprint/UserWidget.h"
 #include "PREnemyStatusWidget.generated.h"
 
-class UProgressBar;
 class UPREnemyStatusViewModel;
+class IPRProgressBarInterface;
 
 /**
  * 적 체력/실드 표시 위젯
@@ -42,14 +42,20 @@ protected:
 	UFUNCTION()
 	void HandleShieldChanged(float Current, float Max);
 
+	UFUNCTION()
+	void HandleHealthSegmentChanged(int32 NumSegments, float Spacing);
+
+	UFUNCTION()
+	void HandleShieldSegmentChanged(int32 NumSegments, float Spacing);
+
 protected:
 	// 체력 바
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UProgressBar> HealthBar;
+	TObjectPtr<UUserWidget> HealthBar;
 
 	// 실드 바
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UProgressBar> ShieldBar;
+	TObjectPtr<UUserWidget> ShieldBar;
 
 private:
 	void UnbindViewModel();

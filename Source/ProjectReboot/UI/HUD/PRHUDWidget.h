@@ -9,7 +9,7 @@ class UPRHUDViewModel;
 class UTextBlock;
 class UImage;
 class UTexture2D;
-class UProgressBar;
+class IPRProgressBarInterface;
 
 /**
  * HUD 위젯
@@ -47,6 +47,12 @@ protected:
 	UFUNCTION()
 	void HandleShieldChanged(float Current, float Max);
 
+	UFUNCTION()
+	void HandleHealthSegmentChanged(int32 NumSegments, float Spacing);
+
+	UFUNCTION()
+	void HandleShieldSegmentChanged(int32 NumSegments, float Spacing);
+
 protected:
 	// 탄약 텍스트
 	UPROPERTY(meta = (BindWidget))
@@ -66,11 +72,11 @@ protected:
 
 	// 체력 바
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UProgressBar> HealthBar;
+	TObjectPtr<UUserWidget> HealthBar;
 
 	// 실드 바
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UProgressBar> ShieldBar;
+	TObjectPtr<UUserWidget> ShieldBar;
 
 	// 무기 타입별 아이콘 매핑
 	UPROPERTY(EditDefaultsOnly, Category = "HUD")

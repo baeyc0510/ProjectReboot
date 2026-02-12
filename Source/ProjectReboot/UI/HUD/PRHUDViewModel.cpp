@@ -36,12 +36,9 @@ void UPRHUDViewModel::BindToASC(UAbilitySystemComponent* InASC)
 
 	BoundASC = InASC;
 
-	// 무기 타입 태그 변경 등록
-	WeaponTypeDelegateHandle = InASC->RegisterGameplayTagEvent(
-		TAG_Equipment_Weapon_Type,
-		EGameplayTagEventType::NewOrRemoved
-	).AddUObject(this, &UPRHUDViewModel::HandleWeaponTagChanged);
-
+	// 태그 변경 등록
+	TagChangedDelegateHandle = InASC->RegisterGenericGameplayTagEvent().AddUObject(this, &ThisClass::OnTagChanged);
+	
 	// 어트리뷰트 바인딩
 	UpdateAttributesBindings();
 	
@@ -69,10 +66,10 @@ void UPRHUDViewModel::UnbindFromASC()
 	// 태그 이벤트 바인딩 제거
 	if (BoundASC.IsValid())
 	{
-		if (WeaponTypeDelegateHandle.IsValid())
+		if (TagChangedDelegateHandle.IsValid())
 		{
-			BoundASC->UnregisterGameplayTagEvent(WeaponTypeDelegateHandle,TAG_Equipment_Weapon_Type,EGameplayTagEventType::NewOrRemoved);
-			WeaponTypeDelegateHandle.Reset();
+			BoundASC->RegisterGenericGameplayTagEvent().Remove(TagChangedDelegateHandle);
+			TagChangedDelegateHandle.Reset();
 		}
 	}
 
@@ -106,9 +103,15 @@ void UPRHUDViewModel::SetHealth(float NewCurrent, float NewMax)
 {
 	if (!FMath::IsNearlyEqual(CurrentHealth, NewCurrent) || !FMath::IsNearlyEqual(MaxHealth, NewMax))
 	{
+		const bool bMaxChanged = !FMath::IsNearlyEqual(MaxHealth, NewMax);
 		CurrentHealth = NewCurrent;
 		MaxHealth = NewMax;
 		OnHealthChanged.Broadcast(CurrentHealth, MaxHealth);
+
+		if (bMaxChanged)
+		{
+			UpdateSegments(MaxHealth, OnHealthSegmentChanged);
+		}
 	}
 }
 
@@ -116,10 +119,43 @@ void UPRHUDViewModel::SetShield(float NewCurrent, float NewMax)
 {
 	if (!FMath::IsNearlyEqual(CurrentShield, NewCurrent) || !FMath::IsNearlyEqual(MaxShield, NewMax))
 	{
+		const bool bMaxChanged = !FMath::IsNearlyEqual(MaxShield, NewMax);
 		CurrentShield = NewCurrent;
 		MaxShield = NewMax;
 		OnShieldChanged.Broadcast(CurrentShield, MaxShield);
+
+		if (bMaxChanged)
+		{
+			UpdateSegments(MaxShield, OnShieldSegmentChanged);
+		}
 	}
+}
+
+void UPRHUDViewModel::UpdateSegments(float MaxValue, FOnHUDSegmentChanged& SegmentDelegate)
+{
+	const int32 NumSegments = (UnitHealth > KINDA_SMALL_NUMBER) ? FMath::TruncToInt(MaxValue / UnitHealth) : 0;
+	const float Spacing = NumSegments / 100.0f;
+	SegmentDelegate.Broadcast(NumSegments, Spacing);
+}
+
+int32 UPRHUDViewModel::GetHealthNumSegments() const
+{
+	return (UnitHealth > KINDA_SMALL_NUMBER) ? FMath::TruncToInt(MaxHealth / UnitHealth) : 0;
+}
+
+float UPRHUDViewModel::GetHealthSpacing() const
+{
+	return GetHealthNumSegments() / 100.0f;
+}
+
+int32 UPRHUDViewModel::GetShieldNumSegments() const
+{
+	return (UnitHealth > KINDA_SMALL_NUMBER) ? FMath::TruncToInt(MaxShield / UnitHealth) : 0;
+}
+
+float UPRHUDViewModel::GetShieldSpacing() const
+{
+	return GetShieldNumSegments() / 100.0f;
 }
 
 void UPRHUDViewModel::SetWeaponType(const FGameplayTag& NewType)
@@ -162,6 +198,14 @@ void UPRHUDViewModel::BindAttributeDelegate(const FGameplayAttribute& Attribute,
 	NewBinding.Attribute = Attribute;
 	NewBinding.DelegateHandle = DelegateHandle;
 	AttributeBindings.Add(NewBinding);
+}
+
+void UPRHUDViewModel::OnTagChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	if (Tag.MatchesTag(TAG_Equipment_Weapon_Type) && !Tag.MatchesTagExact(TAG_Equipment_Weapon_Type))
+	{
+		HandleWeaponTagChanged(Tag, NewCount);
+	}
 }
 
 void UPRHUDViewModel::UpdateAttributesBindings()
@@ -226,10 +270,13 @@ void UPRHUDViewModel::HandleWeaponTagChanged(const FGameplayTag Tag, int32 NewCo
 	{
 		if (BoundASC.IsValid())
 		{
-			if (BoundASC->HasMatchingGameplayTag(TAG_Equipment_Weapon_Type_Bullet)) SetWeaponType(TAG_Equipment_Weapon_Type_Bullet);
-			else if (BoundASC->HasMatchingGameplayTag(TAG_Equipment_Weapon_Type_Beam)) SetWeaponType(TAG_Equipment_Weapon_Type_Beam);
-			else if (BoundASC->HasMatchingGameplayTag(TAG_Equipment_Weapon_Type_Missile)) SetWeaponType(TAG_Equipment_Weapon_Type_Missile);
-			else SetWeaponType(FGameplayTag::EmptyTag);
+			for (auto& OwnedTag : BoundASC->GetOwnedGameplayTags())
+			{
+				if (OwnedTag.MatchesTag(TAG_Equipment_Weapon_Type))
+				{
+					SetWeaponType(OwnedTag);
+				}
+			}
 		}
 	}
 }

@@ -21,7 +21,8 @@
 // Sets default values
 APREnemyCharacter::APREnemyCharacter()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.TickInterval = 0.1f;
 	bUseControllerRotationYaw = false;
 
 	// AI 자동 Possess 설정
@@ -147,6 +148,25 @@ void APREnemyCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 	
 	UnBindViewModels();
+}
+
+void APREnemyCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	
+	// 안전 코드 (스폰 버그로 인한 웨이브 클리어 불가 현상 방지)
+	
+	if (IsDead())
+	{
+		return;
+	}
+	
+	// 추락 감지
+	if (GetActorLocation().Z < SpawnLocation.Z - 2000.f)
+	{
+		FGameplayEffectContextHandle ContextHandle;
+		Die(ContextHandle);
+	}
 }
 
 void APREnemyCharacter::BindViewModels()

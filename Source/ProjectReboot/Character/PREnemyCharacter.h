@@ -56,7 +56,8 @@ protected:
 	/*~ AActor Interfaces ~*/
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
+	virtual void Tick(float DeltaSeconds) override;
+	
 	/*~ IPRPrewarmInterface ~*/
 	// 프리웜 대상 자식 오브젝트 수집
 	virtual void GetPrewarmChildren(TArray<UObject*>& OutChildren) const override;

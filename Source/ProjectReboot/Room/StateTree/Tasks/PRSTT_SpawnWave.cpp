@@ -72,8 +72,8 @@ EStateTreeRunStatus FPRStateTreeTask_SpawnWave::EnterState(
 	}
 
 	const int32 TotalWaves = SpawnInfo.Waves.Num();
-	UE_LOG(LogTemp, Log, TEXT("PRSTT_SpawnWave: Wave %d/%d queued %d enemies (SpawnPerTick: %d)"),
-		CurrentWaveIndex + 1, TotalWaves, Data.TotalToSpawn, Data.SpawnPerTick);
+	UE_LOG(LogTemp, Log, TEXT("PRSTT_SpawnWave: Wave %d/%d queued %d enemies (SpawnPerBatch: %d, Interval: %.2fs)"),
+		CurrentWaveIndex + 1, TotalWaves, Data.TotalToSpawn, Data.SpawnPerBatch, Data.SpawnInterval);
 
 	// 큐가 비어있으면 즉시 완료
 	if (Data.TotalToSpawn == 0)
@@ -81,6 +81,7 @@ EStateTreeRunStatus FPRStateTreeTask_SpawnWave::EnterState(
 		return EStateTreeRunStatus::Succeeded;
 	}
 
+	Data.ElapsedTime = Data.SpawnInterval; // 첫 Tick에서 즉시 스폰 시작
 	Data.bSpawning = true;
 	return EStateTreeRunStatus::Running;
 }
@@ -91,9 +92,17 @@ EStateTreeRunStatus FPRStateTreeTask_SpawnWave::Tick(
 {
 	FInstanceDataType& Data = Context.GetInstanceData(*this);
 
-	const int32 SpawnThisTick = FMath::Max(1, Data.SpawnPerTick);
+	Data.ElapsedTime += DeltaTime;
+	if (Data.ElapsedTime < Data.SpawnInterval)
+	{
+		return EStateTreeRunStatus::Running;
+	}
 
-	for (int32 i = 0; i < SpawnThisTick; i++)
+	// 간격 도달 시 누적 시간 리셋 후 배치 스폰
+	Data.ElapsedTime = 0.f;
+	const int32 SpawnThisBatch = FMath::Max(1, Data.SpawnPerBatch);
+
+	for (int32 i = 0; i < SpawnThisBatch; i++)
 	{
 		if (!SpawnNextEnemy(Context, Data))
 		{
@@ -116,6 +125,7 @@ void FPRStateTreeTask_SpawnWave::ExitState(FStateTreeExecutionContext& Context,
 	Data.SpawnedCount = 0;
 	Data.SpawnPointIndex = 0;
 	Data.TotalToSpawn = 0;
+	Data.ElapsedTime = 0.f;
 	Data.bSpawning = false;
 }
 
@@ -168,7 +178,7 @@ bool FPRStateTreeTask_SpawnWave::SpawnNextEnemy(
 
 	// 스폰
 	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
 
 	APREnemyCharacter* SpawnedEnemy = World->SpawnActor<APREnemyCharacter>(
 		ActiveEntry->EnemyClass, SpawnTransform, SpawnParams);
@@ -185,6 +195,15 @@ bool FPRStateTreeTask_SpawnWave::SpawnNextEnemy(
 		// 스폰 액터 등록
 		Data.RoomController->RegisterSpawnedActor(SpawnedEnemy);
 		Data.SpawnedCount++;
+	}
+	// 스폰 실패
+	else
+	{
+		if (APRGameplayGameState* GameState = World->GetGameState<APRGameplayGameState>())
+		{
+			GameState->AddEventCount(TAG_Event_Kill);
+			// TODO: Enemy 타입 분기?
+		}
 	}
 
 	ActiveEntry->RemainingCount--;

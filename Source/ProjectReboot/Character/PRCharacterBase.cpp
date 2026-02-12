@@ -88,8 +88,6 @@ void APRCharacterBase::Die(const FGameplayEffectContextHandle& EffectContext)
 	
 	// 이벤트 전송
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor( this,TAG_Event_Death,EventData);
-	
-	
 }
 
 void APRCharacterBase::FinishDie()

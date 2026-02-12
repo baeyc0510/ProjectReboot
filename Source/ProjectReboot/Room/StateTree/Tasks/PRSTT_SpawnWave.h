@@ -39,14 +39,18 @@ struct FPRSTT_SpawnWave_InstanceData
 	UPROPERTY(EditAnywhere, Category = Context)
 	TObjectPtr<APRRoomController> RoomController = nullptr;
 
-	// 프레임당 스폰 수
+	// 스폰 간격 (초)
 	UPROPERTY(EditAnywhere, Category = Parameter)
-	int32 SpawnPerTick = 2;
+	float SpawnInterval = 0.1f;
+
+	// 한 번에 스폰할 수
+	UPROPERTY(EditAnywhere, Category = Parameter)
+	int32 SpawnPerBatch = 1;
 
 	// 전체 스폰 예정 수 (Output)
 	UPROPERTY(EditAnywhere, Category = Output)
 	int32 TotalToSpawn = 0;
-	
+
 	// 스폰 큐 (내부)
 	TArray<FPRSpawnQueueEntry> SpawnQueue;
 
@@ -56,13 +60,16 @@ struct FPRSTT_SpawnWave_InstanceData
 	// 스폰된 적 수
 	int32 SpawnedCount = 0;
 
+	// 스폰 간격 누적 시간
+	float ElapsedTime = 0.f;
+
 	// 스폰 진행 중 플래그 (Sustained 재진입 방어)
 	bool bSpawning = false;
 };
 
 /**
  * 웨이브 스폰 StateTree Task
- * Tick 기반으로 프레임당 SpawnPerTick개씩 순차 스폰
+ * SpawnInterval 간격으로 SpawnPerBatch개씩 순차 스폰
  */
 USTRUCT(meta = (DisplayName = "Spawn Wave", Category = "Room"))
 struct PROJECTREBOOT_API FPRStateTreeTask_SpawnWave : public FStateTreeTaskCommonBase

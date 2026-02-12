@@ -39,6 +39,10 @@ public:
 	// 획득 시 Tags를 RunState.ActiveTags에 자동 부여
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Classification")
 	FGameplayTagContainer TagsToGrant;
+	
+	// Instant 여부 (Instant: 적용 후 보유 하지 않음)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Classification")
+	bool bIsInstant = false;
 
 	/*~ Values ~*/
 

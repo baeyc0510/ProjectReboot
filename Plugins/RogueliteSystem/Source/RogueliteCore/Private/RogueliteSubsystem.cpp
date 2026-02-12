@@ -255,12 +255,15 @@ bool URogueliteSubsystem::TryAcquireAction(URogueliteActionData* Action, FString
 	int32 ActualStacksAdded = NewStacks - OldStacks;
 
 	// 상태 업데이트
-	FRogueliteAcquiredInfo& Info = RunState.AcquiredActions.FindOrAdd(Action);
-	if (OldStacks == 0)
+	if (!Action->bIsInstant)
 	{
-		Info.AcquiredTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f;
+		FRogueliteAcquiredInfo& Info = RunState.AcquiredActions.FindOrAdd(Action);
+		if (OldStacks == 0)
+		{
+			Info.AcquiredTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f;
+		}
+		Info.Stacks = NewStacks;
 	}
-	Info.Stacks = NewStacks;
 
 	// 자동 효과 적용
 	if (Action->bAutoApplyToRunState)
@@ -268,7 +271,6 @@ bool URogueliteSubsystem::TryAcquireAction(URogueliteActionData* Action, FString
 		ApplyActionEffects(Action, ActualStacksAdded);	
 	}
 	
-
 	// 이벤트 발생
 	OnActionAcquired.Broadcast(Action, OldStacks, NewStacks);
 	OnStackChanged.Broadcast(Action, OldStacks, NewStacks);
@@ -276,7 +278,7 @@ bool URogueliteSubsystem::TryAcquireAction(URogueliteActionData* Action, FString
 	// 필터링된 리스너들에게 브로드캐스트
 	BroadcastToFilteredDelegates(FilteredAcquiredDelegates, Action, OldStacks, NewStacks);
 	BroadcastToFilteredDelegates(FilteredStackChangedDelegates, Action, OldStacks, NewStacks);
-
+	
 	return true;
 }
 

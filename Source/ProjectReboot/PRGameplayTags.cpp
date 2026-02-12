@@ -199,4 +199,5 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_HUD_Crosshair, "UI.ViewModel.HUD.Crossha
 UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_HUD_Interaction, "UI.ViewModel.HUD.Interaction");
 UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_HUD_LockOn, "UI.ViewModel.HUD.LockOn");
 UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_HUD_EnemyStatus, "UI.ViewModel.HUD.EnemyStatus");
+UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_HUD_EnemyIndicator, "UI.ViewModel.HUD.EnemyIndicator");
 UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_Upgrade, "UI.ViewModel.Upgrade");

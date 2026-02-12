@@ -325,7 +325,7 @@ void APRMissileProjectile::ApplyAOEDamage()
 			HitResult,
 			ExplosionLocation,
 			TargetLocation,
-			PRCollision::AttackTrace,
+			PRCollision::ECC_Attack,
 			QueryParams
 		);
 

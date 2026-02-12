@@ -20,9 +20,11 @@
 #include "ProjectReboot/AbilitySystem/PRCommonAttributeSet.h"
 #include "ProjectReboot/AbilitySystem/PRWeaponAttributeSet.h"
 #include "ProjectReboot/Combat/CombatBlueprintFunctionLibrary.h"
+#include "ProjectReboot/Combat/EnemyDetection/PREnemyDetectionComponent.h"
 #include "ProjectReboot/Equipment/PREquipmentManagerComponent.h"
 #include "ProjectReboot/Input/PREnhancedInputComponent.h"
 #include "ProjectReboot/UI/Crosshair/PRCrosshairViewModel.h"
+#include "ProjectReboot/UI/EnemyIndicator/PREnemyIndicatorViewModel.h"
 #include "ProjectReboot/UI/HUD/PRHUDViewModel.h"
 #include "ProjectReboot/UI/ViewModel/PRViewModelSubsystem.h"
 
@@ -62,6 +64,11 @@ APRPlayerCharacter::APRPlayerCharacter()
 	RogueliteAbilityHandler = CreateDefaultSubobject<URogueliteAbilityHandlerComponent>(TEXT("RogueliteAbilityHandler"));
 	EquipmentManager = CreateDefaultSubobject<UPREquipmentManagerComponent>(TEXT("EquipmentManager"));
 	StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSourceComponent"));
+	EnemyDetectionComponent = CreateDefaultSubobject<UPREnemyDetectionComponent>(TEXT("EnemyDetection"));
+	if (IsValid(EnemyDetectionComponent))
+	{
+		EnemyDetectionComponent->SetupAttachment(RootComponent);
+	}
 	
 	if (StimuliSourceComponent)
 	{
@@ -384,6 +391,8 @@ void APRPlayerCharacter::BindViewModels()
 	{
 		VM->BindToASC(AbilitySystem);
 	}
+
+	ViewModelSubsystem->GetOrCreateGlobalViewModel<UPREnemyIndicatorViewModel>();
 }
 
 void APRPlayerCharacter::UnbindViewModels()

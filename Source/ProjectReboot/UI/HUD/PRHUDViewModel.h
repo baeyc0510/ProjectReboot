@@ -12,6 +12,7 @@ struct FOnAttributeChangeData;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHUDAttributeChanged_Int, int32, Current, int32, Max);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHUDAttributeChanged_Float, float, Current, float, Max);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHUDWeaponTypeChanged, const FGameplayTag&, WeaponTypeTag);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHUDSegmentChanged, int32, NumSegments, float, Spacing);
 
 /**
  * HUD 뷰모델
@@ -63,6 +64,22 @@ public:
 	UFUNCTION(BlueprintPure, Category = "HUD")
 	FGameplayTag GetWeaponTypeTag() const { return WeaponTypeTag; }
 
+	// 체력 세그먼트 수 반환
+	UFUNCTION(BlueprintPure, Category = "HUD")
+	int32 GetHealthNumSegments() const;
+
+	// 체력 세그먼트 간격 반환
+	UFUNCTION(BlueprintPure, Category = "HUD")
+	float GetHealthSpacing() const;
+
+	// 실드 세그먼트 수 반환
+	UFUNCTION(BlueprintPure, Category = "HUD")
+	int32 GetShieldNumSegments() const;
+
+	// 실드 세그먼트 간격 반환
+	UFUNCTION(BlueprintPure, Category = "HUD")
+	float GetShieldSpacing() const;
+
 	UPROPERTY(BlueprintAssignable, Category = "HUD|Events")
 	FOnHUDAttributeChanged_Int OnAmmoChanged;
 
@@ -78,11 +95,18 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "HUD|Events")
 	FOnHUDWeaponTypeChanged OnWeaponTypeChanged;
 
+	UPROPERTY(BlueprintAssignable, Category = "HUD|Events")
+	FOnHUDSegmentChanged OnHealthSegmentChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "HUD|Events")
+	FOnHUDSegmentChanged OnShieldSegmentChanged;
+
 private:
 	void SetAmmo(int32 NewCurrent, int32 NewMax);
 	void SetReserveAmmo(int32 NewCurrent, int32 NewMax);
 	void SetHealth(float NewCurrent, float NewMax);
 	void SetShield(float NewCurrent, float NewMax);
+	void UpdateSegments(float MaxValue, FOnHUDSegmentChanged& SegmentDelegate);
 	void SetWeaponType(const FGameplayTag& NewType);
 
 	void UpdateAttributesBindings();
@@ -92,6 +116,8 @@ private:
 	void BindAttributeDelegate(const FGameplayAttribute& Attribute, void (UPRHUDViewModel::*Handler)(const FOnAttributeChangeData&));
 
 	// ASC 이벤트 핸들러
+	void OnTagChanged(const FGameplayTag Tag, int32 NewCount);
+	
 	void HandleWeaponTagChanged(const FGameplayTag Tag, int32 NewCount);
 	
 	void HandleAmmoChanged(const FOnAttributeChangeData& Data);
@@ -128,9 +154,12 @@ private:
 	float CurrentShield = 0.0f;
 	float MaxShield = 0.0f;
 
+	// 세그먼트 단위 체력 값
+	float UnitHealth = 100.0f;
+
 	// 어트리뷰트 델리게이트 핸들
 	TArray<FHUDAttributeBinding> AttributeBindings;
 	
 	// 태그 델리게이트 핸들
-	FDelegateHandle WeaponTypeDelegateHandle;
+	FDelegateHandle TagChangedDelegateHandle;
 };

@@ -18,7 +18,7 @@ UPRGA_MeleeAttack::UPRGA_MeleeAttack()
 	// 기본 트레이스 설정
 	TraceSettings.TraceShape = EPRTraceShape::Sphere;
 	TraceSettings.TraceRadius = 25.0f;
-	TraceSettings.TraceChannel = PRCollision::AttackTrace;
+	TraceSettings.TraceChannel = PRCollision::ECC_Attack;
 	TraceSettings.MaxHitCount = 1;
 	TraceSettings.bDrawDebugTrace = false;
 	TraceSettings.DebugDrawTime = 1.0f;

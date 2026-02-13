@@ -71,9 +71,9 @@ void UPRRoomWorldSubsystem::LoadRoomTemplate(int32 RoomIndex, TSoftObjectPtr<UWo
 
 	// 레벨 인스턴스 로드
 	bool bSuccess = false;
-	ULevelStreamingDynamic* LevelInstance = ULevelStreamingDynamic::LoadLevelInstance(
+	ULevelStreamingDynamic* LevelInstance = ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(
 		World,
-		Template.ToString(),
+		Template,
 		Location,
 		FRotator::ZeroRotator,
 		bSuccess,

@@ -46,7 +46,7 @@ EStateTreeRunStatus FPRStateTreeTask_Patrol::Tick(FStateTreeExecutionContext& Co
 			// 대기 완료, 다음 위치로 이동
 			InstanceData.bIsWaiting = false;
 			InstanceData.WaitElapsedTime = 0.f;
-			StartMoveToNextLocation(Context, InstanceData);
+			return EStateTreeRunStatus::Succeeded;
 		}
 		return EStateTreeRunStatus::Running;
 	}

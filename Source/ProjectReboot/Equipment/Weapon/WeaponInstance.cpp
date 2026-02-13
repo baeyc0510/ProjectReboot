@@ -122,8 +122,8 @@ void UWeaponInstance::UpdateMuzzleSlotConfig()
 			if (IsValid(NewMuzzle.MuzzleFlashComp))
 			{
 				NewMuzzle.MuzzleFlashComp->SetRelativeScale3D(FXSettings.MuzzleFlashScale);
+				NewMuzzle.MuzzleFlashComp->Deactivate();
 			}
-			NewMuzzle.MuzzleFlashComp->Deactivate();
 		}
 		ActiveMuzzles.Add(NewMuzzle);
 	}

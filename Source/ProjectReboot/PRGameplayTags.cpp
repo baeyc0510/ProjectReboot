@@ -181,6 +181,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Weapon_Impact, "GameplayCue.Weapon.Impact
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Weapon_Impact_Bullet, "GameplayCue.Weapon.Impact.Bullet");
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Weapon_Impact_Beam, "GameplayCue.Weapon.Impact.Beam");
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Weapon_Impact_Missile, "GameplayCue.Weapon.Impact.Missile");
+UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Weapon_Fire, "GameplayCue.Weapon.Fire");
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Character_Dash, "GameplayCue.Character.Dash");
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Character_SlowMotion, "GameplayCue.Character.SlowMotion");
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayCue_Character_Explode, "GameplayCue.Character.Explode");

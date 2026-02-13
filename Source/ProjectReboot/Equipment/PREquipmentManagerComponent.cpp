@@ -4,6 +4,7 @@
 #include "PREquipmentManagerComponent.h"
 
 #include "EquipmentInstance.h"
+#include "PREquipmentInterface.h"
 #include "RogueliteBlueprintLibrary.h"
 #include "RogueliteSubsystem.h"
 #include "GameFramework/Character.h"
@@ -192,8 +193,22 @@ UEquipmentInstance* UPREquipmentManagerComponent::CreateInstance(UPREquipActionD
 
 USceneComponent* UPREquipmentManagerComponent::GetAttachTarget() const
 {
-	// Owner 액터가 캐릭터인 경우
-	if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
+	AActor* Owner = GetOwner();
+	if (!IsValid(Owner))
+	{
+		return nullptr;
+	}
+	
+	if (Owner->Implements<UPREquipmentInterface>())
+	{
+		if (UMeshComponent* Mesh = IPREquipmentInterface::Execute_GetEquipmentOwnerMesh(Owner))
+		{
+			return Mesh;
+		}
+	}
+	
+	// Fallback: Owner 액터가 캐릭터인 경우
+	if (ACharacter* Character = Cast<ACharacter>(Owner))
 	{
 		if (USkeletalMeshComponent* Mesh = Character->GetMesh())
 		{
@@ -202,12 +217,34 @@ USceneComponent* UPREquipmentManagerComponent::GetAttachTarget() const
 	}
 	
 	// Fallback: SkeletalMeshComponent를 직접 찾음
-	if (GetOwner())
+	if (USkeletalMeshComponent* Mesh = Owner->FindComponentByClass<USkeletalMeshComponent>())
 	{
-		if (USkeletalMeshComponent* Mesh = GetOwner()->FindComponentByClass<USkeletalMeshComponent>())
+		return Mesh;
+	}
+	
+	return nullptr;
+}
+
+USkeletalMeshComponent* UPREquipmentManagerComponent::GetSkeletalMesh() const
+{
+	AActor* Owner = GetOwner();
+	if (!IsValid(Owner))
+	{
+		return nullptr;
+	}
+	
+	if (ACharacter* Character = Cast<ACharacter>(Owner))
+	{
+		if (USkeletalMeshComponent* Mesh = Character->GetMesh())
 		{
 			return Mesh;
 		}
+	}
+	
+	// Fallback: SkeletalMeshComponent를 직접 찾음
+	if (USkeletalMeshComponent* Mesh = Owner->FindComponentByClass<USkeletalMeshComponent>())
+	{
+		return Mesh;
 	}
 	
 	return nullptr;
@@ -414,7 +451,7 @@ void UPREquipmentManagerComponent::Equip_Internal(UPREquipActionData* ActionData
 	}
 	
 	// 애니메이션 링크
-	if (USkeletalMeshComponent* SkeletalMeshComp = Cast<USkeletalMeshComponent>(GetAttachTarget()))
+	if (USkeletalMeshComponent* SkeletalMeshComp = GetSkeletalMesh())
 	{
 		TArray<TSubclassOf<UAnimInstance>>& AnimLayersToLink = ActionData->EquipmentVisualSettings.AnimLayersToLink;
 		for (auto& Link : AnimLayersToLink)
@@ -478,7 +515,7 @@ void UPREquipmentManagerComponent::Unequip_Internal(FGameplayTag SlotTag, bool b
 	// 애니메이션 언링크
 	if (ActionData)
 	{
-		if (USkeletalMeshComponent* SkeletalMeshComp = Cast<USkeletalMeshComponent>(GetAttachTarget()))
+		if (USkeletalMeshComponent* SkeletalMeshComp = GetSkeletalMesh())
 		{
 			TArray<TSubclassOf<UAnimInstance>>& AnimLayersToLink = ActionData->EquipmentVisualSettings.AnimLayersToLink;
 			for (auto& Link : AnimLayersToLink)

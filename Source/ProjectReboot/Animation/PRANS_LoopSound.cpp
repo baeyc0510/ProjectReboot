@@ -8,7 +8,9 @@
 
 UPRANS_LoopSound::UPRANS_LoopSound()
 {
+#if WITH_EDITORONLY_DATA
 	bShouldFireInEditor = true;
+#endif
 }
 
 void UPRANS_LoopSound::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference)

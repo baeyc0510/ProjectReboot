@@ -123,6 +123,7 @@ private:
     
     UEquipmentInstance* CreateInstance(UPREquipActionData* ActionData);
     USceneComponent* GetAttachTarget() const;
+    USkeletalMeshComponent* GetSkeletalMesh() const;
     void UnequipChildren(FGameplayTag ParentSlotTag);
     TArray<FGameplayTag> FindChildSlots(FGameplayTag ParentSlotTag) const;
 

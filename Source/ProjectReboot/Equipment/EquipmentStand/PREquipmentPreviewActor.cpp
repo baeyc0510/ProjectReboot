@@ -25,6 +25,20 @@ void APREquipmentPreviewActor::OnConstruction(const FTransform& Transform)
 	InitializePreviewVisuals();
 }
 
+void APREquipmentPreviewActor::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	if (IsValid(PreviewInstance))
+	{
+		PreviewInstance->RefreshVisuals();
+	}
+	else
+	{
+		InitializePreviewVisuals();
+	}
+}
+
 #if WITH_EDITOR
 void APREquipmentPreviewActor::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {

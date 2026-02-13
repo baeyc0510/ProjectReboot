@@ -19,4 +19,8 @@ class PROJECTREBOOT_API IPREquipmentInterface
 	
 public:
 	virtual UPREquipmentManagerComponent* GetEquipmentManager() const = 0;
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	UMeshComponent* GetEquipmentOwnerMesh() const;
+	virtual UMeshComponent* GetEquipmentOwnerMesh_Implementation() const {return nullptr;}
 };

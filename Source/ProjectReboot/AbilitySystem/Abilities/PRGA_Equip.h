@@ -62,6 +62,9 @@ protected:
 	void OnShowEquipmentEventReceived(FGameplayEventData Payload);
 
 protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Equip")
+	FGameplayTag MontageTagOverride; 
+	
 	// 이벤트 태그 -> 몽타주 태그 매핑
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Equip")
 	TMap<FGameplayTag, FGameplayTag> EventTagToMontageTag;

@@ -34,6 +34,8 @@ void UPRGameplayAbility_WeaponFire::ActivateAbility(const FGameplayAbilitySpecHa
 	if (CommitAbilityCooldown(Handle,ActorInfo,ActivationInfo,false))
 	{
 		OnActivateAbility(Handle,ActorInfo,ActivationInfo,TriggerEventData);
+		
+		K2_ExecuteGameplayCue(TAG_GameplayCue_Weapon_Fire, FGameplayEffectContextHandle());
 	}
 }
 

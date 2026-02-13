@@ -6,6 +6,7 @@
 #include "TimerManager.h"
 #include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/Animation/PRAnimationBlueprintLibrary.h"
+#include "ProjectReboot/Equipment/EquipmentInstance.h"
 #include "ProjectReboot/Equipment/PREquipmentBlueprintLibrary.h"
 #include "ProjectReboot/Equipment/PREquipActionData.h"
 #include "ProjectReboot/Equipment/PREquipmentManagerComponent.h"
@@ -52,17 +53,38 @@ void UPRGA_Equip::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-	if (!ActorInfo || !TriggerEventData)
+	UPREquipmentManagerComponent* EquipmentManager = UPREquipmentBlueprintLibrary::GetEquipmentManager(GetAvatarActorFromActorInfo());
+	if (!EquipmentManager)
 	{
+		K2_EndAbility();
 		return;
 	}
-
-	// 장착 이벤트 데이터 기반으로 장비를 다음 프레임에 숨김
-	const UPREquipActionData* EquipAction = Cast<UPREquipActionData>(TriggerEventData->OptionalObject);
-	ScheduleHideEquipment(EquipAction);
-
-	FGameplayTag MontageTag;
-	if (!TryGetMontageTagForEventTag(TriggerEventData->EventTag, MontageTag))
+	
+	const UPREquipActionData* EquipActionData = nullptr;
+	
+	if (TriggerEventData)
+	{
+		EquipActionData = Cast<UPREquipActionData>(TriggerEventData->OptionalObject);
+	}
+	else
+	{
+		EquipActionData = EquipmentManager->GetActionData(TAG_Equipment_Slot_Weapon_Primary);
+	}
+	
+	if (EquipActionData)
+	{
+		// 장비를 다음 프레임에 숨김
+		ScheduleHideEquipment(EquipActionData);
+	}
+	
+	FGameplayTag MontageTag = MontageTagOverride;
+	
+	if (!MontageTag.IsValid())
+	{
+		TryGetMontageTagForEventTag(TriggerEventData->EventTag, MontageTag);
+	}
+	
+	if (!MontageTag.IsValid())
 	{
 		// 재생할 몽타주가 없으면 숨김 복구 후 종료
 		ShowHiddenEquipment();
@@ -78,7 +100,7 @@ void UPRGA_Equip::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const
 		K2_EndAbility();
 		return;
 	}
-
+	
 	UAnimMontage* MontageToPlay = UPRAnimationBlueprintLibrary::FindAnimMontageByGameplayTag(AvatarActor, MontageTag);
 	if (!IsValid(MontageToPlay))
 	{
@@ -275,6 +297,11 @@ void UPRGA_Equip::ShowHiddenEquipment()
 	if (UPREquipmentManagerComponent* EquipmentManager = CachedEquipmentManager.Get())
 	{
 		EquipmentManager->SetEquipmentVisibility(HiddenEquipmentSlot, true);
+		
+		if (UEquipmentInstance* EquipmentInstance = EquipmentManager->GetEquipmentInstance(HiddenEquipmentSlot))
+		{
+			EquipmentInstance->StartDissolve(2.f,true);
+		}
 	}
 
 	bIsEquipmentHidden = false;

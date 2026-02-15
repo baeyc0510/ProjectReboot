@@ -16,6 +16,8 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type_Bullet, "Equipment.Weapon.Type.
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type_Beam, "Equipment.Weapon.Type.Beam");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type_Missile, "Equipment.Weapon.Type.Missile");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type_Preview, "Equipment.Weapon.Type.Preview");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type_Single, "Equipment.Weapon.Type.Single");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Weapon_Type_Scatter, "Equipment.Weapon.Type.Scatter");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot_Weapon, "Equipment.Slot.Weapon");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot_Weapon_Primary, "Equipment.Slot.Weapon.Primary");
@@ -157,6 +159,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_DamageMultiplier, "SetByCaller.Wea
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_MaxPenetration, "SetByCaller.Weapon.MaxPenetration");
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_PenetrationDamageFalloff, "SetByCaller.Weapon.PenetrationDamageFalloff");
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_EffectRadius, "SetByCaller.Weapon.EffectRadius");
+UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Weapon_ScatterCount, "SetByCaller.Weapon.ScatterCount");
 
 /*~ SetByCaller Tags - Common Attributes ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_SetByCaller_Common_MoveSpeed,"SetByCaller.Common.MoveSpeed");
@@ -195,6 +198,14 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Upgrade_Module, "Upgrade.Module");
 /*~ Currency Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Currency, "Currency");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Currency_Core, "Currency.Core");
+UE_DEFINE_GAMEPLAY_TAG(TAG_MetaState_Currency, "MetaState.Currency");
+UE_DEFINE_GAMEPLAY_TAG(TAG_MetaState_Currency_Bolt, "MetaState.Currency.Bolt");
+
+/*~ Reward Tags ~*/
+UE_DEFINE_GAMEPLAY_TAG(TAG_Reward,"Reward");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Reward_Equipment,"Reward.Equipment");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Reward_Upgrade, "Reward.Upgrade");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Reward_Shop, "Reward.Shop");
 
 /*~ UI ViewModel Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel, "UI.ViewModel");

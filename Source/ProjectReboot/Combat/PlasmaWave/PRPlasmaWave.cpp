@@ -181,7 +181,7 @@ void APRPlasmaWave::TraceGround(float DeltaTime)
 	QueryParams.AddIgnoredActor(this);
 	QueryParams.AddIgnoredActor(GetOwner());
 
-	if (World->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd,PRCollision::ECC_Ground, QueryParams))
+	if (World->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd,EPRCollision::ECC_Ground, QueryParams))
 	{
 		float BottomOffsetZ = DamageBoxExtent.Z;
 		if (IsValid(DamageBox))

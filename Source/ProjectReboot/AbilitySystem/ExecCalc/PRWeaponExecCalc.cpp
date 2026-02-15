@@ -18,4 +18,5 @@ UPRWeaponExecCalc::UPRWeaponExecCalc()
 	SetByCallerAttributeMap.Add(TAG_SetByCaller_Weapon_PenetrationDamageFalloff, {UPRWeaponAttributeSet::GetPenetrationDamageFalloffAttribute()});
 	SetByCallerAttributeMap.Add(TAG_SetByCaller_Weapon_MaxPenetration, {UPRWeaponAttributeSet::GetMaxPenetrationAttribute()});
 	SetByCallerAttributeMap.Add(TAG_SetByCaller_Weapon_EffectRadius, {UPRWeaponAttributeSet::GetEffectRadiusAttribute()});
+	SetByCallerAttributeMap.Add(TAG_SetByCaller_Weapon_ScatterCount, {UPRWeaponAttributeSet::GetScatterCountAttribute()});
 }

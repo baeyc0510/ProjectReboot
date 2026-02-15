@@ -48,6 +48,8 @@ public:
 	UFUNCTION(BlueprintPure)
 	UMotionWarpingComponent* GetMotionWarpingComponent() const { return MotionWarpingComponent; }
 
+	void SetSpawnLocation(const FVector& InSpawnLocation) {SpawnLocation = InSpawnLocation;}
+	
 	// 스폰 위치 반환 (Patrol용)
 	UFUNCTION(BlueprintPure)
 	FVector GetSpawnLocation() const {return SpawnLocation;}

@@ -128,19 +128,19 @@ public:
 
 	// 수치 설정
 	UFUNCTION(BlueprintCallable, Category = "Roguelite|Numeric", meta = (WorldContext = "WorldContextObject"))
-	static void SetRunStateValue(const UObject* WorldContextObject, FGameplayTag Key, float Value);
+	static void SetRogueliteStateValue(const UObject* WorldContextObject, FGameplayTag Key, float Value);
 
 	// 수치 조회
 	UFUNCTION(BlueprintPure, Category = "Roguelite|Numeric", meta = (WorldContext = "WorldContextObject"))
-	static float GetRunStateValue(const UObject* WorldContextObject, FGameplayTag Key, float DefaultValue = 0.f);
+	static float GetRogueliteStateValue(const UObject* WorldContextObject, FGameplayTag Key, float DefaultValue = 0.f);
 
 	// 수치 더하기
 	UFUNCTION(BlueprintCallable, Category = "Roguelite|Numeric", meta = (WorldContext = "WorldContextObject"))
-	static float AddRunStateValue(const UObject* WorldContextObject, FGameplayTag Key, float Delta);
+	static float AddRogueliteStateValue(const UObject* WorldContextObject, FGameplayTag Key, float Delta);
 
 	// 모든 수치 조회
 	UFUNCTION(BlueprintPure, Category = "Roguelite|Numeric", meta = (WorldContext = "WorldContextObject"))
-	static TMap<FGameplayTag, float> GetAllRunStateValues(const UObject* WorldContextObject);
+	static TMap<FGameplayTag, float> GetAllRogueliteStateValues(const UObject* WorldContextObject);
 
 	/*~ Save/Load ~*/
 

@@ -90,14 +90,14 @@ bool UPRUpgradeManagerSubsystem::TryPurchaseUpgrade(UPRUpgradeModuleData* InModu
 	}
 
 	// 화폐 차감
-	Subsystem->AddRunStateValue(InModule->CurrencyTag, -Cost);
+	Subsystem->AddStateValue(InModule->CurrencyTag, -Cost);
 
 	// 업그레이드 획득 (RogueliteSubsystem에 위임)
 	FString AcquireFailReason;
 	if (!Subsystem->TryAcquireAction(ActionData, AcquireFailReason))
 	{
 		// 롤백: 화폐 복구
-		Subsystem->AddRunStateValue(InModule->CurrencyTag, Cost);
+		Subsystem->AddStateValue(InModule->CurrencyTag, Cost);
 		OutFailReason = AcquireFailReason;
 		return false;
 	}
@@ -200,7 +200,7 @@ float UPRUpgradeManagerSubsystem::GetCurrency(FGameplayTag CurrencyTag) const
 	{
 		return 0.0f;
 	}
-	return Subsystem->GetRunStateValue(CurrencyTag);
+	return Subsystem->GetStateValue(CurrencyTag);
 }
 
 const TArray<FPRUpgradePurchaseInfo>& UPRUpgradeManagerSubsystem::GetPurchasedModules() const
@@ -216,7 +216,7 @@ void UPRUpgradeManagerSubsystem::BindToRogueliteSubsystem()
 		return;
 	}
 
-	Subsystem->OnRunStateValueChanged.AddDynamic(this, &ThisClass::HandleRunStateValueChanged);
+	Subsystem->OnRogueliteStateValueChanged.AddDynamic(this, &ThisClass::HandleRunStateValueChanged);
 	bIsBoundToSubsystem = true;
 }
 
@@ -233,7 +233,7 @@ void UPRUpgradeManagerSubsystem::UnbindFromRogueliteSubsystem()
 		return;
 	}
 
-	Subsystem->OnRunStateValueChanged.RemoveDynamic(this, &ThisClass::HandleRunStateValueChanged);
+	Subsystem->OnRogueliteStateValueChanged.RemoveDynamic(this, &ThisClass::HandleRunStateValueChanged);
 	bIsBoundToSubsystem = false;
 }
 
@@ -245,7 +245,7 @@ URogueliteSubsystem* UPRUpgradeManagerSubsystem::GetRogueliteSubsystem() const
 void UPRUpgradeManagerSubsystem::HandleRunStateValueChanged(FGameplayTag Key, float OldValue, float NewValue)
 {
 	// Currency 태그인지 확인하고 이벤트 브로드캐스트
-	if (Key.MatchesTag(TAG_Currency))
+	if (Key.MatchesTag(TAG_Currency) || Key.MatchesTag(TAG_MetaState_Currency))
 	{
 		OnCurrencyChanged.Broadcast(Key, OldValue, NewValue);
 	}

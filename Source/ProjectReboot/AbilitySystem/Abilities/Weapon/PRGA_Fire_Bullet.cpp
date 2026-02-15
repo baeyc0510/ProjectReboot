@@ -1,9 +1,11 @@
 // PRGA_Fire_Bullet.cpp
 #include "PRGA_Fire_Bullet.h"
 
+#include "AbilitySystemComponent.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "GameFramework/Character.h"
 #include "ProjectReboot/PRGameplayTags.h"
+#include "ProjectReboot/AbilitySystem/PRWeaponAttributeSet.h"
 #include "ProjectReboot/Equipment/Weapon/BulletWeaponInstance.h"
 
 UPRGA_Fire_Bullet::UPRGA_Fire_Bullet()
@@ -57,18 +59,73 @@ void UPRGA_Fire_Bullet::FireOnce()
 	
 	// Muzzle VFX 재생
 	Weapon->PlayMuzzleFlash();
-	
-	// 스프레드 적용 히트스캔
-	const TArray<FHitResult> HitResults = PerformHitscanWithSpread(BaseSpreadAngle);
 
-	if (HitResults.Num() > 0)
+	const bool bIsScatter = Weapon->HasTag(TAG_Equipment_Weapon_Type_Scatter);
+
+	if (bIsScatter)
 	{
-		// 관통 순서대로 데미지 적용
+		// Scatter: 여러 펠릿 발사 (짧은 사거리)
+		const float ScatterRange = 10000.f * ScatterRangeMultiplier;
+		TArray<FVector> AllImpactPoints;
+
+		// ScatterCount 어트리뷰트에서 펠릿 수 조회 (0 이하면 fallback 사용)
+		int32 PelletCount = ScatterPelletCount;
+		if (const UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+		{
+			const int32 AttrCount = FMath::TruncToInt(ASC->GetNumericAttribute(UPRWeaponAttributeSet::GetScatterCountAttribute()));
+			if (AttrCount > 0)
+			{
+				PelletCount = AttrCount;
+			}
+		}
+
+		FVector AimStart, AimDir;
+		GetCameraAimInfo(AimStart, AimDir);
+
+		for (int32 PelletIndex = 0; PelletIndex < PelletCount; ++PelletIndex)
+		{
+			const TArray<FHitResult> HitResults = PerformHitscanWithSpread(ScatterSpreadAngle, ScatterRange);
+			for (int32 HitIndex = 0; HitIndex < HitResults.Num(); ++HitIndex)
+			{
+				const FHitResult& HitResult = HitResults[HitIndex];
+				Weapon->PlayImpact(HitResult);
+				ApplyWeaponDamage(HitResult, HitIndex);
+			}
+			if (HitResults.Num() > 0)
+			{
+				AllImpactPoints.Add(HitResults.Last().ImpactPoint);
+			}
+			else
+			{
+				// 미히트 시 스프레드 방향의 최대 사거리 지점을 끝점으로 사용
+				const float HalfAngleRad = FMath::DegreesToRadians(ScatterSpreadAngle * 0.5f);
+				const FVector SpreadDir = FMath::VRandCone(AimDir, HalfAngleRad);
+				AllImpactPoints.Add(AimStart + SpreadDir * ScatterRange);
+			}
+		}
+
+		Weapon->PlayBulletTrail(AllImpactPoints);
+	}
+	else
+	{
+		// Single: 단일 히트스캔
+		const TArray<FHitResult> HitResults = PerformHitscanWithSpread(BaseSpreadAngle);
+
 		for (int32 HitIndex = 0; HitIndex < HitResults.Num(); ++HitIndex)
 		{
 			const FHitResult& HitResult = HitResults[HitIndex];
 			Weapon->PlayImpact(HitResult);
 			ApplyWeaponDamage(HitResult, HitIndex);
+		}
+
+		if (HitResults.Num() > 0)
+		{
+			Weapon->PlayBulletTrail({ HitResults.Last().ImpactPoint });
+		}
+		else
+		{
+			// 미히트 시 조준점을 끝점으로 사용
+			Weapon->PlayBulletTrail({ GetAimPoint() });
 		}
 	}
 

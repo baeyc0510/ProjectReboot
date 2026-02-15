@@ -173,29 +173,37 @@ public:
 
 	// 수치 설정
 	UFUNCTION(BlueprintCallable, Category = "Roguelite|Numeric")
-	void SetRunStateValue(FGameplayTag Key, float Value);
+	void SetStateValue(FGameplayTag Key, float Value);
 
 	// 수치 조회
 	UFUNCTION(BlueprintCallable, Category = "Roguelite|Numeric")
-	float GetRunStateValue(FGameplayTag Key, float DefaultValue = 0.f) const;
+	float GetStateValue(FGameplayTag Key, float DefaultValue = 0.f) const;
 
 	// 수치 더하기
 	UFUNCTION(BlueprintCallable, Category = "Roguelite|Numeric")
-	float AddRunStateValue(FGameplayTag Key, float Delta);
+	float AddStateValue(FGameplayTag Key, float Delta);
 
 	// 모든 수치 조회
 	UFUNCTION(BlueprintCallable, Category = "Roguelite|Numeric")
-	TMap<FGameplayTag, float> GetAllRunStateValues() const;
+	TMap<FGameplayTag, float> GetAllStateValues() const;
 
 	/*~ Save/Load ~*/
 
-	// 세이브 데이터 생성
+	// Run 세이브 데이터 생성
 	UFUNCTION(BlueprintCallable, Category = "Roguelite|Save")
 	FRogueliteRunSaveData CreateRunSaveData() const;
 
-	// 세이브 데이터로 복원
+	// Run 세이브 데이터로 복원
 	UFUNCTION(BlueprintCallable, Category = "Roguelite|Save")
 	void RestoreRunFromSaveData(const FRogueliteRunSaveData& SaveData);
+
+	// Meta 세이브 데이터 생성
+	UFUNCTION(BlueprintCallable, Category = "Roguelite|Save")
+	FRogueliteMetaSaveData CreateMetaSaveData() const;
+
+	// Meta 세이브 데이터로 복원
+	UFUNCTION(BlueprintCallable, Category = "Roguelite|Save")
+	void RestoreMetaFromSaveData(const FRogueliteMetaSaveData& SaveData);
 
 	/*~ Pre-Acquire Check ~*/
 
@@ -256,7 +264,7 @@ public:
 
 	// 수치 데이터 변경 이벤트
 	UPROPERTY(BlueprintAssignable, Category = "Roguelite|Events")
-	FRogueliteValueChangedSignature OnRunStateValueChanged;
+	FRogueliteValueChangedSignature OnRogueliteStateValueChanged;
 
 private:
 	/*~ ActionDB ~*/
@@ -274,6 +282,15 @@ private:
 	// 현재 런 상태
 	UPROPERTY()
 	FRogueliteRunState RunState;
+
+	/*~ MetaState ~*/
+
+	// 영구 메타 상태 (Run 초기화에 영향받지 않음)
+	UPROPERTY()
+	FRogueliteMetaState MetaState;
+
+	// 키가 MetaState prefix에 해당하는지 판별
+	bool IsMetaStateKey(const FGameplayTag& Key) const;
 
 	/*~ Pre-Acquire Checks ~*/
 

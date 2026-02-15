@@ -141,7 +141,11 @@ protected:
 	// 외형 가시성 상태
 	bool bVisualsVisible = true;
 
-	/*~ Dissolve ~*/
+	/*~ Materials ~*/
+	// 생성하는 MeshComp들의 RenderCustomDepth 여부
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Dissolve")
+	bool bRenderCustomDepth = true;
+	
 	// Dissolve 머티리얼 파라미터 이름
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Dissolve")
 	FName DissolveParameterName = TEXT("DissolveRate");
@@ -149,7 +153,7 @@ protected:
 	// true: 파라미터 값을 0~100 퍼센티지로 설정 / false: 0~1 비율로 설정
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Dissolve")
 	bool bUseDissolvePercentage = false;
-
+	
 	// 파트별 Dissolve 상태
 	struct FDissolveEntry
 	{

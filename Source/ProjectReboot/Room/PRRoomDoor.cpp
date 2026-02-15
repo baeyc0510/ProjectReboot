@@ -3,7 +3,7 @@
 #include "PRRoomDoor.h"
 
 #include "PRStageManagerSubsystem.h"
-#include "Kismet/GameplayStatics.h"
+#include "Components/BoxComponent.h"
 #include "ProjectReboot/Game/PRGameplayGameMode.h"
 #include "ProjectReboot/Interaction/PRBillboardWidgetComponent.h"
 #include "ProjectReboot/UI/PRBillboardInfoWidget.h"
@@ -11,13 +11,30 @@
 APRRoomDoor::APRRoomDoor()
 {
 	PrimaryActorTick.bCanEverTick = false;
-	InteractionText = FText::FromString(TEXT("다음 방"));
+	InteractionText = FText::FromString(TEXT("들어가기"));
 
-	USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultSceneRoot"));
-	SetRootComponent(Root);
+	RootBoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("RootBoxComponent"));
+	RootBoxComponent->SetCollisionProfileName(TEXT("Interactable"));
+	SetRootComponent(RootBoxComponent);
 
 	BillboardWidget = CreateDefaultSubobject<UPRBillboardWidgetComponent>(TEXT("BillboardWidget"));
-	BillboardWidget->SetupAttachment(Root);
+	BillboardWidget->SetupAttachment(RootBoxComponent);
+}
+
+void APRRoomDoor::SetVisibility(bool bIsVisible)
+{
+	if (bIsVisible)
+	{
+		SetActorHiddenInGame(false);
+		SetActorEnableCollision(true);
+		OnDoorVisibilityChanged.Broadcast(true);
+	}
+	else
+	{
+		SetActorHiddenInGame(true);
+		SetActorEnableCollision(false);
+		OnDoorVisibilityChanged.Broadcast(false);
+	}
 }
 
 void APRRoomDoor::BeginPlay()

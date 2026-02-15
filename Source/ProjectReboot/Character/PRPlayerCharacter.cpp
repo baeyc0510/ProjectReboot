@@ -64,11 +64,11 @@ APRPlayerCharacter::APRPlayerCharacter()
 	RogueliteAbilityHandler = CreateDefaultSubobject<URogueliteAbilityHandlerComponent>(TEXT("RogueliteAbilityHandler"));
 	EquipmentManager = CreateDefaultSubobject<UPREquipmentManagerComponent>(TEXT("EquipmentManager"));
 	StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSourceComponent"));
-	// EnemyDetectionComponent = CreateDefaultSubobject<UPREnemyDetectionComponent>(TEXT("EnemyDetection"));
-	// if (IsValid(EnemyDetectionComponent))
-	// {
-	// 	EnemyDetectionComponent->SetupAttachment(RootComponent);
-	// }
+	EnemyDetectionComponent = CreateDefaultSubobject<UPREnemyDetectionComponent>(TEXT("EnemyDetection"));
+	if (IsValid(EnemyDetectionComponent))
+	{
+		EnemyDetectionComponent->SetupAttachment(RootComponent);
+	}
 	
 	if (StimuliSourceComponent)
 	{

@@ -2,7 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "NativeGameplayTags.h"
 #include "RogueliteTypes.generated.h"
+
+// MetaState 라우팅용 태그 (이 태그의 하위 태그는 MetaState에 저장)
+ROGUELITECORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_RogueliteMetaState);
 
 class URogueliteActionData;
 class URogueliteQueryFilter;
@@ -307,6 +311,69 @@ struct ROGUELITECORE_API FRogueliteRunState
 	}
 };
 
+/*~ Meta State ~*/
+
+USTRUCT(BlueprintType)
+struct ROGUELITECORE_API FRogueliteMetaState
+{
+	GENERATED_BODY()
+
+	// 태그 키 기반 영구 수치 데이터
+	UPROPERTY(BlueprintReadOnly)
+	TMap<FGameplayTag, float> NumericData;
+
+	// 상태 초기화
+	void Reset()
+	{
+		NumericData.Empty();
+	}
+
+	// 수치 데이터 조회
+	float GetNumericValue(FGameplayTag Key, float DefaultValue = 0.f) const
+	{
+		if (const float* Value = NumericData.Find(Key))
+		{
+			return *Value;
+		}
+		return DefaultValue;
+	}
+
+	// 수치 데이터 설정
+	void SetNumericValue(FGameplayTag Key, float Value)
+	{
+		NumericData.Add(Key, Value);
+	}
+
+	// ApplyMode에 따라 값 적용 후 결과 반환
+	float ApplyValue(FGameplayTag Key, float Value, ERogueliteApplyMode Mode)
+	{
+		float Current = GetNumericValue(Key);
+		float NewValue = Current;
+
+		switch (Mode)
+		{
+		case ERogueliteApplyMode::Add:
+			NewValue = Current + Value;
+			break;
+		case ERogueliteApplyMode::Multiply:
+			NewValue = Current * Value;
+			break;
+		case ERogueliteApplyMode::Set:
+			NewValue = Value;
+			break;
+		case ERogueliteApplyMode::Max:
+			NewValue = FMath::Max(Current, Value);
+			break;
+		case ERogueliteApplyMode::Min:
+			NewValue = FMath::Min(Current, Value);
+			break;
+		}
+
+		SetNumericValue(Key, NewValue);
+		return NewValue;
+	}
+};
+
 /*~ Query ~*/
 
 USTRUCT(BlueprintType)
@@ -381,4 +448,16 @@ struct ROGUELITECORE_API FRogueliteRunSaveData
 	// 총 플레이 시간 (초)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float PlayTime = 0.f;
+};
+
+/*~ Meta Save Data ~*/
+
+USTRUCT(BlueprintType)
+struct ROGUELITECORE_API FRogueliteMetaSaveData
+{
+	GENERATED_BODY()
+
+	// 영구 수치 데이터
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TMap<FGameplayTag, float> NumericData;
 };

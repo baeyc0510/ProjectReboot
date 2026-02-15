@@ -70,9 +70,9 @@ struct PROJECTREBOOT_API FPRStateTreeTask_Patrol : public FStateTreeTaskCommonBa
 	virtual void ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
 
 private:
-	// 랜덤 배회 위치 생성
-	FVector GenerateRandomPatrolLocation(const FInstanceDataType& Data, UWorld* World) const;
+	// 랜덤 배회 위치 생성 (겹침 시 false 반환)
+	bool GenerateRandomPatrolLocation(const FInstanceDataType& Data, UWorld* World, FVector& OutLocation) const;
 
-	// 다음 위치로 이동 시작
-	void StartMoveToNextLocation(FStateTreeExecutionContext& Context, FInstanceDataType& Data) const;
+	// 다음 위치로 이동 시작 (목표 생성 실패 시 false 반환)
+	bool StartMoveToNextLocation(FStateTreeExecutionContext& Context, FInstanceDataType& Data) const;
 };

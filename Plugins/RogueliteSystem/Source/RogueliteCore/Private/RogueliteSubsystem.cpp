@@ -1,11 +1,10 @@
 #include "RogueliteSubsystem.h"
 #include "RogueliteActionData.h"
 #include "RogueliteActionDatabase.h"
-#include "RoguelitePoolPreset.h"
-#include "RogueliteQueryFilter.h"
 #include "Engine/World.h"
 #include "Engine/GameInstance.h"
-#include "Engine/AssetManager.h"
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_RogueliteMetaState, "MetaState");
 
 /*~ USubsystem Interface ~*/
 
@@ -31,6 +30,11 @@ void URogueliteSubsystem::Deinitialize()
 	PreAcquireChecks.Empty();
 
 	Super::Deinitialize();
+}
+
+bool URogueliteSubsystem::IsMetaStateKey(const FGameplayTag& Key) const
+{
+	return Key.MatchesTag(TAG_RogueliteMetaState);
 }
 
 /*~ Static Access ~*/
@@ -320,7 +324,7 @@ bool URogueliteSubsystem::RemoveAction(URogueliteActionData* Action, int32 Stack
 	// 자동 효과 제거
 	if (Action->bAutoApplyToRunState)
 	{
-		RemoveActionEffects(Action, ActualStacksRemoved);	
+		RemoveActionEffects(Action, ActualStacksRemoved);
 	}
 
 	if (NewStacks == 0)
@@ -401,36 +405,66 @@ FGameplayTagContainer URogueliteSubsystem::GetAllTags() const
 
 /*~ Numeric Data ~*/
 
-void URogueliteSubsystem::SetRunStateValue(FGameplayTag Key, float Value)
+void URogueliteSubsystem::SetStateValue(FGameplayTag Key, float Value)
 {
-	float OldValue = RunState.GetNumericValue(Key);
-	if (!FMath::IsNearlyEqual(OldValue, Value))
+	if (IsMetaStateKey(Key))
 	{
-		RunState.SetNumericValue(Key, Value);
-		OnRunStateValueChanged.Broadcast(Key, OldValue, Value);
+		float OldValue = MetaState.GetNumericValue(Key);
+		if (!FMath::IsNearlyEqual(OldValue, Value))
+		{
+			MetaState.SetNumericValue(Key, Value);
+			OnRogueliteStateValueChanged.Broadcast(Key, OldValue, Value);
+		}
+	}
+	else
+	{
+		float OldValue = RunState.GetNumericValue(Key);
+		if (!FMath::IsNearlyEqual(OldValue, Value))
+		{
+			RunState.SetNumericValue(Key, Value);
+			OnRogueliteStateValueChanged.Broadcast(Key, OldValue, Value);
+		}
 	}
 }
 
-float URogueliteSubsystem::GetRunStateValue(FGameplayTag Key, float DefaultValue) const
+float URogueliteSubsystem::GetStateValue(FGameplayTag Key, float DefaultValue) const
 {
+	if (IsMetaStateKey(Key))
+	{
+		return MetaState.GetNumericValue(Key, DefaultValue);
+	}
 	return RunState.GetNumericValue(Key, DefaultValue);
 }
 
-float URogueliteSubsystem::AddRunStateValue(FGameplayTag Key, float Delta)
+float URogueliteSubsystem::AddStateValue(FGameplayTag Key, float Delta)
 {
+	if (IsMetaStateKey(Key))
+	{
+		float OldValue = MetaState.GetNumericValue(Key);
+		float NewValue = OldValue + Delta;
+		if (!FMath::IsNearlyEqual(OldValue, NewValue))
+		{
+			MetaState.SetNumericValue(Key, NewValue);
+			OnRogueliteStateValueChanged.Broadcast(Key, OldValue, NewValue);
+		}
+		return NewValue;
+	}
+
 	float OldValue = RunState.GetNumericValue(Key);
 	float NewValue = OldValue + Delta;
 	if (!FMath::IsNearlyEqual(OldValue, NewValue))
 	{
 		RunState.SetNumericValue(Key, NewValue);
-		OnRunStateValueChanged.Broadcast(Key, OldValue, NewValue);
+		OnRogueliteStateValueChanged.Broadcast(Key, OldValue, NewValue);
 	}
 	return NewValue;
 }
 
-TMap<FGameplayTag, float> URogueliteSubsystem::GetAllRunStateValues() const
+TMap<FGameplayTag, float> URogueliteSubsystem::GetAllStateValues() const
 {
-	return RunState.NumericData;
+	TMap<FGameplayTag, float> MergedData = RunState.NumericData;
+	MergedData.Append(MetaState.NumericData);
+	return MergedData;
 }
 
 /*~ Save/Load ~*/
@@ -477,6 +511,18 @@ void URogueliteSubsystem::RestoreRunFromSaveData(const FRogueliteRunSaveData& Sa
 	RunState.NumericData = SaveData.NumericData;
 }
 
+FRogueliteMetaSaveData URogueliteSubsystem::CreateMetaSaveData() const
+{
+	FRogueliteMetaSaveData SaveData;
+	SaveData.NumericData = MetaState.NumericData;
+	return SaveData;
+}
+
+void URogueliteSubsystem::RestoreMetaFromSaveData(const FRogueliteMetaSaveData& SaveData)
+{
+	MetaState.NumericData = SaveData.NumericData;
+}
+
 /*~ Pre-Acquire Check ~*/
 
 void URogueliteSubsystem::RegisterPreAcquireCheck(FRoguelitePreAcquireCheckSignature CheckDelegate)
@@ -498,13 +544,23 @@ void URogueliteSubsystem::ApplyActionEffects(URogueliteActionData* Action, int32
 
 	for (const FRogueliteValueEntry& Entry : Action->Values)
 	{
+		const bool bIsMeta = IsMetaStateKey(Entry.Key);
 		for (int32 i = 0; i < Stacks; ++i)
 		{
-			float OldValue = RunState.GetNumericValue(Entry.Key);
-			float NewValue = RunState.ApplyValue(Entry.Key, Entry.Value, Entry.ApplyMode);
+			float OldValue, NewValue;
+			if (bIsMeta)
+			{
+				OldValue = MetaState.GetNumericValue(Entry.Key);
+				NewValue = MetaState.ApplyValue(Entry.Key, Entry.Value, Entry.ApplyMode);
+			}
+			else
+			{
+				OldValue = RunState.GetNumericValue(Entry.Key);
+				NewValue = RunState.ApplyValue(Entry.Key, Entry.Value, Entry.ApplyMode);
+			}
 			if (!FMath::IsNearlyEqual(OldValue, NewValue))
 			{
-				OnRunStateValueChanged.Broadcast(Entry.Key, OldValue, NewValue);
+				OnRogueliteStateValueChanged.Broadcast(Entry.Key, OldValue, NewValue);
 			}
 		}
 	}
@@ -524,22 +580,38 @@ void URogueliteSubsystem::RemoveActionEffects(URogueliteActionData* Action, int3
 
 	for (const FRogueliteValueEntry& Entry : Action->Values)
 	{
+		const bool bIsMeta = IsMetaStateKey(Entry.Key);
 		for (int32 i = 0; i < Stacks; ++i)
 		{
-			float OldValue = RunState.GetNumericValue(Entry.Key);
-			float NewValue = OldValue;
-
-			// Add의 역연산
-			if (Entry.ApplyMode == ERogueliteApplyMode::Add)
+			float OldValue, NewValue;
+			if (bIsMeta)
 			{
-				NewValue = RunState.ApplyValue(Entry.Key, -Entry.Value, ERogueliteApplyMode::Add);
+				OldValue = MetaState.GetNumericValue(Entry.Key);
+				NewValue = OldValue;
+
+				// Add의 역연산
+				if (Entry.ApplyMode == ERogueliteApplyMode::Add)
+				{
+					NewValue = MetaState.ApplyValue(Entry.Key, -Entry.Value, ERogueliteApplyMode::Add);
+				}
 			}
-				
+			else
+			{
+				OldValue = RunState.GetNumericValue(Entry.Key);
+				NewValue = OldValue;
+
+				// Add의 역연산
+				if (Entry.ApplyMode == ERogueliteApplyMode::Add)
+				{
+					NewValue = RunState.ApplyValue(Entry.Key, -Entry.Value, ERogueliteApplyMode::Add);
+				}
+			}
+
 			// Multiply, Set, Max, Min은 역연산 불가 (상태가 보존되지 않음) TODO: 재계산 시스템
 
 			if (!FMath::IsNearlyEqual(OldValue, NewValue))
 			{
-				OnRunStateValueChanged.Broadcast(Entry.Key, OldValue, NewValue);
+				OnRogueliteStateValueChanged.Broadcast(Entry.Key, OldValue, NewValue);
 			}
 		}
 	}

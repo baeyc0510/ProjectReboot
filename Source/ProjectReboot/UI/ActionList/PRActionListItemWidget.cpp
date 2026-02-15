@@ -25,8 +25,8 @@ void UPRActionListItemWidget::InitWidget(URogueliteActionData* InActionData)
 		return;
 	}
 
-	FText DisplayNameText = InActionData->GetFormattedTextWithValues(InActionData->DisplayName);
-	FText DescriptionText = InActionData->GetFormattedTextWithValues(InActionData->Description);
+	FText DisplayNameText = InActionData->GetFormattedTextWithValuesByIndex(InActionData->DisplayName);
+	FText DescriptionText = InActionData->GetFormattedTextWithValuesByIndex(InActionData->Description);
 
 	TB_ActionName->SetText(DisplayNameText);
 	TB_Description->SetText(DescriptionText);

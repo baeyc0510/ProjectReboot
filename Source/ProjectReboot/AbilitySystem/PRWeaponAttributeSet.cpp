@@ -23,6 +23,9 @@ UPRWeaponAttributeSet::UPRWeaponAttributeSet()
 
 	// 효과 반경
 	InitEffectRadius(100.0f);
+
+	// Scatter
+	InitScatterCount(0.0f);
 }
 
 void UPRWeaponAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
@@ -46,7 +49,8 @@ void UPRWeaponAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribu
 			 Attribute == GetReloadTimeAttribute() ||
 			 Attribute == GetBaseDamageAttribute() ||
 			 Attribute == GetMaxPenetrationAttribute() ||
-			 Attribute == GetEffectRadiusAttribute())
+			 Attribute == GetEffectRadiusAttribute() ||
+			 Attribute == GetScatterCountAttribute())
 	{
 		NewValue = FMath::Max(0.0f, NewValue);
 	}

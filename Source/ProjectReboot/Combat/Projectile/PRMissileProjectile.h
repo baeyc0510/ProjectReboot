@@ -66,6 +66,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Missile")
 	void SetWeaponSlotTag(FGameplayTag SlotTag);
 
+	// 추가 폭발 설정 (Scatter)
+	UFUNCTION(BlueprintCallable, Category = "Missile|Scatter")
+	void SetSubExplosion(int32 Count, float Radius, float SpreadRadius, float Interval = 0.08f);
+
 	/*~ IPRPrewarmInterface ~*/
 	// 프리웜 대상 나이아가라 에셋 수집
 	virtual void GetPrewarmNiagaraAssets(TArray<TSoftObjectPtr<UNiagaraSystem>>& OutAssets) const override;
@@ -83,8 +87,17 @@ protected:
 	// 폭발 이펙트 스폰
 	void SpawnExplosionEffect();
 
+	// 지정 위치에 폭발 이펙트 스폰
+	void SpawnExplosionEffectAt(const FVector& Location);
+
 	// 범위 내 타겟에게 데미지 적용
 	void ApplyAOEDamage();
+
+	// 지정 위치에서 AOE 데미지 적용
+	void ApplyAOEDamageAt(const FVector& Location, float Radius);
+
+	// 추가 폭발 처리 (타이머 콜백)
+	void ProcessNextSubExplosion();
 
 	// 근접 폭발 체크 (유도 미사일용)
 	void CheckProximityDetonation();
@@ -145,4 +158,30 @@ protected:
 	// 무기 슬롯 태그 (GCN에서 무기 인스턴스 조회용)
 	UPROPERTY(BlueprintReadOnly, Category = "Missile|Damage")
 	FGameplayTag WeaponSlotTag;
+
+	/*~ 추가 폭발 (Scatter) ~*/
+
+	// 추가 폭발 개수 (0이면 비활성)
+	int32 SubExplosionCount = 0;
+
+	// 추가 폭발 AOE 반경
+	float SubExplosionRadius = 100.f;
+
+	// 추가 폭발 산개 거리 (메인 폭발 중심 기준)
+	float SubExplosionSpreadRadius = 200.f;
+
+	// 추가 폭발 간격 (초)
+	float SubExplosionInterval = 0.08f;
+
+	// 메인 폭발 위치 (추가 폭발 기준점)
+	FVector MainExplosionLocation = FVector::ZeroVector;
+
+	// 미리 생성된 추가 폭발 위치 목록
+	TArray<FVector> SubExplosionLocations;
+
+	// 현재 추가 폭발 인덱스
+	int32 CurrentSubExplosionIndex = 0;
+
+	// 추가 폭발 타이머 핸들
+	FTimerHandle SubExplosionTimerHandle;
 };

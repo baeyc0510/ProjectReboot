@@ -10,10 +10,15 @@
 #include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/Game/PRGameplayGameState.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/SphereComponent.h"
 
 APRRewardActor::APRRewardActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
+	
+	RootSphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("RootSphereComponent"));
+	RootSphereComponent->SetCollisionProfileName(TEXT("Interactable"));
+	SetRootComponent(RootSphereComponent);
 }
 
 void APRRewardActor::SetRewardPoolPreset(URoguelitePoolPreset* InPoolPreset)

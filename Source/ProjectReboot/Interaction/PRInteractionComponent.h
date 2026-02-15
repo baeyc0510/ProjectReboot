@@ -82,6 +82,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Interaction")
 	float InteractionRadius = 50.0f;
 
+	// 포커스 상실 여유 거리 (획득 거리보다 이만큼 더 멀어져야 포커스 해제)
+	UPROPERTY(EditDefaultsOnly, Category = "Interaction", meta = (ClampMin = "0.0"))
+	float FocusLossMargin = 50.0f;
+
 private:
 	// 포커스 대상 변경 처리
 	void SetFocusedActor(AActor* NewActor);

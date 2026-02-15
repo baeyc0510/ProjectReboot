@@ -22,6 +22,10 @@ struct FActiveMuzzleInfo
 	// 부착된 Muzzle Flash 컴포넌트
 	UPROPERTY()
 	TObjectPtr<UNiagaraComponent> MuzzleFlashComp;
+
+	// 부착된 Trail VFX 컴포넌트
+	UPROPERTY()
+	TObjectPtr<UNiagaraComponent> TrailComp;
 };
 
 // 무기 FX 설정

@@ -19,6 +19,8 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Weapon_Type_Bullet);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Weapon_Type_Beam);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Weapon_Type_Missile);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Weapon_Type_Preview);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Weapon_Type_Single);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Weapon_Type_Scatter);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Weapon);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Weapon_Primary);
@@ -161,6 +163,7 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Weapon_DamageMultiplier);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Weapon_MaxPenetration);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Weapon_PenetrationDamageFalloff);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Weapon_EffectRadius);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Weapon_ScatterCount);
 
 /*~ SetByCaller Tags - Common Attributes ~*/
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_SetByCaller_Common_MoveSpeed);
@@ -199,6 +202,14 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Upgrade_Module);
 /*~ Currency Tags ~*/
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Currency);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Currency_Core);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_MetaState_Currency);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_MetaState_Currency_Bolt);
+
+/*~ Reward Tags ~*/
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Reward);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Reward_Equipment);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Reward_Upgrade);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Reward_Shop);
 
 /*~ UI ViewModel Tags ~*/
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_UI_ViewModel);

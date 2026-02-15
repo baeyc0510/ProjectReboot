@@ -57,6 +57,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Weapon|VFX")
 	void PlayImpact(const FHitResult& HitResult);
 
+	// 총알 궤적 VFX 재생
+	UFUNCTION(BlueprintCallable, Category = "Weapon|VFX")
+	void PlayBulletTrail(const TArray<FVector>& ImpactPoints);
+
 	// VFX 설정 Getter
 	UFUNCTION(BlueprintCallable, Category = "Weapon|VFX")
 	const FWeaponFXSettings& GetVFXSettings() const { return FXSettings; }

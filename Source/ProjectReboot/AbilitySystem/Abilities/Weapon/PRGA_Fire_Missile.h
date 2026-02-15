@@ -10,7 +10,7 @@ class APRMissileProjectile;
 
 /**
  * 미사일 무기 발사 어빌리티 (Projectile 스폰)
- * 락온된 모든 타겟에 대해 잔탄이 있는 한 연속 발사
+ * 락온된 모든 타겟에 대해 잔탄이 있는 한 순차 발사
  */
 UCLASS()
 class PROJECTREBOOT_API UPRGA_Fire_Missile : public UPRGameplayAbility_WeaponFire
@@ -19,20 +19,17 @@ class PROJECTREBOOT_API UPRGA_Fire_Missile : public UPRGameplayAbility_WeaponFir
 
 public:
 	UPRGA_Fire_Missile();
-	
+
 	/*~ IPRPrewarmInterface ~*/
 	virtual void GetPrewarmChildren(TArray<UObject*>& OutChildren) const override;
 
 	/*~ UGameplayAbility Interface ~*/
 	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr, OUT FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
-	
+
 	/*~ UPRGameplayAbility_WeaponFire Interface ~*/
 	virtual void OnActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 
 protected:
-	// 락온된 모든 타겟에 미사일 발사 (잔탄이 있는 동안)
-	void FireAllMissiles();
-
 	// 단일 미사일 발사
 	void FireSingleMissile(UMissileWeaponInstance* Weapon, AActor* HomingTarget);
 
@@ -45,11 +42,22 @@ protected:
 	// MissileWeaponInstance 조회
 	UMissileWeaponInstance* GetMissileWeapon() const;
 
+private:
+	/*~ 순차 발사 태스크 콜백 ~*/
+
+	// 순차 발사 시 개별 미사일 발사 콜백
+	UFUNCTION()
+	void OnSequentialFireMissile(AActor* HomingTarget);
+
+	// 순차 발사 완료 콜백
+	UFUNCTION()
+	void OnSequentialFireCompleted();
+
 protected:
 	// 미사일 발사 몽타주
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Missile")
 	TObjectPtr<UAnimMontage> MissileFireMontage;
-	
+
 	// 스폰할 Projectile 클래스
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Missile")
 	TSubclassOf<APRMissileProjectile> DefaultProjectileClass;
@@ -69,7 +77,29 @@ protected:
 	// 최대 사거리 (0 이하면 무제한)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Missile", meta = (ClampMin = "0.0"))
 	float MaxRange = 5000.0f;
-	
+
+	// 순차 발사 간격 (AvatarActor 시간 기준, 초)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Missile", meta = (ClampMin = "0.0"))
+	float SequentialFireInterval = 0.1f;
+
+	/*~ Scatter 추가 폭발 설정 ~*/
+
+	// 추가 폭발 개수
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Missile|Scatter", meta = (ClampMin = "0"))
+	int32 SubExplosionCount = 3;
+
+	// 추가 폭발 AOE 반경
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Missile|Scatter", meta = (ClampMin = "0.0"))
+	float SubExplosionRadius = 100.f;
+
+	// 추가 폭발 산개 거리
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Missile|Scatter", meta = (ClampMin = "0.0"))
+	float SubExplosionSpreadRadius = 200.f;
+
+	// 추가 폭발 간격 (초)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Missile|Scatter", meta = (ClampMin = "0.01"))
+	float SubExplosionInterval = 0.08f;
+
 private:
 	UPROPERTY()
 	TObjectPtr<ACharacter> OwnerCharacter;

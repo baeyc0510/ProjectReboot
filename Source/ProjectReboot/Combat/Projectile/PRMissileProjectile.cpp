@@ -196,6 +196,14 @@ void APRMissileProjectile::SetWeaponSlotTag(FGameplayTag SlotTag)
 	WeaponSlotTag = SlotTag;
 }
 
+void APRMissileProjectile::SetSubExplosion(int32 Count, float Radius, float SpreadRadius, float Interval)
+{
+	SubExplosionCount = FMath::Max(0, Count);
+	SubExplosionRadius = Radius;
+	SubExplosionSpreadRadius = SpreadRadius;
+	SubExplosionInterval = Interval;
+}
+
 void APRMissileProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	// 자기 자신이나 소유자와 충돌 무시
@@ -243,37 +251,95 @@ void APRMissileProjectile::Explode()
 	}
 	bHasExploded = true;
 
-	// AOE 데미지 적용
+	// 메인 폭발
+	MainExplosionLocation = GetActorLocation();
 	ApplyAOEDamage();
-
-	// 폭발 이펙트 스폰
 	SpawnExplosionEffect();
 
-	// 발사체 제거
-	Destroy();
+	// 비주얼 숨기기 (추가 폭발 대기 중 메시 비노출)
+	SetActorHiddenInGame(true);
+	SetActorEnableCollision(false);
+
+	if (SubExplosionCount > 0)
+	{
+		// 추가 폭발 위치 미리 생성
+		SubExplosionLocations.Reserve(SubExplosionCount);
+		for (int32 i = 0; i < SubExplosionCount; ++i)
+		{
+			const float RandomAngle = FMath::FRandRange(0.f, 2.f * PI);
+			const float RandomDist = FMath::FRandRange(SubExplosionSpreadRadius * 0.3f, SubExplosionSpreadRadius);
+			const FVector Offset = FVector(
+				FMath::Cos(RandomAngle) * RandomDist,
+				FMath::Sin(RandomAngle) * RandomDist,
+				0.f
+			);
+			SubExplosionLocations.Add(MainExplosionLocation + Offset);
+		}
+
+		// 타이머로 순차 폭발
+		CurrentSubExplosionIndex = 0;
+		GetWorldTimerManager().SetTimer(
+			SubExplosionTimerHandle,
+			this,
+			&APRMissileProjectile::ProcessNextSubExplosion,
+			SubExplosionInterval,
+			true
+		);
+	}
+	else
+	{
+		Destroy();
+	}
+}
+
+void APRMissileProjectile::ProcessNextSubExplosion()
+{
+	if (CurrentSubExplosionIndex >= SubExplosionLocations.Num())
+	{
+		GetWorldTimerManager().ClearTimer(SubExplosionTimerHandle);
+		Destroy();
+		return;
+	}
+
+	const FVector& Location = SubExplosionLocations[CurrentSubExplosionIndex];
+	ApplyAOEDamageAt(Location, SubExplosionRadius);
+	SpawnExplosionEffectAt(Location);
+	++CurrentSubExplosionIndex;
 }
 
 void APRMissileProjectile::SpawnExplosionEffect()
 {
+	SpawnExplosionEffectAt(GetActorLocation());
+}
+
+void APRMissileProjectile::SpawnExplosionEffectAt(const FVector& Location)
+{
 	if (IsValid(ExplosionVFX))
 	{
+		float EffectScale = ExplosionRadius / 100.f;
+		
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-		GetWorld(),
-		ExplosionVFX,
-		GetActorLocation(),
-		FRotator::ZeroRotator,
-		FVector(1.0f),
-		true,
-		true,
-		ENCPoolMethod::AutoRelease);
+			GetWorld(),
+			ExplosionVFX,
+			Location,
+			FRotator::ZeroRotator,
+			FVector(EffectScale),
+			true,
+			true,
+			ENCPoolMethod::AutoRelease);
 	}
 	if (IsValid(ExplosionSFX))
 	{
-		UGameplayStatics::SpawnSoundAtLocation(this, ExplosionSFX,GetActorLocation());
+		UGameplayStatics::SpawnSoundAtLocation(this, ExplosionSFX, Location);
 	}
 }
 
 void APRMissileProjectile::ApplyAOEDamage()
+{
+	ApplyAOEDamageAt(GetActorLocation(), ExplosionRadius);
+}
+
+void APRMissileProjectile::ApplyAOEDamageAt(const FVector& Location, float Radius)
 {
 	if (!IsValid(DamageEffectClass) || !InstigatorASC.IsValid())
 	{
@@ -295,16 +361,13 @@ void APRMissileProjectile::ApplyAOEDamage()
 
 	UKismetSystemLibrary::SphereOverlapActors(
 		World,
-		GetActorLocation(),
-		ExplosionRadius,
-		TArray<TEnumAsByte<EObjectTypeQuery>>(), // 모든 오브젝트 타입
+		Location,
+		Radius,
+		TArray<TEnumAsByte<EObjectTypeQuery>>(),
 		AActor::StaticClass(),
 		IgnoreActors,
 		OverlappedActors
 	);
-
-	// 폭발 위치
-	const FVector ExplosionLocation = GetActorLocation();
 
 	// LineTrace 설정
 	FCollisionQueryParams QueryParams;
@@ -333,9 +396,9 @@ void APRMissileProjectile::ApplyAOEDamage()
 		FVector TargetLocation = TargetActor->GetActorLocation();
 		bool bHit = World->LineTraceSingleByChannel(
 			HitResult,
-			ExplosionLocation,
+			Location,
 			TargetLocation,
-			PRCollision::ECC_Attack,
+			EPRCollision::ECC_Attack,
 			QueryParams
 		);
 
@@ -343,7 +406,7 @@ void APRMissileProjectile::ApplyAOEDamage()
 		if (!bHit)
 		{
 			HitResult.ImpactPoint = TargetLocation;
-			HitResult.ImpactNormal = (TargetLocation - ExplosionLocation).GetSafeNormal();
+			HitResult.ImpactNormal = (TargetLocation - Location).GetSafeNormal();
 			HitResult.Location = TargetLocation;
 		}
 

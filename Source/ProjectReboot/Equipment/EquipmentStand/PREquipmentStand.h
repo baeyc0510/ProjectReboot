@@ -7,6 +7,7 @@
 #include "ProjectReboot/Interaction/PRInteractableInterface.h"
 #include "PREquipmentStand.generated.h"
 
+class USphereComponent;
 class UPREquipmentActionSet;
 class APREquipmentStandManager;
 class UPRBillboardWidgetComponent;
@@ -79,7 +80,7 @@ public:
 protected:
 	// 루트 컴포넌트
 	UPROPERTY(VisibleAnywhere, Category = "Components")
-	TObjectPtr<USceneComponent> RootSceneComponent;
+	TObjectPtr<USphereComponent> RootSphereComponent;
 
 	// 상호작용 프롬프트 빌보드 위젯
 	UPROPERTY(VisibleAnywhere, Category = "Components")

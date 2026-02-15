@@ -10,7 +10,11 @@
 EStateTreeRunStatus FPRStateTreeTask_Patrol::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-
+	if (InstanceData.MoveToTask)
+	{
+		return EStateTreeRunStatus::Running;
+	}
+	
 	AAIController* Controller = Cast<AAIController>(Context.GetOwner());
 	if (!IsValid(Controller) || !IsValid(InstanceData.EnemyCharacter))
 	{
@@ -28,7 +32,10 @@ EStateTreeRunStatus FPRStateTreeTask_Patrol::EnterState(FStateTreeExecutionConte
 	InstanceData.WaitElapsedTime = 0.f;
 
 	// 첫 배회 위치로 이동 시작
-	StartMoveToNextLocation(Context, InstanceData);
+	if (!StartMoveToNextLocation(Context, InstanceData))
+	{
+		return EStateTreeRunStatus::Failed;
+	}
 
 	return EStateTreeRunStatus::Running;
 }
@@ -66,7 +73,10 @@ EStateTreeRunStatus FPRStateTreeTask_Patrol::Tick(FStateTreeExecutionContext& Co
 			else
 			{
 				// 이동 실패, 새로운 위치로 재시도
-				StartMoveToNextLocation(Context, InstanceData);
+				if (!StartMoveToNextLocation(Context, InstanceData))
+				{
+					return EStateTreeRunStatus::Failed;
+				}
 			}
 		}
 	}
@@ -94,18 +104,18 @@ void FPRStateTreeTask_Patrol::ExitState(FStateTreeExecutionContext& Context, con
 	InstanceData.WaitElapsedTime = 0.f;
 }
 
-FVector FPRStateTreeTask_Patrol::GenerateRandomPatrolLocation(const FInstanceDataType& Data, UWorld* World) const
+bool FPRStateTreeTask_Patrol::GenerateRandomPatrolLocation(const FInstanceDataType& Data, UWorld* World, FVector& OutLocation) const
 {
 	if (!IsValid(Data.EnemyCharacter))
 	{
-		return FVector::ZeroVector;
+		return false;
 	}
 
 	const FVector SpawnLocation = Data.EnemyCharacter->GetSpawnLocation();
 
 	// 스폰 위치 중심으로 반경 내 랜덤 위치 생성
 	const float RandomAngle = FMath::FRandRange(0.f, 2.f * PI);
-	const float RandomDistance = FMath::FRandRange(0.f, Data.PatrolRadius);
+	const float RandomDistance = FMath::FRandRange(Data.PatrolRadius / 3.0f, Data.PatrolRadius);
 	const FVector RandomOffset = FVector(
 		FMath::Cos(RandomAngle) * RandomDistance,
 		FMath::Sin(RandomAngle) * RandomDistance,
@@ -118,29 +128,37 @@ FVector FPRStateTreeTask_Patrol::GenerateRandomPatrolLocation(const FInstanceDat
 	if (UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(World))
 	{
 		FNavLocation NavLocation;
-		if (NavSys->ProjectPointToNavigation(PatrolLocation, NavLocation, FVector(Data.PatrolRadius, Data.PatrolRadius, 500.f)))
+		if (NavSys->ProjectPointToNavigation(PatrolLocation, NavLocation, FVector(Data.PatrolRadius, Data.PatrolRadius, 1000.f)))
 		{
 			PatrolLocation = NavLocation.Location;
+			OutLocation = PatrolLocation;
+			return true;
 		}
 	}
 
-	return PatrolLocation;
+	OutLocation = SpawnLocation;
+	return false;
 }
 
-void FPRStateTreeTask_Patrol::StartMoveToNextLocation(FStateTreeExecutionContext& Context, FInstanceDataType& Data) const
+bool FPRStateTreeTask_Patrol::StartMoveToNextLocation(FStateTreeExecutionContext& Context, FInstanceDataType& Data) const
 {
 	if (!IsValid(Data.CachedController.Get()))
 	{
-		return;
+		return false;
 	}
 
 	// 랜덤 배회 위치 생성
-	const FVector Destination = GenerateRandomPatrolLocation(Data, Context.GetWorld());
+	FVector Destination;
+	if (!GenerateRandomPatrolLocation(Data, Context.GetWorld(), Destination))
+	{
+		return false;
+	}
 
 	FAIMoveRequest MoveReq;
 	MoveReq.SetGoalLocation(Destination);
 	MoveReq.SetAcceptanceRadius(Data.AcceptanceRadius);
 	MoveReq.SetUsePathfinding(true);
+	MoveReq.SetAllowPartialPath(true);
 	MoveReq.SetCanStrafe(false);
 
 	// UAITask_MoveTo 생성 및 설정
@@ -159,4 +177,6 @@ void FPRStateTreeTask_Patrol::StartMoveToNextLocation(FStateTreeExecutionContext
 	{
 		Data.MoveToTask->ReadyForActivation();
 	}
+
+	return true;
 }

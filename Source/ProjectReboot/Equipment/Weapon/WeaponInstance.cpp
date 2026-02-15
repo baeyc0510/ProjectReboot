@@ -4,6 +4,7 @@
 #include "AbilitySystemInterface.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
+#include "NiagaraDataInterfaceArrayFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "ProjectReboot/Game/PRPrewarmManagerSubsystem.h"
 
@@ -83,6 +84,10 @@ void UWeaponInstance::UpdateMuzzleSlotConfig()
 		{
 			Muzzle.MuzzleFlashComp->DestroyComponent();
 		}
+		if (IsValid(Muzzle.TrailComp))
+		{
+			Muzzle.TrailComp->DestroyComponent();
+		}
 	}
 	ActiveMuzzles.Empty();
 
@@ -125,6 +130,19 @@ void UWeaponInstance::UpdateMuzzleSlotConfig()
 				NewMuzzle.MuzzleFlashComp->Deactivate();
 			}
 		}
+		if (IsValid(FXSettings.TrailVFX) && IsValid(AttachComp))
+		{
+			NewMuzzle.TrailComp = UNiagaraFunctionLibrary::SpawnSystemAttached(
+				FXSettings.TrailVFX,
+				AttachComp,
+				SocketName,
+				FVector::ZeroVector,
+				FRotator::ZeroRotator,
+				EAttachLocation::SnapToTarget,
+				false
+			);
+		}
+
 		ActiveMuzzles.Add(NewMuzzle);
 	}
 }
@@ -177,6 +195,29 @@ void UWeaponInstance::PlayMuzzleFlash()
 			MuzzleTransform.GetLocation()
 		);
 	}
+}
+
+void UWeaponInstance::PlayBulletTrail(const TArray<FVector>& ImpactPoints)
+{
+	if (ActiveMuzzles.Num() == 0 || ImpactPoints.IsEmpty())
+	{
+		return;
+	}
+
+	FActiveMuzzleInfo& Muzzle = ActiveMuzzles[0];
+	if (!IsValid(Muzzle.TrailComp))
+	{
+		return;
+	}
+
+	const FVector MuzzlePosition = GetMuzzleTransform().GetLocation();
+
+	// 파라미터 설정
+	Muzzle.TrailComp->ResetSystem();
+	Muzzle.TrailComp->SetVectorParameter(TEXT("MuzzlePosition"), MuzzlePosition);
+	UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayVector(Muzzle.TrailComp, TEXT("ImpactPositions"), ImpactPoints);
+	Muzzle.TrailComp->SetBoolParameter(TEXT("Trigger"), true);
+	Muzzle.TrailComp->Activate();
 }
 
 void UWeaponInstance::PlayImpact(const FHitResult& HitResult)

@@ -7,6 +7,7 @@
 #include "ProjectReboot/Interaction/PRInteractableInterface.h"
 #include "PRRewardActor.generated.h"
 
+class USphereComponent;
 class URoguelitePoolPreset;
 class UPRActionDecisionPanel;
 class URogueliteActionData;
@@ -48,6 +49,9 @@ protected:
 	void HandleRewardConfirmed(URogueliteActionData* SelectedAction);
 
 protected:
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	TObjectPtr<USphereComponent> RootSphereComponent;
+	
 	// 보상 풀 프리셋
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Reward")
 	TObjectPtr<URoguelitePoolPreset> RewardPoolPreset;

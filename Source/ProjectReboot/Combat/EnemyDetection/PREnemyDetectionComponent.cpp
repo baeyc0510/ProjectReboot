@@ -14,7 +14,7 @@ UPREnemyDetectionComponent::UPREnemyDetectionComponent(const FObjectInitializer&
 	SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	SetCollisionResponseToAllChannels(ECR_Ignore);
 	SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-	SetCollisionResponseToChannel(PRCollision::ECC_Enemy, ECR_Overlap);
+	SetCollisionResponseToChannel(EPRCollision::ECC_Enemy, ECR_Overlap);
 	SetGenerateOverlapEvents(true);
 
 	// 감지 반경 기본값

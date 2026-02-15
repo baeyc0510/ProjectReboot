@@ -2,6 +2,7 @@
 
 #include "PREquipmentStand.h"
 #include "PREquipmentStandManager.h"
+#include "Components/SphereComponent.h"
 #include "ProjectReboot/Equipment/PREquipmentActionSet.h"
 #include "ProjectReboot/Interaction/PRBillboardWidgetComponent.h"
 #include "ProjectReboot/UI/Equipment/PREquipmentInfoWidget.h"
@@ -10,11 +11,12 @@ APREquipmentStand::APREquipmentStand()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-	RootSceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootSceneComponent"));
-	SetRootComponent(RootSceneComponent);
+	RootSphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("RootSphereComponent"));
+	RootSphereComponent->SetCollisionProfileName(TEXT("Interactable"));
+	SetRootComponent(RootSphereComponent);
 
 	InteractionPromptWidget = CreateDefaultSubobject<UPRBillboardWidgetComponent>(TEXT("InteractionPromptWidget"));
-	InteractionPromptWidget->SetupAttachment(RootSceneComponent);
+	InteractionPromptWidget->SetupAttachment(RootSphereComponent);
 }
 
 void APREquipmentStand::PostInitializeComponents()

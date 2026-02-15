@@ -260,6 +260,7 @@ USceneComponent* UEquipmentInstance::CreateMeshComponent(const FEquipmentMeshSpa
         {
             UStaticMeshComponent* StaticMeshComp = NewObject<UStaticMeshComponent>(Owner);
             StaticMeshComp->SetStaticMesh(SpawnInfo.StaticMesh);
+        	StaticMeshComp->bRenderCustomDepth = bRenderCustomDepth;
             ApplyMaterialOverrides(StaticMeshComp, SpawnInfo.MaterialOverrides);
             NewComponent = StaticMeshComp;
         }
@@ -270,6 +271,7 @@ USceneComponent* UEquipmentInstance::CreateMeshComponent(const FEquipmentMeshSpa
         {
             USkeletalMeshComponent* SkelMeshComp = NewObject<USkeletalMeshComponent>(Owner);
             SkelMeshComp->SetSkeletalMesh(SpawnInfo.SkeletalMesh);
+        	SkelMeshComp->bRenderCustomDepth = bRenderCustomDepth;
             ApplyMaterialOverrides(SkelMeshComp, SpawnInfo.MaterialOverrides);
             NewComponent = SkelMeshComp;
         }

@@ -3,13 +3,15 @@
 #include "AbilitySystemComponent.h"
 #include "GameFramework/Character.h"
 #include "ProjectReboot/PRGameplayTags.h"
+#include "ProjectReboot/AbilitySystem/PRWeaponAttributeSet.h"
+#include "ProjectReboot/AbilitySystem/AbilityTask/PRAT_FireMissilesSequentially.h"
 #include "ProjectReboot/Combat/Projectile/PRMissileProjectile.h"
 #include "ProjectReboot/Equipment/Weapon/MissileWeaponInstance.h"
 
 UPRGA_Fire_Missile::UPRGA_Fire_Missile()
 {
 	ActivationPolicy = EPRAbilityActivationPolicy::OnInputTriggered;
-	
+
 	ActivationRequiredTags.AddTag(TAG_State_Aiming);
 }
 
@@ -46,38 +48,60 @@ void UPRGA_Fire_Missile::OnActivateAbility(const FGameplayAbilitySpecHandle Hand
 	{
 		OwnerCharacter = Cast<ACharacter>(GetAvatarActorFromActorInfo());
 	}
-	
-	FireAllMissiles();
 
-	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
-}
-
-void UPRGA_Fire_Missile::FireAllMissiles()
-{
 	UMissileWeaponInstance* Weapon = GetMissileWeapon();
 	if (!IsValid(Weapon) || !Weapon->CanFire())
 	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
-	
+
 	if (IsValid(OwnerCharacter) && IsValid(MissileFireMontage))
 	{
 		OwnerCharacter->PlayAnimMontage(MissileFireMontage);
 	}
-	
-	if (Weapon->GetLockedTargetCount() > 0)
+
+	if (Weapon->GetLockedTargetCount() > 1)
 	{
-		// 락온된 모든 타겟에 대해 잔탄이 있는 동안 발사
+		// 여러 타겟 락온: 순차 발사 태스크 사용
+		TArray<AActor*> Targets;
 		while (Weapon->CanFire() && Weapon->GetLockedTargetCount() > 0)
 		{
-			AActor* HomingTarget = Weapon->ConsumeLockedTarget();
-			FireSingleMissile(Weapon, HomingTarget);
+			Targets.Add(Weapon->ConsumeLockedTarget());
 		}
+
+		UPRAT_FireMissilesSequentially* Task = UPRAT_FireMissilesSequentially::CreateTask(
+			this, Targets, SequentialFireInterval);
+		Task->OnFireNextMissile.AddDynamic(this, &UPRGA_Fire_Missile::OnSequentialFireMissile);
+		Task->OnAllMissilesFired.AddDynamic(this, &UPRGA_Fire_Missile::OnSequentialFireCompleted);
+		Task->ReadyForActivation();
 	}
 	else
 	{
-		FireSingleMissile(Weapon, nullptr);
+		// 단일 타겟 또는 타겟 없음: 즉시 발사
+		AActor* HomingTarget = Weapon->GetLockedTargetCount() > 0
+			? Weapon->ConsumeLockedTarget()
+			: nullptr;
+		FireSingleMissile(Weapon, HomingTarget);
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 	}
+}
+
+void UPRGA_Fire_Missile::OnSequentialFireMissile(AActor* HomingTarget)
+{
+	UMissileWeaponInstance* Weapon = GetMissileWeapon();
+	if (!IsValid(Weapon) || !Weapon->CanFire())
+	{
+		K2_EndAbility();
+		return;
+	}
+
+	FireSingleMissile(Weapon, HomingTarget);
+}
+
+void UPRGA_Fire_Missile::OnSequentialFireCompleted()
+{
+	K2_EndAbility();
 }
 
 void UPRGA_Fire_Missile::FireSingleMissile(UMissileWeaponInstance* Weapon, AActor* HomingTarget)
@@ -135,6 +159,11 @@ void UPRGA_Fire_Missile::InitializeProjectile(APRMissileProjectile* Projectile, 
 	{
 		return;
 	}
+	
+	if (AActor* AvatarActor = GetAvatarActorFromActorInfo())
+	{
+		Projectile->CustomTimeDilation = AvatarActor->CustomTimeDilation;
+	}
 
 	UMissileWeaponInstance* Weapon = GetMissileWeapon();
 
@@ -166,6 +195,22 @@ void UPRGA_Fire_Missile::InitializeProjectile(APRMissileProjectile* Projectile, 
 	if (IsValid(HomingTarget))
 	{
 		Projectile->SetHomingTarget(HomingTarget);
+	}
+
+	// Scatter: 추가 폭발 설정
+	if (IsValid(Weapon) && Weapon->HasTag(TAG_Equipment_Weapon_Type_Scatter))
+	{
+		// ScatterCount 어트리뷰트에서 추가 폭발 수 조회 (0 이하면 fallback 사용)
+		int32 ExplosionCount = SubExplosionCount;
+		if (const UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+		{
+			const int32 AttrCount = FMath::TruncToInt(ASC->GetNumericAttribute(UPRWeaponAttributeSet::GetScatterCountAttribute()));
+			if (AttrCount > 0)
+			{
+				ExplosionCount = AttrCount;
+			}
+		}
+		Projectile->SetSubExplosion(ExplosionCount, SubExplosionRadius, SubExplosionSpreadRadius, SubExplosionInterval);
 	}
 }
 

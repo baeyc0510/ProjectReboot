@@ -102,9 +102,6 @@ void APREnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 스폰 위치 저장 (Patrol 용)
-	SpawnLocation = GetActorLocation();
-
 	if (USkeletalMeshComponent* MeshComponent = GetMesh())
 	{
 		for (TSubclassOf<UAnimInstance>& AnimLayerClass : EnemyAnimLayers)

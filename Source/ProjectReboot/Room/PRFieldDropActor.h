@@ -7,6 +7,7 @@
 #include "ProjectReboot/Interaction/PRInteractableInterface.h"
 #include "PRFieldDropActor.generated.h"
 
+class USphereComponent;
 class URogueliteActionData;
 class UPRBillboardWidgetComponent;
 
@@ -36,13 +37,14 @@ protected:
 	virtual FText GetInteractionText() const override;
 	virtual void GetInteractionInfo(APawn* Interactor, FPRInteractionInfo& OutInfo) const override;
 	virtual USoundBase* GetInteractionSound() override { return InteractionSound; }
-	virtual void OnGainInteractFocus(APawn* Interactor) override;
-	virtual void OnLoseInteractFocus(APawn* Interactor) override;
 
 	// 빌보드 위젯에 액션 정보 반영
 	void UpdatePromptWidget();
 
 protected:
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	TObjectPtr<USphereComponent> RootSphereComponent;
+	
 	// 상호작용 프롬프트 빌보드 위젯
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<UPRBillboardWidgetComponent> InteractionBillboardWidget;

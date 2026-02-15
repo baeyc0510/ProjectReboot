@@ -23,6 +23,11 @@ APRCharacterBase::APRCharacterBase()
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("CombatCharacter"));
 	
 	CombatCapsuleComponent = GetCapsuleComponent();
+	
+	if (GetMesh())
+	{
+		GetMesh()->bRenderCustomDepth = true;
+	}
 }
 
 UAbilitySystemComponent* APRCharacterBase::GetAbilitySystemComponent() const

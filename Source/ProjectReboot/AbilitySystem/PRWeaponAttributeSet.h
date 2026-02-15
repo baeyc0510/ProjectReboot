@@ -87,4 +87,9 @@ public:
     UPROPERTY(BlueprintReadOnly, Category = "Weapon")
     FGameplayAttributeData EffectRadius;
     ATTRIBUTE_ACCESSORS(UPRWeaponAttributeSet, EffectRadius)
+
+    // Scatter 수량 (Bullet: 펠릿 수, Missile: 추가 폭발 수)
+    UPROPERTY(BlueprintReadOnly, Category = "Weapon")
+    FGameplayAttributeData ScatterCount;
+    ATTRIBUTE_ACCESSORS(UPRWeaponAttributeSet, ScatterCount)
 };

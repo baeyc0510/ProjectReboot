@@ -102,8 +102,7 @@ void APRRoomController::ShowDoors()
 			continue;
 		}
 
-		Door->SetActorHiddenInGame(false);
-		Door->SetActorEnableCollision(true);
+		Door->SetVisibility(true);
 	}
 
 	// 사운드 재생
@@ -125,8 +124,7 @@ void APRRoomController::HideAndDisableDoors()
 			continue;
 		}
 
-		Door->SetActorHiddenInGame(true);
-		Door->SetActorEnableCollision(false);
+		Door->SetVisibility(false);
 		Door->SetInteractable(false);
 	}
 

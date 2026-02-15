@@ -8,6 +8,7 @@
 #include "GameFramework/Actor.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
+#include "ProjectReboot/ProjectReboot.h"
 #include "ProjectReboot/Character/PRPlayerCharacter.h"
 #include "ProjectReboot/Interaction/PRInteractableInterface.h"
 #include "ProjectReboot/UI/Interaction/PRInteractionViewModel.h"
@@ -143,15 +144,17 @@ void UPRInteractionComponent::UpdateInteractable()
 	int32 ViewportY = 0;
 	PlayerController->GetViewportSize(ViewportX, ViewportY);
 
-	// Sphere Overlap으로 범위 내 모든 대상 검출, TODO: Interaction 채널 사용
+	// Sphere Overlap으로 범위 내 모든 Interactable 대상 검출,
+	// 포커스 상실 여유를 위해 확장된 거리로 검출
+	const float OverlapRadius = InteractionDistance + FocusLossMargin;
 	FCollisionQueryParams Params(SCENE_QUERY_STAT(PRInteractionComponent), false, OwnerActor);
 	TArray<FOverlapResult> OverlapResults;
 	World->OverlapMultiByChannel(
 		OverlapResults,
 		PlayerLocation,
 		FQuat::Identity,
-		ECC_Visibility,
-		FCollisionShape::MakeSphere(InteractionDistance),
+		EPRCollision::ECC_Interaction,
+		FCollisionShape::MakeSphere(OverlapRadius),
 		Params);
 
 	// 범위 내에서 화면 중심에 가까운 상호작용 대상 찾기 (동일하면 거리 우선)
@@ -159,6 +162,9 @@ void UPRInteractionComponent::UpdateInteractable()
 	float ClosestDistanceSq = FLT_MAX;
 	float ClosestScreenDistSq = FLT_MAX;
 	const FVector2D ScreenCenter(ViewportX * 0.5f, ViewportY * 0.5f);
+	const float InteractionDistanceSq = InteractionDistance * InteractionDistance;
+	const float OverlapRadiusSq = OverlapRadius * OverlapRadius;
+	AActor* PrevFocusedActor = CurrentFocusedActor.Get();
 
 	for (const FOverlapResult& Result : OverlapResults)
 	{
@@ -171,6 +177,15 @@ void UPRInteractionComponent::UpdateInteractable()
 		// 카메라 전방에 있는 액터만 처리
 		const FVector ToTarget = OverlapActor->GetActorLocation() - ViewLocation;
 		if (FVector::DotProduct(ViewForward, ToTarget.GetSafeNormal()) <= 0.0f)
+		{
+			continue;
+		}
+
+		const float DistanceSq = FVector::DistSquared(PlayerLocation, OverlapActor->GetActorLocation());
+
+		// 이미 포커스된 대상: 확장 거리까지 허용 / 새 대상: 기본 거리 이내만 허용
+		const float AllowedDistanceSq = (OverlapActor == PrevFocusedActor) ? OverlapRadiusSq : InteractionDistanceSq;
+		if (DistanceSq > AllowedDistanceSq)
 		{
 			continue;
 		}
@@ -188,8 +203,7 @@ void UPRInteractionComponent::UpdateInteractable()
 			continue;
 		}
 
-		// 화면 중심 거리 및 실제 거리 계산
-		const float DistanceSq = FVector::DistSquared(PlayerLocation, OverlapActor->GetActorLocation());
+		// 화면 중심 거리 계산
 		const float ScreenDistSq = FVector2D::DistSquared(ScreenPos, ScreenCenter);
 
 		// 화면 중심 우선, 동일하면 거리 우선

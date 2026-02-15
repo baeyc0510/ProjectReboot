@@ -4,6 +4,7 @@
 
 #include "RogueliteSubsystem.h"
 #include "RogueliteActionData.h"
+#include "Components/SphereComponent.h"
 #include "ProjectReboot/Interaction/PRBillboardWidgetComponent.h"
 #include "ProjectReboot/UI/PRBillboardInfoWidget.h"
 
@@ -11,11 +12,12 @@ APRFieldDropActor::APRFieldDropActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-	USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
-	SetRootComponent(Root);
+	RootSphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("RootSphereComponent"));
+	RootSphereComponent->SetCollisionProfileName(TEXT("Interactable"));
+	SetRootComponent(RootSphereComponent);
 
 	InteractionBillboardWidget = CreateDefaultSubobject<UPRBillboardWidgetComponent>(TEXT("InteractionBillboardWidget"));
-	InteractionBillboardWidget->SetupAttachment(Root);
+	InteractionBillboardWidget->SetupAttachment(RootSphereComponent);
 }
 
 void APRFieldDropActor::SetActionData(URogueliteActionData* InActionData)
@@ -62,22 +64,6 @@ void APRFieldDropActor::GetInteractionInfo(APawn* Interactor, FPRInteractionInfo
 	{
 		OutInfo.DisplayText = ActionData->DisplayName;
 		OutInfo.Icon = ActionData->Icon;
-	}
-}
-
-void APRFieldDropActor::OnGainInteractFocus(APawn* Interactor)
-{
-	if (IsValid(InteractionBillboardWidget))
-	{
-		InteractionBillboardWidget->SetVisibility(true);
-	}
-}
-
-void APRFieldDropActor::OnLoseInteractFocus(APawn* Interactor)
-{
-	if (IsValid(InteractionBillboardWidget))
-	{
-		InteractionBillboardWidget->SetVisibility(false);
 	}
 }
 

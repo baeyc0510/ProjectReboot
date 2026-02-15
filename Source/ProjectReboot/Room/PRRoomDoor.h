@@ -9,7 +9,11 @@
 #include "GameFramework/Actor.h"
 #include "PRRoomDoor.generated.h"
 
+class UBoxComponent;
 class UPRBillboardWidgetComponent;
+
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDoorVisibilityChangedSiganture, bool, bIsVisible);
 
 /**
  * 보상 카테고리별 표시 정보
@@ -79,6 +83,9 @@ public:
 	// 표시되는 보상 카테고리 반환
 	UFUNCTION(BlueprintPure, Category = "Room|Door")
 	FGameplayTag GetDisplayRewardCategory() const { return DisplayRewardCategory; }
+	
+	// 문 표시 여부
+	void SetVisibility(bool bIsVisible);
 
 protected:
 	/*~ AActor Interface ~*/
@@ -87,6 +94,14 @@ protected:
 	// 빌보드 위젯에 보상 카테고리 정보 반영
 	void UpdateBillboardFromCategory(FGameplayTag InRewardCategory);
 
+public:
+	UPROPERTY(BlueprintAssignable)
+	FOnDoorVisibilityChangedSiganture OnDoorVisibilityChanged;
+
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "Components")
+	TObjectPtr<UBoxComponent> RootBoxComponent;
+	
 	// 빌보드 위젯 컴포넌트
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<UPRBillboardWidgetComponent> BillboardWidget;

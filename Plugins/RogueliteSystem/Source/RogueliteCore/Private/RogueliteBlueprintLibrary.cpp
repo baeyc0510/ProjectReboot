@@ -214,37 +214,37 @@ FGameplayTagContainer URogueliteBlueprintLibrary::GetAllTags(const UObject* Worl
 
 /*~ Numeric ~*/
 
-void URogueliteBlueprintLibrary::SetRunStateValue(const UObject* WorldContextObject, FGameplayTag Key, float Value)
+void URogueliteBlueprintLibrary::SetRogueliteStateValue(const UObject* WorldContextObject, FGameplayTag Key, float Value)
 {
 	if (URogueliteSubsystem* Subsystem = GetSubsystem(WorldContextObject))
 	{
-		Subsystem->SetRunStateValue(Key, Value);
+		Subsystem->SetStateValue(Key, Value);
 	}
 }
 
-float URogueliteBlueprintLibrary::GetRunStateValue(const UObject* WorldContextObject, FGameplayTag Key, float DefaultValue)
+float URogueliteBlueprintLibrary::GetRogueliteStateValue(const UObject* WorldContextObject, FGameplayTag Key, float DefaultValue)
 {
 	if (URogueliteSubsystem* Subsystem = GetSubsystem(WorldContextObject))
 	{
-		return Subsystem->GetRunStateValue(Key, DefaultValue);
+		return Subsystem->GetStateValue(Key, DefaultValue);
 	}
 	return DefaultValue;
 }
 
-float URogueliteBlueprintLibrary::AddRunStateValue(const UObject* WorldContextObject, FGameplayTag Key, float Delta)
+float URogueliteBlueprintLibrary::AddRogueliteStateValue(const UObject* WorldContextObject, FGameplayTag Key, float Delta)
 {
 	if (URogueliteSubsystem* Subsystem = GetSubsystem(WorldContextObject))
 	{
-		return Subsystem->AddRunStateValue(Key, Delta);
+		return Subsystem->AddStateValue(Key, Delta);
 	}
 	return Delta;
 }
 
-TMap<FGameplayTag, float> URogueliteBlueprintLibrary::GetAllRunStateValues(const UObject* WorldContextObject)
+TMap<FGameplayTag, float> URogueliteBlueprintLibrary::GetAllRogueliteStateValues(const UObject* WorldContextObject)
 {
 	if (URogueliteSubsystem* Subsystem = GetSubsystem(WorldContextObject))
 	{
-		return Subsystem->GetAllRunStateValues();
+		return Subsystem->GetAllStateValues();
 	}
 	return TMap<FGameplayTag, float>();
 }

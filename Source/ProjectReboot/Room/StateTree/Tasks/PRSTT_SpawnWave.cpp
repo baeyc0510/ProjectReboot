@@ -185,6 +185,9 @@ bool FPRStateTreeTask_SpawnWave::SpawnNextEnemy(
 
 	if (IsValid(SpawnedEnemy))
 	{
+		// 스폰 성공 위치 기록
+		SpawnedEnemy->SetSpawnLocation(SpawnedEnemy->GetActorLocation());
+		
 		// 등장 GameplayCue 실행
 		if (UAbilitySystemComponent* ASC = SpawnedEnemy->GetAbilitySystemComponent())
 		{

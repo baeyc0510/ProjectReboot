@@ -37,7 +37,19 @@ protected:
 	// 탄퍼짐 각도 (AttributeSet에서 가져올 수도 있음)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Bullet")
 	float BaseSpreadAngle = 1.0f;
-	
+
+	// Scatter 탄퍼짐 각도
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Bullet|Scatter")
+	float ScatterSpreadAngle = 5.0f;
+
+	// Scatter 펠릿 수
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Bullet|Scatter", meta = (ClampMin = "2"))
+	int32 ScatterPelletCount = 6;
+
+	// Scatter 사거리 배율 (기본 사거리 대비)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Bullet|Scatter", meta = (ClampMin = "0.1", ClampMax = "1.0"))
+	float ScatterRangeMultiplier = 0.1f;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Bullet")
 	TObjectPtr<UAnimMontage> BulletFireMontage;
 	

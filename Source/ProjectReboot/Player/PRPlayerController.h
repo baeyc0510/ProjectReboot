@@ -9,6 +9,7 @@
 class UPRCrosshairConfig;
 class UPRCameraConfig;
 class UPRAbilitySystemComponent;
+class UPRModalWidget;
 /**
  * 
  */
@@ -31,12 +32,20 @@ public:
 	
 	/*~ APRPlayerController ~*/
 	UPRAbilitySystemComponent* GetPRAbilitySystemComponent() const;
-	
+
+	// 모달 위젯 표시
+	UFUNCTION(BlueprintCallable, Category = "UI|Modal")
+	UPRModalWidget* ShowModal(const FText& Message);
+
 protected:
 	// 크로스헤어 설정
 	UPROPERTY(EditDefaultsOnly, Category = "UI|Crosshair")
 	TObjectPtr<UPRCrosshairConfig> CrosshairConfig;
-	
+
+	// 모달 위젯 클래스
+	UPROPERTY(EditDefaultsOnly, Category = "UI|Modal")
+	TSubclassOf<UPRModalWidget> ModalWidgetClass;
+
 private:
 	void InitializeViewModels();
 	void DeinitializeViewModels();

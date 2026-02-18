@@ -8,6 +8,8 @@
 #include "ProjectReboot/Camera/PRCameraConfig.h"
 #include "ProjectReboot/Camera/PRPlayerCameraManager.h"
 #include "ProjectReboot/UI/Crosshair/PRCrosshairViewModel.h"
+#include "ProjectReboot/UI/Modal/PRModalWidget.h"
+#include "ProjectReboot/UI/PRUIBlueprintLibrary.h"
 #include "ProjectReboot/UI/ViewModel/PRViewModelSubsystem.h"
 
 APRPlayerController::APRPlayerController(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -70,6 +72,22 @@ void APRPlayerController::InitializeViewModels()
 
 void APRPlayerController::DeinitializeViewModels()
 {
+}
+
+UPRModalWidget* APRPlayerController::ShowModal(const FText& Message)
+{
+	if (!ModalWidgetClass)
+	{
+		return nullptr;
+	}
+
+	UPRModalWidget* Modal = Cast<UPRModalWidget>(UPRUIBlueprintLibrary::PushUI(this, ModalWidgetClass));
+	if (IsValid(Modal))
+	{
+		Modal->SetText(Message);
+	}
+
+	return Modal;
 }
 
 void APRPlayerController::OnPossess(APawn* InPawn)

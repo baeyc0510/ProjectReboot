@@ -30,6 +30,10 @@ void UPRUpgradeListItem::NativeConstruct()
 	{
 		LevelUpOverlay->SetVisibility(ESlateVisibility::Collapsed);
 	}
+	if (MaxLevelOverlay)
+	{
+		MaxLevelOverlay->SetVisibility(ESlateVisibility::Collapsed);
+	}
 	if (TB_NextLevel)
 	{
 		TB_NextLevel->SetVisibility(ESlateVisibility::Collapsed);
@@ -74,6 +78,8 @@ void UPRUpgradeListItem::UpdateLevelInfo(int32 InCurrentLevel, int32 InMaxLevel,
 	MaxLevel = InMaxLevel;
 	NextCost = InNextCost;
 
+	const bool bIsMaxLevel = CurrentLevel >= MaxLevel;
+
 	RefreshLevelText();
 
 	if (TB_NextLevel)
@@ -82,10 +88,41 @@ void UPRUpgradeListItem::UpdateLevelInfo(int32 InCurrentLevel, int32 InMaxLevel,
 			FText::AsNumber(InCurrentLevel + 1)));
 	}
 
+	if (CostPanel)
+	{
+		if (bIsMaxLevel)
+		{
+			CostPanel->SetVisibility(ESlateVisibility::Collapsed);
+		}
+		else
+		{
+			CostPanel->SetVisibility(ESlateVisibility::HitTestInvisible);
+		}
+	}
+	
 	if (TB_NextCost)
 	{
-		TB_NextCost->SetText(FText::Format(NSLOCTEXT("Upgrade", "NextCost", "{0}"),
-			FText::AsNumber(InNextCost)));
+		if (bIsMaxLevel)
+		{
+			TB_NextCost->SetVisibility(ESlateVisibility::Collapsed);
+		}
+		else
+		{
+			TB_NextCost->SetVisibility(ESlateVisibility::HitTestInvisible);
+			TB_NextCost->SetText(FText::Format(NSLOCTEXT("Upgrade", "NextCost", "{0}"),
+				FText::AsNumber(InNextCost)));
+		}
+	}
+
+	// 최대 레벨 도달 시 오버레이 표시 및 버튼 비활성화
+	if (MaxLevelOverlay)
+	{
+		MaxLevelOverlay->SetVisibility(bIsMaxLevel ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+	}
+
+	if (PurchaseButton)
+	{
+		PurchaseButton->SetIsEnabled(!bIsMaxLevel);
 	}
 }
 
@@ -113,13 +150,15 @@ void UPRUpgradeListItem::HandleButtonHovered()
 	bIsHovered = true;
 	RefreshLevelText();
 
+	const bool bIsMaxLevel = CurrentLevel >= MaxLevel;
+
 	if (LevelUpOverlay)
 	{
-		LevelUpOverlay->SetVisibility(ESlateVisibility::Visible);
+		LevelUpOverlay->SetVisibility(bIsMaxLevel ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
 	}
 	if (TB_NextLevel)
 	{
-		TB_NextLevel->SetVisibility(ESlateVisibility::Visible);
+		TB_NextLevel->SetVisibility(bIsMaxLevel ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
 	}
 }
 

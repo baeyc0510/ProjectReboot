@@ -1,9 +1,10 @@
-﻿// PRCrosshairWidget.h
+// PRCrosshairWidget.h
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Blueprint/UserWidget.h"
+#include "PRCrosshairViewModel.h"
 #include "PRCrosshairWidget.generated.h"
 
 class UPRCrosshairStyle;
@@ -29,17 +30,11 @@ protected:
     // 스타일 적용 (BP DesignTime에서도 활용 가능)
     UFUNCTION(BlueprintCallable)
     void ApplyStyle(UPRCrosshairStyle* Style);
-    
+
     /*~ ViewModel Event Handlers ~*/
     UFUNCTION()
-    void HandleSpreadChanged(float NewSpread);
-
-    UFUNCTION()
-    void HandleADSAlphaChanged(float NewAlpha);
-
-    UFUNCTION()
     void HandleCanFireChanged(bool bCanFire);
-    
+
     UFUNCTION()
     void HandleVisibilityChanged(bool bVisible);
 
@@ -48,6 +43,13 @@ protected:
 
     UFUNCTION()
     void HandleCrosshairTagChanged(const FGameplayTag& NewTag);
+
+    UFUNCTION()
+    void HandleHitMarkerTriggered(EPRHitMarkerType HitMarkerType);
+
+    // BP에서 UMG Animation으로 구현할 이벤트
+    UFUNCTION(BlueprintImplementableEvent, Category = "Crosshair|HitMarker")
+    void OnPlayHitMarkerAnimation(EPRHitMarkerType HitMarkerType);
 
 protected:
     // 크로스헤어 요소들
@@ -72,9 +74,6 @@ private:
     void UnbindViewModel();
     void ApplyInitialState();
 
-    // 위치 업데이트
-    void UpdateCrosshairPositions(float Spread);
-
     // 색상 업데이트
     void UpdateCrosshairColor();
 
@@ -93,5 +92,4 @@ private:
 
     bool bIsTargetingEnemy = false;
     bool bCanFire = true;
-    bool bHideOnADS = false;
 };

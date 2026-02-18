@@ -4,7 +4,29 @@
 #include "PRUIBlueprintLibrary.h"
 
 #include "PRUIManagerSubsystem.h"
+#include "ProjectReboot/Player/PRPlayerController.h"
+#include "ProjectReboot/UI/Modal/PRModalWidget.h"
 #include "ProjectReboot/UI/ViewModel/PRViewModelSubsystem.h"
+
+UPRModalWidget* UPRUIBlueprintLibrary::ShowModal(APlayerController* OwningPlayer, const FText& Message)
+{
+	if (!IsValid(OwningPlayer))
+	{
+		UWorld* World = GEngine ? GEngine->GetCurrentPlayWorld() : nullptr;
+		if (IsValid(World))
+		{
+			OwningPlayer = World->GetFirstPlayerController();
+		}
+	}
+
+	APRPlayerController* PC = Cast<APRPlayerController>(OwningPlayer);
+	if (!IsValid(PC))
+	{
+		return nullptr;
+	}
+
+	return PC->ShowModal(Message);
+}
 
 UUserWidget* UPRUIBlueprintLibrary::PushUI(APlayerController* OwningPlayer, TSubclassOf<UUserWidget> WidgetClass)
 {

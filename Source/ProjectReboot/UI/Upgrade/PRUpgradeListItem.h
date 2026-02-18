@@ -143,6 +143,10 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<UTextBlock> TB_NextLevel;
 
+	// 비용 위젯 컨테이너
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
+	TObjectPtr<UPanelWidget> CostPanel;
+	
 	// 다음 레벨 비용 텍스트
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<UTextBlock> TB_NextCost;
@@ -150,6 +154,10 @@ protected:
 	// 레벨업 오버레이
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<UOverlay> LevelUpOverlay;
+
+	// 최대 레벨 도달 오버레이
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
+	TObjectPtr<UOverlay> MaxLevelOverlay;
 
 	// 호버 애니메이션
 	UPROPERTY(Transient, meta = (BindWidgetAnimOptional))

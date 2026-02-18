@@ -1,4 +1,4 @@
-﻿// PRCrosshairWidget.cpp
+// PRCrosshairWidget.cpp
 #include "PRCrosshairWidget.h"
 
 #include "PRCrosshairViewModel.h"
@@ -42,13 +42,11 @@ void UPRCrosshairWidget::BindViewModel()
         return;
     }
 
-    // 델리게이트 바인딩
-    ViewModel->OnSpreadChanged.AddDynamic(this, &UPRCrosshairWidget::HandleSpreadChanged);
-    ViewModel->OnADSAlphaChanged.AddDynamic(this, &UPRCrosshairWidget::HandleADSAlphaChanged);
     ViewModel->OnCanFireChanged.AddDynamic(this, &UPRCrosshairWidget::HandleCanFireChanged);
     ViewModel->OnVisibilityChanged.AddDynamic(this, &UPRCrosshairWidget::HandleVisibilityChanged);
     ViewModel->OnTargetingEnemyChanged.AddDynamic(this, &UPRCrosshairWidget::HandleTargetingEnemyChanged);
     ViewModel->OnCrosshairTagChanged.AddDynamic(this, &UPRCrosshairWidget::HandleCrosshairTagChanged);
+    ViewModel->OnHitMarkerTriggered.AddDynamic(this, &UPRCrosshairWidget::HandleHitMarkerTriggered);
 
     ApplyInitialState();
 }
@@ -60,12 +58,11 @@ void UPRCrosshairWidget::UnbindViewModel()
         return;
     }
 
-    ViewModel->OnSpreadChanged.RemoveDynamic(this, &UPRCrosshairWidget::HandleSpreadChanged);
-    ViewModel->OnADSAlphaChanged.RemoveDynamic(this, &UPRCrosshairWidget::HandleADSAlphaChanged);
     ViewModel->OnCanFireChanged.RemoveDynamic(this, &UPRCrosshairWidget::HandleCanFireChanged);
     ViewModel->OnVisibilityChanged.RemoveDynamic(this, &UPRCrosshairWidget::HandleVisibilityChanged);
     ViewModel->OnTargetingEnemyChanged.RemoveDynamic(this, &UPRCrosshairWidget::HandleTargetingEnemyChanged);
     ViewModel->OnCrosshairTagChanged.RemoveDynamic(this, &UPRCrosshairWidget::HandleCrosshairTagChanged);
+    ViewModel->OnHitMarkerTriggered.RemoveDynamic(this, &UPRCrosshairWidget::HandleHitMarkerTriggered);
 
     ViewModel = nullptr;
 }
@@ -78,28 +75,11 @@ void UPRCrosshairWidget::ApplyInitialState()
     }
 
     const FPRCrosshairSetting& Setting = ViewModel->GetCurrentSetting();
-    bHideOnADS = Setting.bHideOnADS;
     bCanFire = ViewModel->CanFire();
     bIsTargetingEnemy = ViewModel->IsTargetingEnemy();
 
     ApplyStyle(Setting.Style);
-    HandleSpreadChanged(ViewModel->GetCurrentSpread());
-    HandleADSAlphaChanged(ViewModel->GetADSAlpha());
     HandleVisibilityChanged(ViewModel->IsVisible());
-}
-
-void UPRCrosshairWidget::HandleSpreadChanged(float NewSpread)
-{
-    UpdateCrosshairPositions(NewSpread);
-}
-
-void UPRCrosshairWidget::HandleADSAlphaChanged(float NewAlpha)
-{
-    if (bHideOnADS)
-    {
-        const float Opacity = FMath::Lerp(1.0f, 0.0f, NewAlpha);
-        SetRenderOpacity(Opacity);
-    }
 }
 
 void UPRCrosshairWidget::HandleCanFireChanged(bool bNewCanFire)
@@ -127,21 +107,14 @@ void UPRCrosshairWidget::HandleCrosshairTagChanged(const FGameplayTag& NewTag)
     }
 
     const FPRCrosshairSetting& Setting = ViewModel->GetCurrentSetting();
-    bHideOnADS = Setting.bHideOnADS;
-
-    // 스타일 적용
     ApplyStyle(Setting.Style);
-
-    // ADS 투명도 재적용
-    if (bHideOnADS)
-    {
-        HandleADSAlphaChanged(ViewModel->GetADSAlpha());
-    }
-    else
-    {
-        SetRenderOpacity(1.0f);
-    }
 }
+
+void UPRCrosshairWidget::HandleHitMarkerTriggered(EPRHitMarkerType HitMarkerType)
+{
+    OnPlayHitMarkerAnimation(HitMarkerType);
+}
+
 void UPRCrosshairWidget::ApplyStyle(UPRCrosshairStyle* Style)
 {
     CurrentStyle = Style;
@@ -232,41 +205,6 @@ void UPRCrosshairWidget::ApplyStyle(UPRCrosshairStyle* Style)
     }
 
     UpdateCrosshairColor();
-}
-
-void UPRCrosshairWidget::UpdateCrosshairPositions(float Spread)
-{
-    if (CrosshairTop)
-    {
-        if (UCanvasPanelSlot* PanelSlot =  Cast<UCanvasPanelSlot>(CrosshairTop->Slot))
-        {
-            PanelSlot->SetPosition(FVector2D(0.0f, -Spread));
-        }
-    }
-
-    if (CrosshairBottom)
-    {
-        if (UCanvasPanelSlot* PanelSlot =  Cast<UCanvasPanelSlot>(CrosshairBottom->Slot))
-        {
-            PanelSlot->SetPosition(FVector2D(0.0f, Spread));
-        }
-    }
-
-    if (CrosshairLeft)
-    {
-        if (UCanvasPanelSlot* PanelSlot =  Cast<UCanvasPanelSlot>(CrosshairLeft->Slot))
-        {
-            PanelSlot->SetPosition(FVector2D(-Spread, 0.0f));
-        }
-    }
-
-    if (CrosshairRight)
-    {
-        if (UCanvasPanelSlot* PanelSlot =  Cast<UCanvasPanelSlot>(CrosshairRight->Slot))
-        {
-            PanelSlot->SetPosition(FVector2D(Spread, 0.0f));
-        }
-    }
 }
 
 void UPRCrosshairWidget::UpdateCrosshairColor()

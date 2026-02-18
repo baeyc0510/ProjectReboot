@@ -6,6 +6,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "PRUIBlueprintLibrary.generated.h"
 
+class UPRModalWidget;
 class UPRUIManagerSubsystem;
 class UPRViewModelBase;
 class UPRViewModelSubsystem;
@@ -28,6 +29,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category= "UI")
 	static void PopUI(APlayerController* OwningPlayer, UUserWidget* WidgetInstance = nullptr);
 	
+	// 모달 위젯 표시 (PlayerController의 ModalWidgetClass 사용)
+	UFUNCTION(BlueprintCallable, Category = "UI|Modal")
+	static UPRModalWidget* ShowModal(APlayerController* OwningPlayer, const FText& Message);
+
 	// UI 매니저 서브시스템 조회
 	UFUNCTION(BlueprintCallable, Category= "UI")
 	static UPRUIManagerSubsystem* GetUIManager(APlayerController* OwningPlayer);

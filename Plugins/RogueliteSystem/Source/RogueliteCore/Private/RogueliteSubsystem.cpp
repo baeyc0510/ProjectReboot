@@ -275,6 +275,12 @@ bool URogueliteSubsystem::TryAcquireAction(URogueliteActionData* Action, FString
 		ApplyActionEffects(Action, ActualStacksAdded);	
 	}
 	
+	// 태그 적용
+	if (!Action->TagsToGrant.IsEmpty())
+	{
+		RunState.ActiveTagStacks.AppendTags(Action->TagsToGrant);
+	}
+	
 	// 이벤트 발생
 	OnActionAcquired.Broadcast(Action, OldStacks, NewStacks);
 	OnStackChanged.Broadcast(Action, OldStacks, NewStacks);
@@ -325,6 +331,12 @@ bool URogueliteSubsystem::RemoveAction(URogueliteActionData* Action, int32 Stack
 	if (Action->bAutoApplyToRunState)
 	{
 		RemoveActionEffects(Action, ActualStacksRemoved);
+	}
+	
+	// 부여된 태그 제거
+	if (!Action->TagsToGrant.IsEmpty())
+	{
+		RunState.ActiveTagStacks.RemoveTags(Action->TagsToGrant);
 	}
 
 	if (NewStacks == 0)
@@ -564,11 +576,6 @@ void URogueliteSubsystem::ApplyActionEffects(URogueliteActionData* Action, int32
 			}
 		}
 	}
-
-	if (!Action->TagsToGrant.IsEmpty())
-	{
-		RunState.ActiveTagStacks.AppendTags(Action->TagsToGrant);
-	}
 }
 
 void URogueliteSubsystem::RemoveActionEffects(URogueliteActionData* Action, int32 Stacks)
@@ -614,12 +621,6 @@ void URogueliteSubsystem::RemoveActionEffects(URogueliteActionData* Action, int3
 				OnRogueliteStateValueChanged.Broadcast(Entry.Key, OldValue, NewValue);
 			}
 		}
-	}
-	
-	// 자동 부여된 태그 제거
-	if (!Action->TagsToGrant.IsEmpty())
-	{
-		RunState.ActiveTagStacks.RemoveTags(Action->TagsToGrant);
 	}
 }
 

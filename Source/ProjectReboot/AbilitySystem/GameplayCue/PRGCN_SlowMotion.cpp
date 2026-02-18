@@ -4,12 +4,9 @@
 #include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/App.h"
-#include "ProjectReboot/PRGameplayTags.h"
 
 APRGCN_SlowMotion::APRGCN_SlowMotion()
 {
-	GameplayCueTag = TAG_GameplayCue_Character_SlowMotion;
-
 	// 페이드 아웃 완료 후 수동 파괴
 	bAutoDestroyOnRemove = false;
 

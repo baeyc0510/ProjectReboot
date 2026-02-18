@@ -187,6 +187,15 @@ void UPRStageManagerSubsystem::HandleRunEnded(bool bCompleted)
 
 /*~ Room Graph ~*/
 
+int32 UPRStageManagerSubsystem::GetCurrentRoomStep() const
+{
+	if (auto NodeInfo = GetCurrentRoomNodeInfo())
+	{
+		return NodeInfo->StepIndex;
+	}
+	return 0;
+}
+
 const FPRRoomNodeInfo* UPRStageManagerSubsystem::GetRoomNodeInfo(int32 RoomIndex) const
 {
 	return RoomGraph.Find(RoomIndex);

@@ -140,11 +140,15 @@ TArray<URogueliteActionData*> URogueliteActionDatabase::GetAllActions() const
 
 TArray<URogueliteActionData*> URogueliteActionDatabase::GetActionsByTag(FGameplayTag Tag) const
 {
-	if (const TSet<URogueliteActionData*>* Set = TagIndex.Find(Tag))
+	TSet<URogueliteActionData*> ResultSet;
+	for (const auto& Pair : TagIndex)
 	{
-		return Set->Array();
+		if (Pair.Key.MatchesTag(Tag))
+		{
+			ResultSet.Append(Pair.Value);
+		}
 	}
-	return TArray<URogueliteActionData*>();
+	return ResultSet.Array();
 }
 
 TArray<URogueliteActionData*> URogueliteActionDatabase::GetActionsByTags(const FGameplayTagContainer& Tags, bool bRequireAll) const
@@ -166,9 +170,13 @@ TArray<URogueliteActionData*> URogueliteActionDatabase::GetActionsByTags(const F
 		TSet<URogueliteActionData*> ResultSet;
 		for (const FGameplayTag& Tag : Tags)
 		{
-			if (const TSet<URogueliteActionData*>* Set = TagIndex.Find(Tag))
+			// 계층적 매칭: 하위 태그를 가진 액션도 포함
+			for (const auto& Pair : TagIndex)
 			{
-				ResultSet.Append(*Set);
+				if (Pair.Key.MatchesTag(Tag))
+				{
+					ResultSet.Append(Pair.Value);
+				}
 			}
 		}
 		Result = ResultSet.Array();
@@ -199,11 +207,15 @@ TArray<URogueliteActionData*> URogueliteActionDatabase::ExecuteQuery(const FRogu
 	else
 	{
 		TSet<URogueliteActionData*> CandidateSet;
-		for (const FGameplayTag& Tag : EffectivePoolTags)
+		for (const FGameplayTag& PoolTag : EffectivePoolTags)
 		{
-			if (const TSet<URogueliteActionData*>* Set = TagIndex.Find(Tag))
+			// 계층적 매칭: 하위 태그를 가진 액션도 포함
+			for (const auto& Pair : TagIndex)
 			{
-				CandidateSet.Append(*Set);
+				if (Pair.Key.MatchesTag(PoolTag))
+				{
+					CandidateSet.Append(Pair.Value);
+				}
 			}
 		}
 		Candidates = CandidateSet.Array();
@@ -255,11 +267,15 @@ TArray<FRogueliteActionProbability> URogueliteActionDatabase::CalculateProbabili
 	else
 	{
 		TSet<URogueliteActionData*> CandidateSet;
-		for (const FGameplayTag& Tag : EffectivePoolTags)
+		for (const FGameplayTag& PoolTag : EffectivePoolTags)
 		{
-			if (const TSet<URogueliteActionData*>* Set = TagIndex.Find(Tag))
+			// 계층적 매칭: 하위 태그를 가진 액션도 포함
+			for (const auto& Pair : TagIndex)
 			{
-				CandidateSet.Append(*Set);
+				if (Pair.Key.MatchesTag(PoolTag))
+				{
+					CandidateSet.Append(Pair.Value);
+				}
 			}
 		}
 		Candidates = CandidateSet.Array();

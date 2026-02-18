@@ -179,8 +179,6 @@ bool UCombatBlueprintFunctionLibrary::SphereSweepTraceByStartEnd(
 		return false;
 	}
 
-	NotifyCombatInterfaceHit(OutHits);
-
 	return true;
 }
 
@@ -238,8 +236,6 @@ bool UCombatBlueprintFunctionLibrary::BoxSweepTraceByStartEnd(
 	{
 		return false;
 	}
-
-	NotifyCombatInterfaceHit(OutHits);
 
 	return true;
 }

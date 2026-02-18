@@ -155,9 +155,8 @@ public:
 	UPROPERTY(VisibleAnywhere, Transient, Category = "Room|Door")
 	TArray<TObjectPtr<APRRoomDoor>> Doors;
 
-	// 동적 스폰 액터 목록 (방 전환 시 일괄 파괴)
-	UPROPERTY(VisibleAnywhere, Category = "Room")
-	TArray<TObjectPtr<AActor>> SpawnedActors;
+	// 동적 스폰 액터 목록 (방 전환 시 일괄 파괴, 외부 파괴 허용)
+	TArray<TWeakObjectPtr<AActor>> SpawnedActors;
 	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)

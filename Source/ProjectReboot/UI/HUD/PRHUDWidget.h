@@ -6,9 +6,11 @@
 #include "PRHUDWidget.generated.h"
 
 class UPRHUDViewModel;
+class UPRWeaponPartIconWidget;
 class UTextBlock;
 class UImage;
 class UTexture2D;
+class UPanelWidget;
 class IPRProgressBarInterface;
 
 /**
@@ -24,6 +26,7 @@ class PROJECTREBOOT_API UPRHUDWidget : public UUserWidget
 public:
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 protected:
 	/*~ ViewModel Event Handlers ~*/
@@ -53,6 +56,13 @@ protected:
 	UFUNCTION()
 	void HandleShieldSegmentChanged(int32 NumSegments, float Spacing);
 
+	UFUNCTION()
+	void HandleStaminaChanged(float Current, float Max);
+
+	// 부품 아이콘 변경 처리
+	UFUNCTION()
+	void HandlePartIconsChanged();
+
 protected:
 	// 탄약 텍스트
 	UPROPERTY(meta = (BindWidget))
@@ -78,9 +88,25 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UUserWidget> ShieldBar;
 
+	// 스태미나 바
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UUserWidget> StaminaBar;
+
+	// 부품 아이콘 컨테이너 (HorizontalBox 등)
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UPanelWidget> WeaponPartIconContainer;
+
 	// 무기 타입별 아이콘 매핑
 	UPROPERTY(EditDefaultsOnly, Category = "HUD")
 	TMap<FGameplayTag, TObjectPtr<UTexture2D>> WeaponIconMap;
+
+	// 부품 아이콘 위젯 클래스 (BP에서 디자인)
+	UPROPERTY(EditDefaultsOnly, Category = "HUD")
+	TSubclassOf<UPRWeaponPartIconWidget> WeaponPartIconWidgetClass;
+
+	// 스태미나 바 보간 속도
+	UPROPERTY(EditDefaultsOnly, Category = "HUD")
+	float StaminaInterpSpeed = 10.0f;
 
 private:
 	void BindViewModel();
@@ -90,4 +116,8 @@ private:
 private:
 	UPROPERTY()
 	TObjectPtr<UPRHUDViewModel> ViewModel;
+
+	// 스태미나 바 보간용 값
+	float StaminaDisplayPercent = 1.0f;
+	float StaminaTargetPercent = 1.0f;
 };

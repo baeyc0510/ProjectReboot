@@ -4,6 +4,7 @@
 
 #include "Components/Button.h"
 #include "Components/PanelWidget.h"
+#include "Components/TextBlock.h"
 #include "Engine/LocalPlayer.h"
 #include "ProjectReboot/UI/PRUIBlueprintLibrary.h"
 #include "ProjectReboot/UI/Upgrade/PRUpgradeListItem.h"
@@ -60,8 +61,10 @@ void UPRUpgradePanel::BindToViewModel()
 	BoundViewModel = ViewModel;
 	BoundViewModel->OnViewModelUpdated.AddDynamic(this, &ThisClass::HandleViewModelUpdated);
 	BoundViewModel->OnVisibilityChanged.AddDynamic(this, &ThisClass::HandleVisibilityChanged);
+	BoundViewModel->OnCurrencyUpdated.AddDynamic(this, &ThisClass::HandleCurrencyUpdated);
 	// 바인딩 직후 상태 반영
 	HandleVisibilityChanged(BoundViewModel->IsVisible());
+	HandleCurrencyUpdated(BoundViewModel->GetCurrentCurrency());
 }
 
 void UPRUpgradePanel::UnbindFromViewModel()
@@ -70,6 +73,7 @@ void UPRUpgradePanel::UnbindFromViewModel()
 	{
 		BoundViewModel->OnViewModelUpdated.RemoveDynamic(this, &ThisClass::HandleViewModelUpdated);
 		BoundViewModel->OnVisibilityChanged.RemoveDynamic(this, &ThisClass::HandleVisibilityChanged);
+		BoundViewModel->OnCurrencyUpdated.RemoveDynamic(this, &ThisClass::HandleCurrencyUpdated);
 	}
 
 	BoundViewModel.Reset();
@@ -138,6 +142,14 @@ void UPRUpgradePanel::HandleVisibilityChanged(bool bVisible)
 {
 	// 패널 가시성 적용
 	SetVisibility(bVisible ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+}
+
+void UPRUpgradePanel::HandleCurrencyUpdated(float NewCurrency)
+{
+	if (BalanceText)
+	{
+		BalanceText->SetText(FText::AsNumber(FMath::TruncToInt(NewCurrency)));
+	}
 }
 
 void UPRUpgradePanel::RefreshUpgradeList()

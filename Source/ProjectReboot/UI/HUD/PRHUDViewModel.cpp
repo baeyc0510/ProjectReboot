@@ -3,6 +3,8 @@
 #include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/AbilitySystem/PRCommonAttributeSet.h"
 #include "ProjectReboot/AbilitySystem/PRWeaponAttributeSet.h"
+#include "ProjectReboot/Equipment/PREquipmentManagerComponent.h"
+#include "ProjectReboot/Equipment/PREquipActionData.h"
 
 UPRHUDViewModel::UPRHUDViewModel()
 {
@@ -21,6 +23,7 @@ void UPRHUDViewModel::InitializeForPlayer(ULocalPlayer* InLocalPlayer)
 
 void UPRHUDViewModel::Deinitialize()
 {
+	UnbindFromEquipmentManager();
 	UnbindFromASC();
 	Super::Deinitialize();
 }
@@ -131,6 +134,17 @@ void UPRHUDViewModel::SetShield(float NewCurrent, float NewMax)
 	}
 }
 
+void UPRHUDViewModel::SetStamina(float NewCurrent, float NewMax)
+{
+	if (!FMath::IsNearlyEqual(CurrentStamina, NewCurrent) || !FMath::IsNearlyEqual(MaxStamina, NewMax))
+	{
+		const bool bMaxChanged = !FMath::IsNearlyEqual(MaxStamina, NewMax);
+		CurrentStamina = NewCurrent;
+		MaxStamina = NewMax;
+		OnStaminaChanged.Broadcast(CurrentStamina, MaxStamina);
+	}
+}
+
 void UPRHUDViewModel::UpdateSegments(float MaxValue, FOnHUDSegmentChanged& SegmentDelegate)
 {
 	const int32 NumSegments = (UnitHealth > KINDA_SMALL_NUMBER) ? FMath::TruncToInt(MaxValue / UnitHealth) : 0;
@@ -238,7 +252,18 @@ void UPRHUDViewModel::UpdateAttributesBindings()
 	float ValShield = BoundASC->GetGameplayAttributeValue(UPRCommonAttributeSet::GetShieldAttribute(), bFoundShield);
 	float ValMaxShield = BoundASC->GetGameplayAttributeValue(UPRCommonAttributeSet::GetMaxShieldAttribute(), bFoundMaxShield);
 	SetShield(ValShield, ValMaxShield);
-	
+
+	// 스태미나 어트리뷰트 바인딩
+	BindAttributeDelegate(UPRCommonAttributeSet::GetStaminaAttribute(), &UPRHUDViewModel::HandleStaminaChanged);
+	BindAttributeDelegate(UPRCommonAttributeSet::GetMaxStaminaAttribute(), &UPRHUDViewModel::HandleMaxStaminaChanged);
+
+	// 초기 스태미나 값 설정
+	bool bFoundStamina = false;
+	bool bFoundMaxStamina = false;
+	float ValStamina = BoundASC->GetGameplayAttributeValue(UPRCommonAttributeSet::GetStaminaAttribute(), bFoundStamina);
+	float ValMaxStamina = BoundASC->GetGameplayAttributeValue(UPRCommonAttributeSet::GetMaxStaminaAttribute(), bFoundMaxStamina);
+	SetStamina(ValStamina, ValMaxStamina);
+
 	// Ammo 어트리뷰트 바인딩
 	BindAttributeDelegate(UPRWeaponAttributeSet::GetAmmoAttribute(), &UPRHUDViewModel::HandleAmmoChanged);
 	BindAttributeDelegate(UPRWeaponAttributeSet::GetMaxAmmoAttribute(), &UPRHUDViewModel::HandleMaxAmmoChanged);
@@ -319,4 +344,90 @@ void UPRHUDViewModel::HandleShieldChanged(const FOnAttributeChangeData& Data)
 void UPRHUDViewModel::HandleMaxShieldChanged(const FOnAttributeChangeData& Data)
 {
 	SetShield(CurrentShield, Data.NewValue);
+}
+
+void UPRHUDViewModel::HandleStaminaChanged(const FOnAttributeChangeData& Data)
+{
+	SetStamina(Data.NewValue, MaxStamina);
+}
+
+void UPRHUDViewModel::HandleMaxStaminaChanged(const FOnAttributeChangeData& Data)
+{
+	SetStamina(CurrentStamina, Data.NewValue);
+}
+
+void UPRHUDViewModel::BindToEquipmentManager(UPREquipmentManagerComponent* InEquipmentManager)
+{
+	UnbindFromEquipmentManager();
+
+	if (!IsValid(InEquipmentManager))
+	{
+		return;
+	}
+
+	BoundEquipmentManager = InEquipmentManager;
+
+	InEquipmentManager->OnEquipped.AddDynamic(this, &ThisClass::HandleEquipmentChanged);
+	InEquipmentManager->OnUnequipped.AddDynamic(this, &ThisClass::HandleEquipmentChanged);
+
+	// 초기 부품 아이콘 갱신
+	UpdatePartIcons();
+}
+
+void UPRHUDViewModel::UnbindFromEquipmentManager()
+{
+	if (BoundEquipmentManager.IsValid())
+	{
+		BoundEquipmentManager->OnEquipped.RemoveDynamic(this, &ThisClass::HandleEquipmentChanged);
+		BoundEquipmentManager->OnUnequipped.RemoveDynamic(this, &ThisClass::HandleEquipmentChanged);
+	}
+
+	BoundEquipmentManager.Reset();
+	PartIcons.Reset();
+}
+
+void UPRHUDViewModel::HandleEquipmentChanged(FGameplayTag SlotTag, UEquipmentInstance* Instance, UPREquipActionData* ActionData)
+{
+	// 무기 슬롯 변경 시에만 부품 아이콘 갱신
+	if (SlotTag.MatchesTag(TAG_Equipment_Slot_Weapon))
+	{
+		UpdatePartIcons();
+	}
+}
+
+void UPRHUDViewModel::UpdatePartIcons()
+{
+	PartIcons.Reset();
+
+	if (!BoundEquipmentManager.IsValid())
+	{
+		OnPartIconsChanged.Broadcast();
+		return;
+	}
+
+	// 무기 부품 슬롯 순회
+	const FGameplayTag PartSlots[] =
+	{
+		TAG_Equipment_Slot_Weapon_Barrel,
+		TAG_Equipment_Slot_Weapon_Mag,
+		TAG_Equipment_Slot_Weapon_Scope,
+		TAG_Equipment_Slot_Weapon_Stock,
+		TAG_Equipment_Slot_Weapon_Trigger,
+	};
+
+	for (const FGameplayTag& SlotTag : PartSlots)
+	{
+		UPREquipActionData* PartAction = BoundEquipmentManager->GetActionData(SlotTag);
+		if (!IsValid(PartAction))
+		{
+			continue;
+		}
+
+		if (IsValid(PartAction->Icon))
+		{
+			PartIcons.Add(PartAction->Icon);
+		}
+	}
+
+	OnPartIconsChanged.Broadcast();
 }

@@ -8,6 +8,7 @@
 
 class UButton;
 class UPanelWidget;
+class UTextBlock;
 class UPRUpgradeListItem;
 class UPRUpgradeModuleData;
 class UPRUpgradeViewModel;
@@ -63,10 +64,18 @@ protected:
 	UFUNCTION()
 	void HandleVisibilityChanged(bool bVisible);
 
+	// 화폐 갱신 처리
+	UFUNCTION()
+	void HandleCurrencyUpdated(float NewCurrency);
+
 protected:
 	// 닫기 버튼
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UButton> CloseButton;
+
+	// 잔액 텍스트
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> BalanceText;
 
 	// 업그레이드 목록 패널
 	UPROPERTY(meta = (BindWidget))

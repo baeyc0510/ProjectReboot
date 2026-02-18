@@ -7,12 +7,17 @@
 #include "PRHUDViewModel.generated.h"
 
 class UAbilitySystemComponent;
+class UPREquipmentManagerComponent;
+class UPREquipActionData;
+class UEquipmentInstance;
+class UTexture2D;
 struct FOnAttributeChangeData;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHUDAttributeChanged_Int, int32, Current, int32, Max);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHUDAttributeChanged_Float, float, Current, float, Max);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHUDWeaponTypeChanged, const FGameplayTag&, WeaponTypeTag);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHUDSegmentChanged, int32, NumSegments, float, Spacing);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHUDPartIconsChanged);
 
 /**
  * HUD 뷰모델
@@ -36,6 +41,14 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "HUD")
 	void UnbindFromASC();
+
+	// 장비 매니저 바인딩
+	UFUNCTION(BlueprintCallable, Category = "HUD")
+	void BindToEquipmentManager(UPREquipmentManagerComponent* InEquipmentManager);
+
+	// 장비 매니저 바인딩 해제
+	UFUNCTION(BlueprintCallable, Category = "HUD")
+	void UnbindFromEquipmentManager();
 
 	UFUNCTION(BlueprintPure, Category = "HUD")
 	int32 GetCurrentAmmo() const { return CurrentAmmo; }
@@ -62,7 +75,17 @@ public:
 	float GetMaxShield() const { return MaxShield; }
 
 	UFUNCTION(BlueprintPure, Category = "HUD")
+	float GetCurrentStamina() const { return CurrentStamina; }
+
+	UFUNCTION(BlueprintPure, Category = "HUD")
+	float GetMaxStamina() const { return MaxStamina; }
+
+	UFUNCTION(BlueprintPure, Category = "HUD")
 	FGameplayTag GetWeaponTypeTag() const { return WeaponTypeTag; }
+
+	// 장착 부품 아이콘 목록 반환
+	UFUNCTION(BlueprintPure, Category = "HUD")
+	const TArray<UTexture2D*>& GetPartIcons() const { return PartIcons; }
 
 	// 체력 세그먼트 수 반환
 	UFUNCTION(BlueprintPure, Category = "HUD")
@@ -101,11 +124,18 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "HUD|Events")
 	FOnHUDSegmentChanged OnShieldSegmentChanged;
 
+	UPROPERTY(BlueprintAssignable, Category = "HUD|Events")
+	FOnHUDAttributeChanged_Float OnStaminaChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "HUD|Events")
+	FOnHUDPartIconsChanged OnPartIconsChanged;
+
 private:
 	void SetAmmo(int32 NewCurrent, int32 NewMax);
 	void SetReserveAmmo(int32 NewCurrent, int32 NewMax);
 	void SetHealth(float NewCurrent, float NewMax);
 	void SetShield(float NewCurrent, float NewMax);
+	void SetStamina(float NewCurrent, float NewMax);
 	void UpdateSegments(float MaxValue, FOnHUDSegmentChanged& SegmentDelegate);
 	void SetWeaponType(const FGameplayTag& NewType);
 
@@ -132,6 +162,16 @@ private:
 	void HandleShieldChanged(const FOnAttributeChangeData& Data);
 	void HandleMaxShieldChanged(const FOnAttributeChangeData& Data);
 
+	void HandleStaminaChanged(const FOnAttributeChangeData& Data);
+	void HandleMaxStaminaChanged(const FOnAttributeChangeData& Data);
+
+	// 장비 변경 핸들러
+	UFUNCTION()
+	void HandleEquipmentChanged(FGameplayTag SlotTag, UEquipmentInstance* Instance, UPREquipActionData* ActionData);
+
+	// 부품 아이콘 갱신
+	void UpdatePartIcons();
+
 private:
 	struct FHUDAttributeBinding
 	{
@@ -144,6 +184,13 @@ private:
 	UPROPERTY()
 	TWeakObjectPtr<UAbilitySystemComponent> BoundASC;
 
+	UPROPERTY()
+	TWeakObjectPtr<UPREquipmentManagerComponent> BoundEquipmentManager;
+
+	// 장착 부품 아이콘 캐시
+	UPROPERTY()
+	TArray<TObjectPtr<UTexture2D>> PartIcons;
+
 	FGameplayTag WeaponTypeTag;
 	int32 CurrentAmmo = 0;
 	int32 MaxAmmo = 0;
@@ -153,6 +200,8 @@ private:
 	float MaxHealth = 0.0f;
 	float CurrentShield = 0.0f;
 	float MaxShield = 0.0f;
+	float CurrentStamina = 0.0f;
+	float MaxStamina = 0.0f;
 
 	// 세그먼트 단위 체력 값
 	float UnitHealth = 100.0f;

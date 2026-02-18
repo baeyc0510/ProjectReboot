@@ -3,6 +3,8 @@
 #include "ProjectReboot/UI/ViewModel/PRViewModelSubsystem.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
+#include "Components/PanelWidget.h"
+#include "PRWeaponPartIconWidget.h"
 #include "ProjectReboot/UI/Interfaces/PRProgressBarInterface.h"
 
 void UPRHUDWidget::NativeConstruct()
@@ -15,6 +17,21 @@ void UPRHUDWidget::NativeDestruct()
 {
 	UnbindViewModel();
 	Super::NativeDestruct();
+}
+
+void UPRHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+	Super::NativeTick(MyGeometry, InDeltaTime);
+
+	if (!FMath::IsNearlyEqual(StaminaDisplayPercent, StaminaTargetPercent, KINDA_SMALL_NUMBER))
+	{
+		StaminaDisplayPercent = FMath::FInterpTo(StaminaDisplayPercent, StaminaTargetPercent, InDeltaTime, StaminaInterpSpeed);
+
+		if (IsValid(StaminaBar) && StaminaBar->Implements<UPRProgressBarInterface>())
+		{
+			IPRProgressBarInterface::Execute_SetPercent(StaminaBar, StaminaDisplayPercent);
+		}
+	}
 }
 
 void UPRHUDWidget::BindViewModel()
@@ -44,6 +61,8 @@ void UPRHUDWidget::BindViewModel()
 	ViewModel->OnShieldChanged.AddDynamic(this, &UPRHUDWidget::HandleShieldChanged);
 	ViewModel->OnHealthSegmentChanged.AddDynamic(this, &UPRHUDWidget::HandleHealthSegmentChanged);
 	ViewModel->OnShieldSegmentChanged.AddDynamic(this, &UPRHUDWidget::HandleShieldSegmentChanged);
+	ViewModel->OnStaminaChanged.AddDynamic(this, &UPRHUDWidget::HandleStaminaChanged);
+	ViewModel->OnPartIconsChanged.AddDynamic(this, &UPRHUDWidget::HandlePartIconsChanged);
 	ViewModel->OnVisibilityChanged.AddDynamic(this, &UPRHUDWidget::HandleVisibilityChanged);
 
 	ApplyInitialState();
@@ -63,6 +82,8 @@ void UPRHUDWidget::UnbindViewModel()
 	ViewModel->OnShieldChanged.RemoveDynamic(this, &UPRHUDWidget::HandleShieldChanged);
 	ViewModel->OnHealthSegmentChanged.RemoveDynamic(this, &UPRHUDWidget::HandleHealthSegmentChanged);
 	ViewModel->OnShieldSegmentChanged.RemoveDynamic(this, &UPRHUDWidget::HandleShieldSegmentChanged);
+	ViewModel->OnStaminaChanged.RemoveDynamic(this, &UPRHUDWidget::HandleStaminaChanged);
+	ViewModel->OnPartIconsChanged.RemoveDynamic(this, &UPRHUDWidget::HandlePartIconsChanged);
 	ViewModel->OnVisibilityChanged.RemoveDynamic(this, &UPRHUDWidget::HandleVisibilityChanged);
 
 	ViewModel = nullptr;
@@ -83,6 +104,13 @@ void UPRHUDWidget::ApplyInitialState()
 	HandleShieldChanged(ViewModel->GetCurrentShield(), ViewModel->GetMaxShield());
 	HandleHealthSegmentChanged(ViewModel->GetHealthNumSegments(), ViewModel->GetHealthSpacing());
 	HandleShieldSegmentChanged(ViewModel->GetShieldNumSegments(), ViewModel->GetShieldSpacing());
+	HandleStaminaChanged(ViewModel->GetCurrentStamina(), ViewModel->GetMaxStamina());
+	StaminaDisplayPercent = StaminaTargetPercent;
+	if (IsValid(StaminaBar) && StaminaBar->Implements<UPRProgressBarInterface>())
+	{
+		IPRProgressBarInterface::Execute_SetPercent(StaminaBar, StaminaDisplayPercent);
+	}
+	HandlePartIconsChanged();
 	HandleVisibilityChanged(ViewModel->IsVisible());
 }
 
@@ -124,19 +152,42 @@ void UPRHUDWidget::HandleReserveAmmoChanged(int32 Current, int32 Max)
 
 void UPRHUDWidget::HandleWeaponTypeChanged(const FGameplayTag& NewTag)
 {
-	if (!WeaponIcon)
+	const bool bHasWeapon = NewTag.IsValid();
+	const ESlateVisibility AmmoVisibility = bHasWeapon ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed;
+
+	if (AmmoText)
 	{
-		return;
+		AmmoText->SetVisibility(AmmoVisibility);
 	}
 
-	if (TObjectPtr<UTexture2D>* Icon = WeaponIconMap.Find(NewTag))
+	if (ReserveAmmoText)
 	{
-		WeaponIcon->SetBrushFromTexture(*Icon);
-		WeaponIcon->SetVisibility(ESlateVisibility::HitTestInvisible);
+		ReserveAmmoText->SetVisibility(AmmoVisibility);
 	}
-	else
+
+	if (MaxReserveAmmoText)
 	{
-		WeaponIcon->SetVisibility(ESlateVisibility::Collapsed);
+		MaxReserveAmmoText->SetVisibility(AmmoVisibility);
+	}
+
+	if (WeaponIcon)
+	{
+		if (bHasWeapon)
+		{
+			if (TObjectPtr<UTexture2D>* Icon = WeaponIconMap.Find(NewTag))
+			{
+				WeaponIcon->SetBrushFromTexture(*Icon);
+				WeaponIcon->SetVisibility(ESlateVisibility::HitTestInvisible);
+			}
+			else
+			{
+				WeaponIcon->SetVisibility(ESlateVisibility::Collapsed);
+			}
+		}
+		else
+		{
+			WeaponIcon->SetVisibility(ESlateVisibility::Collapsed);
+		}
 	}
 }
 
@@ -173,3 +224,41 @@ void UPRHUDWidget::HandleShieldSegmentChanged(int32 NumSegments, float Spacing)
 		IPRProgressBarInterface::Execute_SetSegments(ShieldBar, NumSegments, Spacing);
 	}
 }
+
+void UPRHUDWidget::HandleStaminaChanged(float Current, float Max)
+{
+	StaminaTargetPercent = (Max > KINDA_SMALL_NUMBER) ? (Current / Max) : 0.0f;
+}
+
+void UPRHUDWidget::HandlePartIconsChanged()
+{
+	if (!IsValid(WeaponPartIconContainer) || !WeaponPartIconWidgetClass)
+	{
+		return;
+	}
+
+	WeaponPartIconContainer->ClearChildren();
+
+	if (!ViewModel)
+	{
+		return;
+	}
+
+	for (UTexture2D* Icon : ViewModel->GetPartIcons())
+	{
+		if (!IsValid(Icon))
+		{
+			continue;
+		}
+
+		UPRWeaponPartIconWidget* PartIcon = CreateWidget<UPRWeaponPartIconWidget>(this, WeaponPartIconWidgetClass);
+		if (!IsValid(PartIcon))
+		{
+			continue;
+		}
+
+		PartIcon->SetIcon(Icon);
+		WeaponPartIconContainer->AddChild(PartIcon);
+	}
+}
+

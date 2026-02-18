@@ -178,12 +178,13 @@ void UPRUpgradeViewModel::RefreshSelectedUpgradeInfo()
 void UPRUpgradeViewModel::RefreshCurrency()
 {
 	UPRUpgradeManagerSubsystem* Subsystem = GetUpgradeSubsystem();
-	if (!IsValid(Subsystem) || !IsValid(SelectedUpgrade))
+	if (!IsValid(Subsystem))
 	{
 		return;
 	}
 
-	float NewCurrency = Subsystem->GetCurrency(SelectedUpgrade->CurrencyTag);
+	const FGameplayTag CurrencyTag = IsValid(SelectedUpgrade) ? SelectedUpgrade->CurrencyTag : TAG_MetaState_Currency_Module;
+	float NewCurrency = Subsystem->GetCurrency(CurrencyTag);
 	if (CurrentCurrency != NewCurrency)
 	{
 		CurrentCurrency = NewCurrency;
@@ -200,17 +201,22 @@ void UPRUpgradeViewModel::HandleUpgradePurchased(UPRUpgradeModuleData* InModule,
 	}
 }
 
-void UPRUpgradeViewModel::HandleCurrencyChanged(FGameplayTag CurrencyTag, float OldValue, float NewValue)
+void UPRUpgradeViewModel::HandleCurrencyChanged(FGameplayTag InCurrencyTag, float OldValue, float NewValue)
 {
-	UPRUpgradeManagerSubsystem* Subsystem = GetUpgradeSubsystem();
-
-	// 현재 선택된 업그레이드의 화폐 태그와 일치하면 갱신
-	if (IsValid(SelectedUpgrade) && SelectedUpgrade->CurrencyTag == CurrencyTag)
+	const FGameplayTag ActiveCurrencyTag = IsValid(SelectedUpgrade) ? SelectedUpgrade->CurrencyTag : TAG_MetaState_Currency_Module;
+	if (InCurrencyTag != ActiveCurrencyTag)
 	{
-		CurrentCurrency = NewValue;
-		bCanPurchase = IsValid(Subsystem) && Subsystem->CanPurchaseUpgrade(SelectedUpgrade);
-
-		OnCurrencyUpdated.Broadcast(CurrentCurrency);
-		OnViewModelUpdated.Broadcast();
+		return;
 	}
+
+	CurrentCurrency = NewValue;
+
+	UPRUpgradeManagerSubsystem* Subsystem = GetUpgradeSubsystem();
+	if (IsValid(SelectedUpgrade))
+	{
+		bCanPurchase = IsValid(Subsystem) && Subsystem->CanPurchaseUpgrade(SelectedUpgrade);
+	}
+
+	OnCurrencyUpdated.Broadcast(CurrentCurrency);
+	OnViewModelUpdated.Broadcast();
 }

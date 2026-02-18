@@ -77,6 +77,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Stage|Progress")
 	int32 GetCurrentRoomIndex() const { return StageProgress.CurrentRoomIndex; }
 
+	UFUNCTION(BlueprintPure, Category = "Stage|Progress")
+	int32 GetCurrentRoomStep() const;
 	/*~ Room Graph ~*/
 
 	// 방 노드 정보 조회

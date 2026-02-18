@@ -179,6 +179,7 @@ void UWeaponInstance::PlayMuzzleFlash()
 	{
 		if (IsValid(Muzzle.MuzzleFlashComp))
 		{
+			Muzzle.MuzzleFlashComp->ResetSystem();
 			Muzzle.MuzzleFlashComp->SetRelativeScale3D(FXSettings.MuzzleFlashScale);
 			Muzzle.MuzzleFlashComp->Activate(true);
 			break;
@@ -186,14 +187,34 @@ void UWeaponInstance::PlayMuzzleFlash()
 	}
 
 	// 사운드 재생
-	if (IsValid(FXSettings.FireSound) && ActiveMuzzles.Num() > 0)
+	if (ActiveMuzzles.Num() > 0)
 	{
-		FTransform MuzzleTransform = GetMuzzleTransform();
-		UGameplayStatics::PlaySoundAtLocation(
-			GetWorld(),
-			FXSettings.FireSound,
-			MuzzleTransform.GetLocation()
-		);
+		// 태그 매칭되는 오버라이드 사운드 탐색
+		USoundBase* SoundToPlay = nullptr;
+		for (const auto& [Tag, Sound] : FXSettings.FireSoundOverrides)
+		{
+			if (HasTag(Tag) && IsValid(Sound))
+			{
+				SoundToPlay = Sound;
+				break;
+			}
+		}
+
+		// 오버라이드가 없으면 기본 사운드 사용
+		if (!IsValid(SoundToPlay))
+		{
+			SoundToPlay = FXSettings.FireSound;
+		}
+
+		if (IsValid(SoundToPlay))
+		{
+			FTransform MuzzleTransform = GetMuzzleTransform();
+			UGameplayStatics::PlaySoundAtLocation(
+				GetWorld(),
+				SoundToPlay,
+				MuzzleTransform.GetLocation()
+			);
+		}
 	}
 }
 

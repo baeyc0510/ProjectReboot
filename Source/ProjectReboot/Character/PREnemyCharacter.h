@@ -28,6 +28,7 @@ public:
 	
 	/*~ ICombatInterface ~*/
 	virtual void FinishDie() override;
+	virtual void OnHit(const FHitResult& HitResult, AActor* HitInstigator) override;
 	
 	/*~ APREnemyCharacter Interface ~*/
 	UFUNCTION(BlueprintPure)

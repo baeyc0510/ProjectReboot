@@ -88,7 +88,7 @@ protected:
 	void SpawnExplosionEffect();
 
 	// 지정 위치에 폭발 이펙트 스폰
-	void SpawnExplosionEffectAt(const FVector& Location);
+	void SpawnExplosionEffectAt(const FVector& Location, float EffectScale);
 
 	// 범위 내 타겟에게 데미지 적용
 	void ApplyAOEDamage();
@@ -165,7 +165,7 @@ protected:
 	int32 SubExplosionCount = 0;
 
 	// 추가 폭발 AOE 반경
-	float SubExplosionRadius = 100.f;
+	float SubExplosionRadiusScale = 0.5f;
 
 	// 추가 폭발 산개 거리 (메인 폭발 중심 기준)
 	float SubExplosionSpreadRadius = 200.f;

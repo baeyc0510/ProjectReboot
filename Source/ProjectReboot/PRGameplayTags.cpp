@@ -50,6 +50,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_State_Hit, "State.Hit");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Invincible, "State.Invincible");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Dodging, "State.Dodging");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_BlockMovementInput, "State.BlockMovementInput");
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_Suppress_StaminaRegen, "State.Suppress.StaminaRegen");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_CannotFire, "State.Weapon.CannotFire");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_Crosshair, "State.Weapon.Crosshair");
@@ -199,7 +200,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Upgrade_Module, "Upgrade.Module");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Currency, "Currency");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Currency_Core, "Currency.Core");
 UE_DEFINE_GAMEPLAY_TAG(TAG_MetaState_Currency, "MetaState.Currency");
-UE_DEFINE_GAMEPLAY_TAG(TAG_MetaState_Currency_Bolt, "MetaState.Currency.Bolt");
+UE_DEFINE_GAMEPLAY_TAG(TAG_MetaState_Currency_Module, "MetaState.Currency.Module");
 
 /*~ Reward Tags ~*/
 UE_DEFINE_GAMEPLAY_TAG(TAG_Reward,"Reward");
@@ -216,3 +217,4 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_HUD_LockOn, "UI.ViewModel.HUD.LockOn");
 UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_HUD_EnemyStatus, "UI.ViewModel.HUD.EnemyStatus");
 UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_HUD_EnemyIndicator, "UI.ViewModel.HUD.EnemyIndicator");
 UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_Upgrade, "UI.ViewModel.Upgrade");
+UE_DEFINE_GAMEPLAY_TAG(TAG_UI_ViewModel_Shop, "UI.ViewModel.Shop");

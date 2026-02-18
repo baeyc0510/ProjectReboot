@@ -29,7 +29,7 @@ public:
 	virtual bool IsDead() const override;
 	virtual void Die(const FGameplayEffectContextHandle& EffectContext) override;
 	virtual void FinishDie() override;
-	virtual void OnHit(const FHitResult& HitResult) override;
+	virtual void OnHit(const FHitResult& HitResult, AActor* HitInstigator) override;
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")

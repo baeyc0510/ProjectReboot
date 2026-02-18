@@ -33,10 +33,13 @@ public:
 	virtual void Die(const FGameplayEffectContextHandle& EffectContext) override;
 	virtual void FinishDie() override;
 	// 피격 이벤트 처리
-	virtual void OnHit(const FHitResult& HitResult) override;
+	virtual void OnHit(const FHitResult& HitResult, AActor* HitInstigator) override;
 	
 	/*~ IPRAnimRegistryInterface Interface ~*/
 	virtual UAnimMontage* FindMontageByGameplayTag(const FGameplayTag& MontageTag) const override;
+	
+	/*~ AActor Interface ~*/
+	virtual void BeginPlay() override;
 	
 	/*~ APRCharacterBase Interface ~*/
 	float GetBaseMoveSpeed() const {return BaseMoveSpeed;}

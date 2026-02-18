@@ -73,6 +73,17 @@ public:
 	FGameplayAttributeData MaxShield;
 	ATTRIBUTE_ACCESSORS(UPRCommonAttributeSet, MaxShield)
 
+	/*~ Stamina ~*/
+	// 스태미나
+	UPROPERTY(BlueprintReadOnly, Category = "Combat")
+	FGameplayAttributeData Stamina;
+	ATTRIBUTE_ACCESSORS(UPRCommonAttributeSet, Stamina)
+
+	// 최대 스태미나
+	UPROPERTY(BlueprintReadOnly, Category = "Combat")
+	FGameplayAttributeData MaxStamina;
+	ATTRIBUTE_ACCESSORS(UPRCommonAttributeSet, MaxStamina)
+
 	/*~ Hit Stagger ~*/
 	// 경직 수치
 	UPROPERTY(BlueprintReadOnly, Category = "Combat")

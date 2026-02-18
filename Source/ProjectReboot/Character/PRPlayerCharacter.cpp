@@ -143,10 +143,12 @@ void APRPlayerCharacter::TeleportWithoutCameraLag(const FVector& DestLocation, c
 	if (IsValid(CameraBoom))
 	{
 		FTimerHandle RestoreLagHandle;
-		GetWorldTimerManager().SetTimerForNextTick([this, bOriginalEnableCameraLag, bOriginalEnableCameraRotationLag]()
+		GetWorldTimerManager().SetTimerForNextTick([this, DestRotation, bOriginalEnableCameraLag, bOriginalEnableCameraRotationLag]()
 		{
+			SetActorRotation(DestRotation);
 			if (IsValid(CameraBoom))
 			{
+				CameraBoom->SetWorldRotation(DestRotation);
 				CameraBoom->bEnableCameraLag = bOriginalEnableCameraLag;
 				CameraBoom->bEnableCameraRotationLag = bOriginalEnableCameraRotationLag;
 			}
@@ -390,6 +392,7 @@ void APRPlayerCharacter::BindViewModels()
 	if (UPRHUDViewModel* VM = ViewModelSubsystem->GetOrCreateGlobalViewModel<UPRHUDViewModel>())
 	{
 		VM->BindToASC(AbilitySystem);
+		VM->BindToEquipmentManager(EquipmentManager);
 	}
 
 	ViewModelSubsystem->GetOrCreateGlobalViewModel<UPREnemyIndicatorViewModel>();
@@ -411,6 +414,7 @@ void APRPlayerCharacter::UnbindViewModels()
 	if (UPRHUDViewModel* VM = ViewModelSubsystem->GetOrCreateGlobalViewModel<UPRHUDViewModel>())
 	{
 		VM->UnbindFromASC();
+		VM->UnbindFromEquipmentManager();
 	}
 }
 

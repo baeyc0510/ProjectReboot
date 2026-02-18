@@ -99,7 +99,7 @@ void APRCharacterBase::FinishDie()
 {
 }
 
-void APRCharacterBase::OnHit(const FHitResult& HitResult)
+void APRCharacterBase::OnHit(const FHitResult& HitResult, AActor* HitInstigator)
 {
 	if (!AbilitySystem)
 	{
@@ -121,6 +121,11 @@ UAnimMontage* APRCharacterBase::FindMontageByGameplayTag(const FGameplayTag& Mon
 		return MontageSet->FindMontageByTag(MontageTag);
 	}
 	return nullptr;
+}
+
+void APRCharacterBase::BeginPlay()
+{
+	Super::BeginPlay();
 }
 
 float APRCharacterBase::GetMaxMoveSpeed() const

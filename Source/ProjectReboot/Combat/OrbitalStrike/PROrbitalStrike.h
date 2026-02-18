@@ -57,12 +57,15 @@ protected:
 	// 낙하/폭발 이펙트
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<UParticleSystemComponent> ImpactEffect;
-
+	
 	// 데미지 판정 영역
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<USphereComponent> DamageArea;
 
 	/*~ Config ~*/
+	// 폭발 사운드
+	UPROPERTY(EditDefaultsOnly, Category = "Config")
+	TObjectPtr<USoundBase> ImpactSound;
 
 	// Impact 연출 딜레이 (VFX 재생 후 데미지 판정까지 대기 시간)
 	UPROPERTY(EditDefaultsOnly, Category = "Config")

@@ -7,6 +7,7 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
+#include "Kismet/GameplayStatics.h"
 #include "ProjectReboot/Combat/PRCombatInterface.h"
 
 void APROrbitalStrike::GetPrewarmNiagaraAssets(TArray<TSoftObjectPtr<UNiagaraSystem>>& OutAssets) const
@@ -89,10 +90,16 @@ void APROrbitalStrike::StartImpactPhase()
 		TelegraphEffect->Deactivate();
 	}
 
-	// 낙하 이펙트 시작
+	// 폭발 이펙트 시작
 	if (IsValid(ImpactEffect))
 	{
 		ImpactEffect->Activate();
+	}
+	
+	// 사운드 재생
+	if (IsValid(ImpactSound))
+	{
+		UGameplayStatics::PlaySoundAtLocation(this,ImpactSound,GetActorLocation());
 	}
 
 	// ImpactDelay 후 데미지 판정

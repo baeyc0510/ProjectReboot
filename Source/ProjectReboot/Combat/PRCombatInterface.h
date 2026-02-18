@@ -41,6 +41,6 @@ public:
 
 	/*~ Hit ~*/
 	// 피격 이벤트 처리
-	virtual void OnHit(const FHitResult& HitResult) = 0;
+	virtual void OnHit(const FHitResult& HitResult, AActor* HitInstigator = nullptr) = 0;
 	
 };

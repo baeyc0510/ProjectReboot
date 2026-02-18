@@ -54,9 +54,13 @@ struct FWeaponFXSettings
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "VFX")
 	bool bFlipImpactNormal = false;
 
-	// 발사 사운드
+	// 기본 발사 사운드
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sound")
 	TObjectPtr<USoundBase> FireSound;
+
+	// 태그별 발사 사운드 오버라이드 (매칭 시 FireSound 대신 사용)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sound")
+	TMap<FGameplayTag, TObjectPtr<USoundBase>> FireSoundOverrides;
 
 	// 피격 사운드
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Sound")

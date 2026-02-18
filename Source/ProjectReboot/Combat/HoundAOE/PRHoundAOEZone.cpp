@@ -6,6 +6,7 @@
 #include "NiagaraSystem.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
+#include "Components/AudioComponent.h"
 #include "ProjectReboot/Combat/PRCombatInterface.h"
 
 void APRHoundAOEZone::GetPrewarmNiagaraAssets(TArray<TSoftObjectPtr<UNiagaraSystem>>& OutAssets) const
@@ -29,6 +30,18 @@ void APRHoundAOEZone::GetPrewarmNiagaraAssets(TArray<TSoftObjectPtr<UNiagaraSyst
 	if (IsValid(DamageAreaEffect))
 	{
 		if (UNiagaraSystem* Asset = DamageAreaEffect->GetAsset())
+		{
+			OutAssets.Add(Asset);
+		}
+	}
+}
+
+void APRHoundAOEZone::GetPrewarmSoundAssets(TArray<TSoftObjectPtr<USoundBase>>& OutAssets) const
+{
+	IPRPrewarmInterface::GetPrewarmSoundAssets(OutAssets);
+	if (IsValid(ImpactSound))
+	{
+		if (USoundBase* Asset = ImpactSound->GetSound())
 		{
 			OutAssets.Add(Asset);
 		}
@@ -66,6 +79,8 @@ APRHoundAOEZone::APRHoundAOEZone()
 	DamageAreaEffect->SetupAttachment(RootComponent);
 	DamageAreaEffect->bAutoActivate = false;
 
+	ImpactSound = CreateDefaultSubobject<UAudioComponent>(TEXT("ImpactSound"));
+	ImpactSound->bAutoActivate = false;
 }
 
 void APRHoundAOEZone::InitZone(const FGameplayEffectSpecHandle& InDamageSpec, FLinearColor Color,
@@ -162,6 +177,12 @@ void APRHoundAOEZone::StartDamageZonePhase()
 	{
 		DamageAreaEffect->Activate();
 	}
+	
+	if (IsValid(ImpactSound))
+	{
+		ImpactSound->Play();
+		ImpactSound->FadeIn(0.1f);
+	}
 
 	// 이미 영역 안에 있는 액터에 GE 적용
 	TArray<AActor*> OverlappingActors;
@@ -209,6 +230,12 @@ void APRHoundAOEZone::CleanupZone()
 	if (IsValid(ImpactEffect))
 	{
 		ImpactEffect->Deactivate();
+	}
+	
+	// Sound fadeout
+	if (IsValid(ImpactSound))
+	{
+		ImpactSound->FadeOut(CleanupLifeSpan,0.f);
 	}
 
 	// 잔여 VFX 재생 후 파괴

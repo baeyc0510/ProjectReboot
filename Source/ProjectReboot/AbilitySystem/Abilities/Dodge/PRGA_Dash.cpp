@@ -29,11 +29,20 @@ void UPRGA_Dash::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const 
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
+	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+	{
+		K2_EndAbility();
+		return;
+	}
+	
 	// 대시 이벤트 발송 (저스트 회피 트리거)
 	SendDashEvent();
 
 	// 대시 이동 적용
 	ApplyDashMovement();
+	
+	// Optional: 이펙트 적용
+	ApplyDashEffect();
 
 	// 대시 몽타주 재생
 	if (UAnimMontage* DashMontage = GetDashMontage())
@@ -201,6 +210,27 @@ UAnimMontage* UPRGA_Dash::GetDashMontage() const
 
 	// 방향별 몽타주 없으면 기본 대시 몽타주로 폴백
 	return FindMontageByGameplayTag(TAG_Montage_Dash);
+}
+
+void UPRGA_Dash::ApplyDashEffect()
+{
+	if (!IsValid(DashEffect))
+	{
+		return;
+	}
+	
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+	{
+		if (EffectHandle.IsValid())
+		{
+			ASC->RemoveActiveGameplayEffect(EffectHandle);
+			EffectHandle.Invalidate();
+		}
+		
+		FGameplayEffectContextHandle EffectContext;
+		FGameplayEffectSpecHandle EffectSpec = ASC->MakeOutgoingSpec(DashEffect, 1.0f, EffectContext);
+		EffectHandle = K2_ApplyGameplayEffectSpecToOwner(EffectSpec);
+	}
 }
 
 void UPRGA_Dash::ApplyDashMovement()

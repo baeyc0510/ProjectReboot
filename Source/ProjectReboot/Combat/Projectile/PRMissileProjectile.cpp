@@ -5,6 +5,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
+#include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
 #include "Components/CapsuleComponent.h"
@@ -199,7 +200,6 @@ void APRMissileProjectile::SetWeaponSlotTag(FGameplayTag SlotTag)
 void APRMissileProjectile::SetSubExplosion(int32 Count, float Radius, float SpreadRadius, float Interval)
 {
 	SubExplosionCount = FMath::Max(0, Count);
-	SubExplosionRadius = Radius;
 	SubExplosionSpreadRadius = SpreadRadius;
 	SubExplosionInterval = Interval;
 }
@@ -302,31 +302,35 @@ void APRMissileProjectile::ProcessNextSubExplosion()
 	}
 
 	const FVector& Location = SubExplosionLocations[CurrentSubExplosionIndex];
-	ApplyAOEDamageAt(Location, SubExplosionRadius);
-	SpawnExplosionEffectAt(Location);
+	float SubExplosionRadius =  ExplosionRadius * SubExplosionRadiusScale;
+	ApplyAOEDamageAt(Location,SubExplosionRadius);
+	SpawnExplosionEffectAt(Location, SubExplosionRadius / 100.f);
 	++CurrentSubExplosionIndex;
 }
 
 void APRMissileProjectile::SpawnExplosionEffect()
 {
-	SpawnExplosionEffectAt(GetActorLocation());
+	SpawnExplosionEffectAt(GetActorLocation(), ExplosionRadius / 100.f);
 }
 
-void APRMissileProjectile::SpawnExplosionEffectAt(const FVector& Location)
+void APRMissileProjectile::SpawnExplosionEffectAt(const FVector& Location, float EffectScale)
 {
 	if (IsValid(ExplosionVFX))
 	{
-		float EffectScale = ExplosionRadius / 100.f;
-		
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+		UNiagaraComponent* NiagaraComponent = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
 			GetWorld(),
 			ExplosionVFX,
 			Location,
 			FRotator::ZeroRotator,
-			FVector(EffectScale),
+			FVector(1.f),
 			true,
 			true,
 			ENCPoolMethod::AutoRelease);
+		
+		if (NiagaraComponent)
+		{
+			NiagaraComponent->SetFloatParameter(TEXT("Scale"), EffectScale);
+		}
 	}
 	if (IsValid(ExplosionSFX))
 	{
@@ -368,7 +372,7 @@ void APRMissileProjectile::ApplyAOEDamageAt(const FVector& Location, float Radiu
 		IgnoreActors,
 		OverlappedActors
 	);
-
+	
 	// LineTrace 설정
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(this);

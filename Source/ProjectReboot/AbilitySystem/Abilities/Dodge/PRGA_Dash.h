@@ -49,6 +49,9 @@ protected:
 	// 대시 몽타주 선택
 	UAnimMontage* GetDashMontage() const;
 
+	// 대시 이펙트 적용
+	void ApplyDashEffect();
+	
 	// 대시 이동 적용
 	void ApplyDashMovement();
 
@@ -66,7 +69,11 @@ protected:
 	void OnDashMovementFinished();
 
 	void EnableMovement();
+
 protected:
+	UPROPERTY(EditDefaultsOnly, Category = "Dash")
+	TSubclassOf<UGameplayEffect> DashEffect;
+	
 	// 대시 몽타주 오버라이드
 	UPROPERTY(EditDefaultsOnly, Category = "Dash")
 	TObjectPtr<UAnimMontage> DashMontageOverride;
@@ -95,4 +102,6 @@ private:
 	TObjectPtr<UAbilityTask_ApplyRootMotionConstantForce> DashMoveTask;
 	
 	bool bMovementBlocked = false;
+	
+	FActiveGameplayEffectHandle EffectHandle;
 };

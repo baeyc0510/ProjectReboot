@@ -11,6 +11,7 @@
 #include "ProjectReboot/Game/PRGameplayGameState.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/SphereComponent.h"
+#include "ProjectReboot/UI/PRUIBlueprintLibrary.h"
 
 APRRewardActor::APRRewardActor()
 {
@@ -74,6 +75,16 @@ void APRRewardActor::ShowRewardPanel(APawn* Interactor)
 	TArray<URogueliteActionData*> RewardActions = RogueliteSubsystem->QuerySimple(RewardPoolPreset, RewardCount);
 	if (RewardActions.Num() == 0)
 	{
+		UPRUIBlueprintLibrary::ShowModal(nullptr, FText::FromString(TEXT("획득 가능한 보상이 없습니다!")));
+		UWorld* World = GetWorld();
+		if (IsValid(World))
+		{
+			if (APRGameplayGameState* GameState = World->GetGameState<APRGameplayGameState>())
+			{
+				GameState->SendRoomEvent(TAG_Event_Reward_Selected);
+			}
+		}
+
 		UE_LOG(LogTemp, Warning, TEXT("PRRewardActor::ShowRewardPanel: No reward actions found"));
 		return;
 	}

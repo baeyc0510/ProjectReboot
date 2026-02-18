@@ -62,7 +62,7 @@ void APRFieldDropActor::GetInteractionInfo(APawn* Interactor, FPRInteractionInfo
 
 	if (IsValid(ActionData))
 	{
-		OutInfo.DisplayText = ActionData->DisplayName;
+		OutInfo.DisplayText =  ActionData->GetFormattedTextWithValuesByIndex(ActionData->DisplayName);
 		OutInfo.Icon = ActionData->Icon;
 	}
 }

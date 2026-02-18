@@ -386,9 +386,9 @@ void APRRoomController::RegisterSpawnedActor(AActor* Actor)
 
 void APRRoomController::DestroyAllSpawnedActors()
 {
-	for (TObjectPtr<AActor>& Actor : SpawnedActors)
+	for (TWeakObjectPtr<AActor>& Actor : SpawnedActors)
 	{
-		if (IsValid(Actor))
+		if (Actor.IsValid())
 		{
 			Actor->Destroy();
 		}

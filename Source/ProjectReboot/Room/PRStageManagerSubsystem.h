@@ -152,20 +152,23 @@ protected:
 	// 가중치 기반 랜덤 선택
 	EPRRoomType SelectWeightedRandom(const TMap<EPRRoomType, float>& Weights, FRandomStream& Random) const;
 
-	// 보상 카테고리 선택 (NodeCount만큼, 중복 없이)
-	TArray<FPRRewardCategoryEntry> SelectRewardCategories(const FPRRewardCategoryPool& Pool, int32 Count, FRandomStream& Random) const;
+	// 보상 카테고리 선택 (Count만큼, 제외 카테고리 필터링)
+	TArray<FPRRewardCategoryEntry> SelectRewardCategories(const FPRRewardCategoryPool& Pool, int32 Count, FRandomStream& Random, const TSet<FGameplayTag>& ExcludedCategories = TSet<FGameplayTag>()) const;
 
 	// 템플릿 선택
 	TSoftObjectPtr<UWorld> SelectTemplate(EPRRoomType RoomType, FRandomStream& Random) const;
 
-	// 노드 생성 (RoomType 명시 지정)
-	FPRRoomNodeInfo CreateRoomNode(int32 RoomIndex, int32 StepIndex, EPRRoomType RoomType, float Difficulty, FRandomStream& Random) const;
+	// 노드 생성 (RoomType 명시 지정, 제외 카테고리로 중복 방지)
+	FPRRoomNodeInfo CreateRoomNode(int32 RoomIndex, int32 StepIndex, EPRRoomType RoomType, float Difficulty, FRandomStream& Random, const TSet<FGameplayTag>& ExcludedCategories = TSet<FGameplayTag>()) const;
 
 	// 전이 가중치 조회 (TypeTransitions 기반)
 	float GetTransitionWeight(EPRRoomType FromType, EPRRoomType ToType) const;
 
 	// 전이 가능한 타입 목록 조회 (가중치 > 0 && PossibleTypes에 포함된 타입)
 	void GetValidTypesForTransition(EPRRoomType FromType, const FPRRoomStep& Step, TArray<EPRRoomType>& OutTypes, TArray<float>& OutWeights) const;
+
+	// 해당 타입이 UsedCategories에 포함되지 않은 카테고리를 보유하는지 확인
+	bool HasAvailableCategory(EPRRoomType RoomType, const TSet<FGameplayTag>& UsedCategories) const;
 
 	// 스폰 정보 생성 (Config + ThemeData → Info)
 	FPRRoomSpawnInfo CreateSpawnInfo(const FPRRoomSpawnConfig& Config, EPRRoomType RoomType, float Difficulty, FRandomStream& Random) const;

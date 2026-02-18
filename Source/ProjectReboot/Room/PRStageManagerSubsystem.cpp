@@ -361,12 +361,20 @@ void UPRStageManagerSubsystem::BuildRoomGraphForStage(int32 StageIndex)
 				continue;
 			}
 
-			// 이 노드의 분기 수 결정 (Min~Max 범위 내 랜덤)
-			FRandomStream BranchRandom = CreateDeterministicRandom(StageIndex, CurrentRoomIndex, CurrentNode->RoomType);
-			const int32 BranchCount = BranchRandom.RandRange(Step.MinBranchCount, Step.MaxBranchCount);
+			// 이 노드의 분기 수 결정 (시작 방은 1개 고정, 나머지는 Min~Max 범위 내 랜덤)
+			int32 BranchCount;
+			if (CurrentStepIndex == 0)
+			{
+				BranchCount = 1;
+			}
+			else
+			{
+				FRandomStream BranchRandom = CreateDeterministicRandom(StageIndex, CurrentRoomIndex, CurrentNode->RoomType);
+				BranchCount = BranchRandom.RandRange(Step.MinBranchCount, Step.MaxBranchCount);
+			}
 
 			// 각 분기마다 연결 대상 결정
-			// 보상 카테고리 다양성 필수: 연결된 방들은 반드시 서로 다른 카테고리를 가져야 함
+			// 보상 카테고리 다양성: 가능하면 서로 다른 카테고리를 배정
 			TSet<FGameplayTag> UsedCategories;
 
 			for (int32 BranchIndex = 0; BranchIndex < BranchCount; BranchIndex++)
@@ -383,74 +391,89 @@ void UPRStageManagerSubsystem::BuildRoomGraphForStage(int32 StageIndex)
 					continue;
 				}
 
-				// 카테고리 중복 없이 노드 생성 시도 (최대 시도 횟수 제한)
-				constexpr int32 MaxAttempts = 10;
-				int32 TargetRoomIndex = INDEX_NONE;
-
-				for (int32 Attempt = 0; Attempt < MaxAttempts; Attempt++)
+				// 카테고리가 모두 소진된 타입 제외 (새 카테고리를 제공할 수 없는 타입)
+				TArray<EPRRoomType> FilteredTypes;
+				TArray<float> FilteredWeights;
+				for (int32 i = 0; i < ValidTypes.Num(); i++)
 				{
-					FRandomStream AttemptRandom = CreateDeterministicRandom(StageIndex, CurrentRoomIndex * 100 + BranchIndex * 10 + Attempt, CurrentNode->RoomType);
-
-					// 타입 선택
-					const int32 TypeIndex = PRStageHelpers::SelectWeightedIndex(ValidWeights, AttemptRandom);
-					if (!ValidTypes.IsValidIndex(TypeIndex))
+					if (HasAvailableCategory(ValidTypes[i], UsedCategories))
 					{
-						continue;
+						FilteredTypes.Add(ValidTypes[i]);
+						FilteredWeights.Add(ValidWeights[i]);
 					}
-					const EPRRoomType SelectedType = ValidTypes[TypeIndex];
+				}
 
-					// 기존 노드 재사용 시도: 카테고리가 중복되지 않는 노드만 재사용
+				// 필터링 후 타입이 없으면 제약 완화 (전체 타입 사용)
+				if (FilteredTypes.Num() == 0)
+				{
+					FilteredTypes = ValidTypes;
+					FilteredWeights = ValidWeights;
+				}
+
+				// 타입 선택
+				const int32 TypeIndex = PRStageHelpers::SelectWeightedIndex(FilteredWeights, ConnectionRandom);
+				if (!FilteredTypes.IsValidIndex(TypeIndex))
+				{
+					continue;
+				}
+				const EPRRoomType SelectedType = FilteredTypes[TypeIndex];
+
+				// 기존 노드 재사용 시도: 카테고리가 중복되지 않는 노드 우선
+				int32 TargetRoomIndex = INDEX_NONE;
+				for (int32 ExistingRoomIndex : NextStepRoomIndices)
+				{
+					if (const FPRRoomNodeInfo* ExistingNode = RoomGraph.Find(ExistingRoomIndex))
+					{
+						if (ExistingNode->RoomType == SelectedType &&
+							!UsedCategories.Contains(ExistingNode->RewardCategory))
+						{
+							if (ConnectionRandom.FRand() < 0.5f)
+							{
+								TargetRoomIndex = ExistingRoomIndex;
+								break;
+							}
+						}
+					}
+				}
+
+				// 재사용 불가 시 새 노드 생성
+				if (TargetRoomIndex == INDEX_NONE)
+				{
+					FRandomStream NodeRandom = CreateDeterministicRandom(StageIndex, NextStepIndex * 1000 + NextStepRoomIndices.Num(), SelectedType);
+					FPRRoomNodeInfo NewNode = CreateRoomNode(NextRoomIndex, NextStepIndex, SelectedType, Step.Difficulty, NodeRandom, UsedCategories);
+
+					// 동일 타입+카테고리 노드가 이미 존재하면 재사용
 					for (int32 ExistingRoomIndex : NextStepRoomIndices)
 					{
 						if (const FPRRoomNodeInfo* ExistingNode = RoomGraph.Find(ExistingRoomIndex))
 						{
-							if (ExistingNode->RoomType == SelectedType && 
-								!UsedCategories.Contains(ExistingNode->RewardCategory))
+							if (ExistingNode->RoomType == NewNode.RoomType &&
+								ExistingNode->RewardCategory == NewNode.RewardCategory)
 							{
-								// 재사용 확률 50%
-								if (AttemptRandom.FRand() < 0.5f)
-								{
-									TargetRoomIndex = ExistingRoomIndex;
-									break;
-								}
+								TargetRoomIndex = ExistingRoomIndex;
+								break;
 							}
 						}
 					}
 
-					// 재사용할 노드 찾음
-					if (TargetRoomIndex != INDEX_NONE)
-					{
-						break;
-					}
-
-					// 새 노드 생성 시도
-					FRandomStream NodeRandom = CreateDeterministicRandom(StageIndex, NextStepIndex * 1000 + NextStepRoomIndices.Num() + Attempt, SelectedType);
-					FPRRoomNodeInfo NewNode = CreateRoomNode(NextRoomIndex, NextStepIndex, SelectedType, Step.Difficulty, NodeRandom);
-
-					// 카테고리 중복 검사
-					if (!UsedCategories.Contains(NewNode.RewardCategory))
+					if (TargetRoomIndex == INDEX_NONE)
 					{
 						NextRoomIndex++;
 						RoomGraph.Add(NewNode.RoomIndex, NewNode);
 						NextStepRoomIndices.Add(NewNode.RoomIndex);
 						TargetRoomIndex = NewNode.RoomIndex;
-						break;
 					}
-					// 중복이면 다음 시도 (NextRoomIndex 증가 없이 다시)
 				}
 
 				// 연결 추가 (중복 방지)
-				if (TargetRoomIndex != INDEX_NONE)
+				if (const FPRRoomNodeInfo* TargetNode = RoomGraph.Find(TargetRoomIndex))
 				{
-					if (const FPRRoomNodeInfo* TargetNode = RoomGraph.Find(TargetRoomIndex))
-					{
-						UsedCategories.Add(TargetNode->RewardCategory);
-					}
+					UsedCategories.Add(TargetNode->RewardCategory);
+				}
 
-					if (!CurrentNode->NextRoomIndices.Contains(TargetRoomIndex))
-					{
-						CurrentNode->NextRoomIndices.Add(TargetRoomIndex);
-					}
+				if (!CurrentNode->NextRoomIndices.Contains(TargetRoomIndex))
+				{
+					CurrentNode->NextRoomIndices.Add(TargetRoomIndex);
 				}
 			}
 		}
@@ -522,10 +545,25 @@ EPRRoomType UPRStageManagerSubsystem::SelectWeightedRandom(const TMap<EPRRoomTyp
 	return Types.IsValidIndex(SelectedIndex) ? Types[SelectedIndex] : EPRRoomType::Combat;
 }
 
-TArray<FPRRewardCategoryEntry> UPRStageManagerSubsystem::SelectRewardCategories(const FPRRewardCategoryPool& Pool, int32 Count, FRandomStream& Random) const
+TArray<FPRRewardCategoryEntry> UPRStageManagerSubsystem::SelectRewardCategories(const FPRRewardCategoryPool& Pool, int32 Count, FRandomStream& Random, const TSet<FGameplayTag>& ExcludedCategories) const
 {
 	TArray<FPRRewardCategoryEntry> Result;
-	TArray<FPRRewardCategoryEntry> Available = Pool.Categories;
+
+	// 제외 카테고리를 필터링한 후보 목록 생성
+	TArray<FPRRewardCategoryEntry> Available;
+	for (const FPRRewardCategoryEntry& Entry : Pool.Categories)
+	{
+		if (!ExcludedCategories.Contains(Entry.Category))
+		{
+			Available.Add(Entry);
+		}
+	}
+
+	// 필터링 후 후보가 없으면 제약 완화 (전체 풀 사용)
+	if (Available.Num() == 0)
+	{
+		Available = Pool.Categories;
+	}
 
 	Count = FMath::Min(Count, Available.Num());
 
@@ -576,7 +614,7 @@ TSoftObjectPtr<UWorld> UPRStageManagerSubsystem::SelectTemplate(EPRRoomType Room
 	return Pool->Entries.IsValidIndex(SelectedIndex) ? Pool->Entries[SelectedIndex].Level : nullptr;
 }
 
-FPRRoomNodeInfo UPRStageManagerSubsystem::CreateRoomNode(int32 RoomIndex, int32 StepIndex, EPRRoomType RoomType, float Difficulty, FRandomStream& Random) const
+FPRRoomNodeInfo UPRStageManagerSubsystem::CreateRoomNode(int32 RoomIndex, int32 StepIndex, EPRRoomType RoomType, float Difficulty, FRandomStream& Random, const TSet<FGameplayTag>& ExcludedCategories) const
 {
 	const UPRStageConfigData* StageConfig = GetCurrentStageConfig();
 
@@ -588,12 +626,12 @@ FPRRoomNodeInfo UPRStageManagerSubsystem::CreateRoomNode(int32 RoomIndex, int32 
 	Node.Difficulty = Difficulty;
 	Node.Seed = Random.RandRange(0, MAX_int32);
 
-	// 보상 카테고리 설정
+	// 보상 카테고리 설정 (제외 카테고리 필터링 적용)
 	if (IsValid(StageConfig))
 	{
 		if (const FPRRewardCategoryPool* RewardPool = StageConfig->RewardsByType.Find(RoomType))
 		{
-			TArray<FPRRewardCategoryEntry> SelectedCategories = SelectRewardCategories(*RewardPool, 1, Random);
+			TArray<FPRRewardCategoryEntry> SelectedCategories = SelectRewardCategories(*RewardPool, 1, Random, ExcludedCategories);
 			if (SelectedCategories.Num() > 0)
 			{
 				Node.RewardCategory = SelectedCategories[0].Category;
@@ -669,6 +707,32 @@ void UPRStageManagerSubsystem::GetValidTypesForTransition(EPRRoomType FromType, 
 			OutWeights.Add(Pair.Value);
 		}
 	}
+}
+
+bool UPRStageManagerSubsystem::HasAvailableCategory(EPRRoomType RoomType, const TSet<FGameplayTag>& UsedCategories) const
+{
+	const UPRStageConfigData* StageConfig = GetCurrentStageConfig();
+	if (!IsValid(StageConfig))
+	{
+		return true;
+	}
+
+	const FPRRewardCategoryPool* Pool = StageConfig->RewardsByType.Find(RoomType);
+	if (!Pool || Pool->Categories.Num() == 0)
+	{
+		// 카테고리 풀이 없는 타입은 카테고리 제약 없이 사용 가능
+		return true;
+	}
+
+	for (const FPRRewardCategoryEntry& Entry : Pool->Categories)
+	{
+		if (!UsedCategories.Contains(Entry.Category))
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 FPRRoomSpawnInfo UPRStageManagerSubsystem::CreateSpawnInfo(const FPRRoomSpawnConfig& Config, EPRRoomType RoomType, float Difficulty, FRandomStream& Random) const

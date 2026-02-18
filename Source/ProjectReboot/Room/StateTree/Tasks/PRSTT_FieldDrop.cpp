@@ -41,6 +41,11 @@ EStateTreeRunStatus FPRStateTreeTask_FieldDrop::Tick(
 	const float DeltaTime) const
 {
 	FInstanceDataType& Data = Context.GetInstanceData(*this);
+	if (!Data.RoomController)
+	{
+		return EStateTreeRunStatus::Failed;
+	}
+	
 	Data.ElapsedTime += DeltaTime;
 
 	if (Data.ElapsedTime >= Data.DropInterval)

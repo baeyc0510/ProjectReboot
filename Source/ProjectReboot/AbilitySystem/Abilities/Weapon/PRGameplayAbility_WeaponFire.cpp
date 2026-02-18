@@ -225,6 +225,9 @@ void UPRGameplayAbility_WeaponFire::ApplyWeaponDamage(const FHitResult& HitResul
 	FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(DamageEffectClass, GetAbilityLevel());
 	if (SpecHandle.IsValid())
 	{
+		// HitResult 전달
+		SpecHandle.Data->GetContext().AddHitResult(HitResult);
+		
 		// 기본 데미지 * 배율 전달
 		if (const UAbilitySystemComponent* SourceASC = GetAbilitySystemComponentFromActorInfo())
 		{

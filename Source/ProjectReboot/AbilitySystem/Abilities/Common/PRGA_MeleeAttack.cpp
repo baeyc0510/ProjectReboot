@@ -11,6 +11,7 @@
 #include "ProjectReboot/PRGameplayTags.h"
 #include "ProjectReboot/ProjectReboot.h"
 #include "ProjectReboot/Combat/CombatBlueprintFunctionLibrary.h"
+#include "ProjectReboot/Combat/PRCombatInterface.h"
 
 UPRGA_MeleeAttack::UPRGA_MeleeAttack()
 {
@@ -220,7 +221,6 @@ void UPRGA_MeleeAttack::PerformAttackTrace()
 		// 중복 처리 방지 등록
 		HitActors.Add(HitActor);
 		ApplyMeleeDamage(HitResult);
-		
 	}
 }
 
@@ -240,6 +240,11 @@ void UPRGA_MeleeAttack::ApplyMeleeDamage(const FHitResult& HitResult)
 	UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(HitActor);
 	if (!IsValid(TargetASC))
 	{
+		// Ghost 등 ASC는 없지만 CombatInterface를 구현한 경우 Hit이벤트 알림
+		if (IPRCombatInterface* CombatInterface = Cast<IPRCombatInterface>(HitActor))
+		{
+			CombatInterface->OnHit(HitResult, GetAvatarActorFromActorInfo());
+		}
 		return;
 	}
 
@@ -247,6 +252,7 @@ void UPRGA_MeleeAttack::ApplyMeleeDamage(const FHitResult& HitResult)
 	FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(DamageEffectClass, GetAbilityLevel());
 	if (SpecHandle.IsValid())
 	{
+		SpecHandle.Data->GetContext().AddHitResult(HitResult);
 		SpecHandle.Data->SetSetByCallerMagnitude(TAG_SetByCaller_Combat_Damage, BaseDamage);
 
 		FGameplayAbilityTargetDataHandle TargetDataHandle;

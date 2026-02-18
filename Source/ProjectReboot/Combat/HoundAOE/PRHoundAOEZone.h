@@ -29,9 +29,9 @@ public:
 		float TelegraphDuration, float Radius, float DamageDuration, TSubclassOf<AActor> InTargetActorClass);
 
 	/*~ IPRPrewarmInterface ~*/
-	// 프리웜 대상 나이아가라 에셋 수집
 	virtual void GetPrewarmNiagaraAssets(TArray<TSoftObjectPtr<UNiagaraSystem>>& OutAssets) const override;
-
+	virtual void GetPrewarmSoundAssets(TArray<TSoftObjectPtr<USoundBase>>& OutAssets) const override;
+	
 protected:
 	/*~ Phase Handlers ~*/
 
@@ -83,6 +83,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<UNiagaraComponent> ImpactEffect;
 
+	// 폭발 사운드
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	TObjectPtr<UAudioComponent> ImpactSound;
+	
 	// 데미지 영역 이펙트
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<UNiagaraComponent> DamageAreaEffect;
@@ -95,11 +99,11 @@ protected:
 
 	// Impact 연출 딜레이 (낙하 VFX 재생 후 데미지 시작까지 대기 시간)
 	UPROPERTY(EditDefaultsOnly, Category = "Config")
-	float ImpactDelay = 0.3f;
+	float ImpactDelay = 0.5f;
 
 	// VFX 잔여 후 파괴까지 대기 시간
 	UPROPERTY(EditDefaultsOnly, Category = "Config")
-	float CleanupLifeSpan = 2.0f;
+	float CleanupLifeSpan = 1.0f;
 
 	// 데미지 대상 클래스 필터 (비어있으면 전체)
 	UPROPERTY(EditDefaultsOnly, Category = "Config")

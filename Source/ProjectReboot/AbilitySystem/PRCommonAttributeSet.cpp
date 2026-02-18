@@ -25,6 +25,11 @@ void UPRCommonAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribu
 	{
 		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxShield());
 	}
+	// Stamina 클램핑 (0 ~ MaxStamina)
+	else if (Attribute == GetStaminaAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxStamina());
+	}
 	// Stagger 클램핑 (0 ~ HitImmunity)
 	else if (Attribute == GetStaggerAttribute())
 	{
@@ -35,6 +40,10 @@ void UPRCommonAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribu
 		NewValue = FMath::Max(NewValue, 1.0f);
 	}
 	else if (Attribute == GetMaxShieldAttribute())
+	{
+		NewValue = FMath::Max(NewValue, 0.0f);
+	}
+	else if (Attribute == GetMaxStaminaAttribute())
 	{
 		NewValue = FMath::Max(NewValue, 0.0f);
 	}
@@ -68,6 +77,14 @@ void UPRCommonAttributeSet::PostAttributeChange(const FGameplayAttribute& Attrib
 			SetShield(NewValue);
 		}
 	}
+	else if (Attribute == GetMaxStaminaAttribute())
+	{
+		// MaxStamina보다 커지지 않도록 클램핑
+		if (GetStamina() > NewValue)
+		{
+			SetStamina(NewValue);
+		}
+	}
 	else if (Attribute == GetHitImmunityAttribute())
 	{
 		// HitImmunity보다 커지지 않도록 클램핑
@@ -97,6 +114,12 @@ void UPRCommonAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCa
 	{
 		const float ClampedShield = FMath::Clamp(GetShield(), 0.0f, GetMaxShield());
 		SetShield(ClampedShield);
+	}
+	// Stamina 클램핑
+	else if (Data.EvaluatedData.Attribute == GetStaminaAttribute())
+	{
+		const float ClampedStamina = FMath::Clamp(GetStamina(), 0.0f, GetMaxStamina());
+		SetStamina(ClampedStamina);
 	}
 	// Stagger 처리
 	else if (Data.EvaluatedData.Attribute == GetStaggerAttribute())
@@ -196,6 +219,16 @@ void UPRCommonAttributeSet::HandleIncomingDamage(const FGameplayEffectModCallbac
 			HandleDeath(Data);
 		}
 	}
+	
+	// Send CombatInterface Event
+	const FGameplayEffectContextHandle& EffectContext = Data.EffectSpec.GetEffectContext();
+	if (const FHitResult* HitResult = EffectContext.GetHitResult())
+	{
+		if (IPRCombatInterface* CombatInterface = Cast<IPRCombatInterface>(HitResult->GetActor()))
+		{
+			CombatInterface->OnHit(*HitResult, EffectContext.GetInstigator());
+		}
+	}
 
 	// 데미지 이벤트 발송
 	SendDamageEvent(Data, IncomingDamageValue, InstigatorTags);
@@ -247,6 +280,7 @@ void UPRCommonAttributeSet::SendDamageEvent(const FGameplayEffectModCallbackData
 		return;
 	}
 
+	// Send GameplayEvent
 	FGameplayEventData EventData;
 	EventData.EventTag = TAG_Event_Damage;
 	EventData.EventMagnitude = DamageAmount;

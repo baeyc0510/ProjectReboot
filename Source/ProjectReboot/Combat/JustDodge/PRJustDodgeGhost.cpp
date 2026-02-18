@@ -52,7 +52,7 @@ void APRJustDodgeGhost::FinishDie()
 {
 }
 
-void APRJustDodgeGhost::OnHit(const FHitResult& HitResult)
+void APRJustDodgeGhost::OnHit(const FHitResult& HitResult, AActor* HitInstigator)
 {
 	if (!OwnerASC.IsValid())
 	{

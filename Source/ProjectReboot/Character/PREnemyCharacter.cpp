@@ -5,6 +5,7 @@
 
 #include "MotionWarpingComponent.h"
 #include "PREnemyData.h"
+#include "PRPlayerCharacter.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -12,6 +13,8 @@
 #include "ProjectReboot/AI/PRAIController.h"
 #include "ProjectReboot/AbilitySystem/PRAbilitySystemComponent.h"
 #include "ProjectReboot/Game/PRGameplayGameState.h"
+#include "ProjectReboot/UI/PRUIBlueprintLibrary.h"
+#include "ProjectReboot/UI/Crosshair/PRCrosshairViewModel.h"
 #include "ProjectReboot/UI/Enemy/PREnemyStatusViewModel.h"
 #include "ProjectReboot/UI/Enemy/PREnemyStatusWidget.h"
 #include "ProjectReboot/UI/LockOn/PRLockOnViewModel.h"
@@ -63,6 +66,27 @@ void APREnemyCharacter::FinishDie()
 		{
 			GameState->AddEventCount(TAG_Event_Kill);
 		}
+	}
+}
+
+void APREnemyCharacter::OnHit(const FHitResult& HitResult, AActor* HitInstigator)
+{
+	Super::OnHit(HitResult, HitInstigator);
+	
+	if (!Cast<APRPlayerCharacter>(HitInstigator))
+	{
+		return;
+	}
+	
+	UPRViewModelSubsystem* ViewModelSubsystem = UPRUIBlueprintLibrary::GetViewModelSubsystem(GetWorld()->GetFirstPlayerController());
+	if (!ViewModelSubsystem)
+	{
+		return;
+	}
+	
+	if (UPRCrosshairViewModel* CrosshairViewModel = ViewModelSubsystem->GetOrCreateGlobalViewModel<UPRCrosshairViewModel>())
+	{
+		CrosshairViewModel->ShowHitMarker(EPRHitMarkerType::Normal);
 	}
 }
 
